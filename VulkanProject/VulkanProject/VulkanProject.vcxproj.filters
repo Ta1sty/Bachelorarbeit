@@ -60,5 +60,6 @@
   <ItemGroup>
     <None Include="shader.frag" />
     <None Include="shader.vert" />
+    <None Include="traversalShader.frag" />
   </ItemGroup>
 </Project>
