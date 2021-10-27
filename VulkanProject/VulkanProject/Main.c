@@ -13,6 +13,15 @@
 #include "Window.h"
 #include "Globals.h"
 #include "Util.h"
+int resizeW = -1;
+int resizeH = -1;
+
+void resize_callback(GLFWwindow* window, int width, int height) {
+    resizeW = width;
+    resizeH = height;
+}
+
+
 
 int main()
 {
@@ -21,15 +30,29 @@ int main()
     App* appPtr = &app;
     if(init_window(&app.window) && init_vulkan(&app.vk_info, &app.window))
     {
+        glfwSetFramebufferSizeCallback(app.window, resize_callback);
         while (!glfwWindowShouldClose(app.window)) {
             glfwPollEvents();
-            if(drawFrame(&app.vk_info) == FAILURE)
+            if(WINDOW_WIDTH != 0 && WINDOW_HEIGHT != 0)
             {
-                break;
+                if (drawFrame(&app.vk_info) == FAILURE)
+                {
+                    break;
+                }
+            }
+
+            if (resizeW >= 0 || resizeH >= 0)
+            {
+                create_or_resize_swapchain(&app.vk_info, &app.window, resizeW, resizeH);
+                WINDOW_WIDTH = resizeW;
+                WINDOW_HEIGHT = resizeH;
+                resizeW = -1;
+                resizeH = -1;
             }
         }
         destroy_vulkan(&app.vk_info);
         destroy_window(app.window);
+        int a = 5;
         return 0;
     }
     printf("Init failed\n");

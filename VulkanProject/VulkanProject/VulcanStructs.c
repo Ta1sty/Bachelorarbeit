@@ -219,18 +219,12 @@ int create_validation_layer(VkInfo* vk_info)
 	return SUCCESS;
 }
 
-int create_swapchain(VkInfo* vk_info, GLFWwindow** window, VkBool32 resize, uint32_t width, uint32_t height)
+int create_swapchain(VkInfo* vk_info, GLFWwindow** window, uint32_t width, uint32_t height)
 {
 	Swapchain* swapchain = &vk_info->swapchain;
-	if (resize)
-	{
-		//TODO reset swapchain see partially_destroy_old_swapchain
-	}
-	else
-	{
-		memset(swapchain, 0, sizeof(Swapchain));
-		if (glfwCreateWindowSurface(vk_info->instance, *window, NULL, &swapchain->surface)) return err("Failed to create surface");
-	}
+	memset(swapchain, 0, sizeof(Swapchain));
+	if (glfwCreateWindowSurface(vk_info->instance, *window, NULL, &swapchain->surface)) return err("Failed to create surface");
+
 	VkBool32 presentation_supported;
 	if (vkGetPhysicalDeviceSurfaceSupportKHR(vk_info->physical_device, vk_info->queue_family_index, swapchain->surface,
 	                                         &presentation_supported)
@@ -296,13 +290,13 @@ int create_image_views(VkInfo* info)
 	swapchain->image_count = 0;
 	if (vkGetSwapchainImagesKHR(info->device, swapchain->vk_swapchain, &swapchain->image_count, NULL))
 		return err("Failed to get swapchain images");
+	info->buffer_count = swapchain->image_count;
 	swapchain->images = malloc(sizeof(VkImage) * swapchain->image_count);
 	if (vkGetSwapchainImagesKHR(info->device, swapchain->vk_swapchain, &swapchain->image_count,
 	                            swapchain->images))
 		return err("Failed to get swapchain images");
-	swapchain->image_view_count = swapchain->image_count;
-	swapchain->image_views = malloc(sizeof(VkImageView) * swapchain->image_view_count);
-	for (uint32_t i = 0; i < swapchain->image_view_count; i++)
+	swapchain->image_views = malloc(sizeof(VkImageView) * swapchain->image_count);
+	for (uint32_t i = 0; i < swapchain->image_count; i++)
 	{
 		VkImageViewCreateInfo createInfo = {
 			.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
@@ -444,16 +438,13 @@ int create_pipeline(VkInfo* info)
 	dynamicState.dynamicStateCount = 2;
 	dynamicState.pDynamicStates = dynamicStates;
 	*/
-	VkPipelineLayoutCreateInfo pipeline_layout_info = {
-		.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-		.setLayoutCount = 0, // Optional
-		.pSetLayouts = NULL, // Optional
-		.pushConstantRangeCount = 0, // Optional
-		.pPushConstantRanges = NULL, // Optional
-	};
+	VkPipelineLayoutCreateInfo pipeline_layout_info = {0};
+	pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	pipeline_layout_info.setLayoutCount = 1;
+	pipeline_layout_info.pSetLayouts = &info->descriptor_set_layout;
 
 	if (vkCreatePipelineLayout(info->device, &pipeline_layout_info, NULL,
-	                           &info->pipelineLayout))
+	                           &info->pipeline_layout))
 		return err("Failed to create pipeline layout");
 
 	VkGraphicsPipelineCreateInfo pipeline_info = {
@@ -468,11 +459,10 @@ int create_pipeline(VkInfo* info)
 		.pDepthStencilState = NULL, // Optional
 		.pColorBlendState = &color_blending,
 		.pDynamicState = NULL, // Optional
-		.layout = info->pipelineLayout,
+		.layout = info->pipeline_layout,
 		.renderPass = info->renderPass,
 		.subpass = 0,
 		.basePipelineHandle = VK_NULL_HANDLE, // Optional
-		.basePipelineIndex = -1, // Optional
 	};
 	if (vkCreateGraphicsPipelines(info->device, VK_NULL_HANDLE, 1, &pipeline_info, NULL,
 	                              &info->pipeline))
@@ -527,8 +517,8 @@ int create_render_pass(VkInfo* info)
 int create_frame_buffers(VkInfo* info)
 {
 	Swapchain* swapchain = &info->swapchain;
-	swapchain->frame_buffers = malloc(sizeof(VkFramebuffer) * swapchain->image_view_count);
-	for (size_t i = 0; i < swapchain->image_view_count; i++)
+	swapchain->frame_buffers = malloc(sizeof(VkFramebuffer) * swapchain->image_count);
+	for (size_t i = 0; i < swapchain->image_count; i++)
 	{
 		VkImageView attachments[] = {
 			swapchain->image_views[i]
@@ -556,19 +546,19 @@ int create_command_buffers(VkInfo* info)
 	.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
 	.commandPool = info->command_pool,
 	.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-	.commandBufferCount = swapchain->image_view_count,
+	.commandBufferCount = swapchain->image_count,
 	};
-	swapchain->command_buffers = malloc(sizeof(VkCommandBuffer) * swapchain->image_view_count);
-	if (vkAllocateCommandBuffers(info->device, &allocInfo, swapchain->command_buffers)) return err("failed to allocate command buffers");
+	info->command_buffers = malloc(sizeof(VkCommandBuffer) * info->buffer_count);
+	if (vkAllocateCommandBuffers(info->device, &allocInfo, info->command_buffers)) return err("failed to allocate command buffers");
 
-	for (size_t i = 0; i < swapchain->image_view_count; i++) {
+	for (size_t i = 0; i < swapchain->image_count; i++) {
 		VkCommandBufferBeginInfo beginInfo = {
 			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
 		.flags = 0, // Optional
 		.pInheritanceInfo = NULL, // Optional
 		};
 
-		if (vkBeginCommandBuffer(swapchain->command_buffers[i], &beginInfo)) {
+		if (vkBeginCommandBuffer(info->command_buffers[i], &beginInfo)) {
 			printf("failed to begin command buffer");
 			return FAILURE;
 		}
@@ -585,13 +575,14 @@ int create_command_buffers(VkInfo* info)
 		.pClearValues = &clearColor
 		};
 
-		vkCmdBeginRenderPass(swapchain->command_buffers[i], &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdBeginRenderPass(info->command_buffers[i], &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
 
-		vkCmdBindPipeline(swapchain->command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, info->pipeline);
-		vkCmdDraw(swapchain->command_buffers[i], 3, 1, 0, 0);
-		vkCmdEndRenderPass(swapchain->command_buffers[i]);
+		vkCmdBindPipeline(info->command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, info->pipeline);
+		vkCmdBindDescriptorSets(info->command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, info->pipeline_layout, 0, 1, &info->descriptor_sets[i], 0, NULL);
+		vkCmdDraw(info->command_buffers[i], 3, 1, 0, 0);
+		vkCmdEndRenderPass(info->command_buffers[i]);
 
-		if (vkEndCommandBuffer(swapchain->command_buffers[i])) return err("failed to end command buffer");
+		if (vkEndCommandBuffer(info->command_buffers[i])) return err("failed to end command buffer");
 	}
 	return SUCCESS;
 }

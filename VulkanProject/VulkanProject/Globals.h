@@ -26,10 +26,8 @@ typedef struct swapchain
 	uint32_t image_count;
 	VkImage* images;
 
-	uint32_t image_view_count;
 	VkImageView* image_views;
 	VkFramebuffer* frame_buffers;
-	VkCommandBuffer* command_buffers;
 } Swapchain;
 
 typedef struct vkInfo {
@@ -55,14 +53,23 @@ typedef struct vkInfo {
 	VkCommandPool command_pool;
 	VkQueue graphics_queue;
 	VkQueue present_queue;
+	uint32_t buffer_count;
+	VkCommandBuffer* command_buffers;
 
 	Swapchain swapchain;
-
+	// shader objects
 	Shader vertex_shader;
 	Shader fragment_shader;
 
+	VkBuffer* uniformBuffers;
+	VkDeviceMemory* uniformBufferMemory;
+
+	VkDescriptorPool descriptorPool;
+	VkDescriptorSet* descriptor_sets;
+
 	VkRenderPass renderPass;
-	VkPipelineLayout pipelineLayout;
+	VkDescriptorSetLayout descriptor_set_layout;
+	VkPipelineLayout pipeline_layout;
 	VkPipeline pipeline;
 	VkSemaphore imageAvailableSemaphore;
 	VkSemaphore renderFinishedSemaphore;
