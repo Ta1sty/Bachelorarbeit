@@ -154,19 +154,23 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Globals.c" />
+    <ClCompile Include="Raster.c" />
     <ClCompile Include="Shader.c" />
     <ClCompile Include="Util.c" />
     <ClCompile Include="VulcanStructs.c" />
     <ClCompile Include="Vulkan.c" />
     <ClCompile Include="Main.c" />
+    <ClCompile Include="VulkanUtil.c" />
     <ClCompile Include="Window.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Globals.h" />
+    <ClInclude Include="Raster.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Util.h" />
     <ClInclude Include="Vulkan.h" />
     <ClInclude Include="VulkanStructs.h" />
+    <ClInclude Include="VulkanUtil.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>

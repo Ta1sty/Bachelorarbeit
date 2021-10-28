@@ -77,11 +77,11 @@ void main() {
         tlas_index = tlas_index_arr[queueStart];
         ray_orign = transformed_ray_origin[queueStart];
         ray_direction = transformed_ray_direction[queueStart];
-        queueStart++; // advance positon by one
+        queueStart = (queueStart + 1) % BUFFER_SIZE; // advance positon by one
         queueElements--; // decrement number of elements
 
         float min_t = 1.0e-3f;
-        float max_t = 0x7F7FFFFF; // 2139095039, does max_t work with infinity? read set tmax only to 10000
+        float max_t = 0x7F7FFFFF; // 2139095039, does max_t work with infinity? read set tmax only to 10000, uintBitsToFloat()
         rayQueryEXT ray_query;
 		rayQueryInitializeEXT(ray_query, tlas_arr[tlas_index], 0, 0xFF, ray_orign, min_t, ray_direction, max_t);
         while(rayQueryProceedEXT(ray_query)){

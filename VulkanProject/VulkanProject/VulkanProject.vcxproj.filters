@@ -36,6 +36,12 @@
     <ClCompile Include="VulcanStructs.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Raster.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VulkanUtil.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Vulkan.h">
@@ -54,6 +60,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="VulkanStructs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Raster.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanUtil.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

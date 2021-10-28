@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "Globals.h"
+#include "Raster.h"
 #include "Shader.h"
 #include "Util.h"
 #include "VulkanStructs.h"
@@ -342,14 +343,34 @@ int create_pipeline(VkInfo* info)
 	};
 
 	VkPipelineShaderStageCreateInfo shader_stages[] = {vert_create_info, frag_create_info};
-
-	VkPipelineVertexInputStateCreateInfo vertex_input_info = {
+	VkPipelineVertexInputStateCreateInfo vertex_input_info = { 0 };
+	VkVertexInputBindingDescription bindingDescription;
+	VkVertexInputAttributeDescription* attributeDescriptions = NULL;
+	if(info->rasterize == VK_FALSE)
+	{
+		VkPipelineVertexInputStateCreateInfo noRasterInfo = {
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
 		.vertexBindingDescriptionCount = 0,
 		.pVertexBindingDescriptions = NULL, // Optional
 		.vertexAttributeDescriptionCount = 0,
 		.pVertexAttributeDescriptions = NULL, // Optional
-	};
+		};
+		vertex_input_info = noRasterInfo;
+	} else
+	{
+		bindingDescription = getBindingDescription();
+		attributeDescriptions = getAttributeDescriptions();
+		VkPipelineVertexInputStateCreateInfo rasterInfo = {
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+		.vertexBindingDescriptionCount = 1,
+		.pVertexBindingDescriptions = &bindingDescription,
+		.vertexAttributeDescriptionCount = 2,
+		.pVertexAttributeDescriptions = attributeDescriptions,
+		};
+		vertex_input_info = rasterInfo;
+	}
+
+
 	VkPipelineInputAssemblyStateCreateInfo input_assembly = {
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
 		.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
@@ -467,6 +488,9 @@ int create_pipeline(VkInfo* info)
 	if (vkCreateGraphicsPipelines(info->device, VK_NULL_HANDLE, 1, &pipeline_info, NULL,
 	                              &info->pipeline))
 		return err("Failed to create pipeline");
+
+	free(attributeDescriptions);
+
 	return SUCCESS;
 }
 
@@ -578,6 +602,13 @@ int create_command_buffers(VkInfo* info)
 		vkCmdBeginRenderPass(info->command_buffers[i], &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
 
 		vkCmdBindPipeline(info->command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, info->pipeline);
+		if(info->rasterize == VK_TRUE)
+		{
+			VkBuffer vertexBuffers[] = { info->vertexBuffer };
+			VkDeviceSize offsets[] = { 0 };
+			vkCmdBindVertexBuffers(info->command_buffers[i], 0, 1, vertexBuffers, offsets);
+		}
+
 		vkCmdBindDescriptorSets(info->command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, info->pipeline_layout, 0, 1, &info->descriptor_sets[i], 0, NULL);
 		vkCmdDraw(info->command_buffers[i], 3, 1, 0, 0);
 		vkCmdEndRenderPass(info->command_buffers[i]);

@@ -28,6 +28,7 @@ int main()
     App app;
     memset(&app, 0, sizeof(app));
     App* appPtr = &app;
+    app.vk_info.rasterize = VK_TRUE;
     if(init_window(&app.window) && init_vulkan(&app.vk_info, &app.window))
     {
         glfwSetFramebufferSizeCallback(app.window, resize_callback);

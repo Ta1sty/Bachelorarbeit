@@ -49,6 +49,7 @@ typedef struct vkInfo {
 	const char** device_extension_names;
 
 	VkBool32 ray_tracing;
+	VkBool32 rasterize;
 	// command pool
 	VkCommandPool command_pool;
 	VkQueue graphics_queue;
@@ -60,6 +61,9 @@ typedef struct vkInfo {
 	// shader objects
 	Shader vertex_shader;
 	Shader fragment_shader;
+
+	VkBuffer vertexBuffer;
+	VkDeviceMemory vertexBufferMemory;
 
 	VkBuffer* uniformBuffers;
 	VkDeviceMemory* uniformBufferMemory;

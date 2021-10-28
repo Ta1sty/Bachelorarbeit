@@ -7,10 +7,15 @@
 #include <GLFW/glfw3.h>
 #include "Util.h"
 #include "Globals.h"
+#include "Raster.h"
 #include "Shader.h"
 #include "VulkanStructs.h"
 int init_vulkan(VkInfo* info, GLFWwindow** window)
 {
+	if(info->rasterize == VK_TRUE)
+	{
+		initVertexArray();
+	}
 	if (
 		create_instance(info) &&
 #ifdef NDEBUG
@@ -36,6 +41,7 @@ int create_or_resize_swapchain(VkInfo* vk, GLFWwindow** window, uint32_t width, 
 		create_descriptor_set_layout(vk) &&
 		create_pipeline(vk) &&
 		create_frame_buffers(vk) &&
+		create_vertex_buffer(vk) &&
 		create_uniform_buffers(vk) &&
 		createDescriptorPool(vk) &&
 		createDescriptorSets(vk) &&
@@ -101,6 +107,7 @@ void destroy_vulkan(VkInfo* vk)
 	free(vk->physical_devices);
 	if (vk->device) vkDestroyDevice(vk->device, NULL);
 	if (vk->instance) vkDestroyInstance(vk->instance, NULL);
+	freeVertexArray();
 	memset(vk, 0, sizeof(VkInfo));
 }
 
@@ -153,9 +160,31 @@ void destroy_swapchain(VkInfo* vk)
 		vk->uniformBufferMemory = NULL;
 	}
 
+	if (vk->vertexBuffer != NULL)
+	{
+		vkDestroyBuffer(vk->device, vk->vertexBuffer, NULL);
+		vk->vertexBuffer = NULL;
+	}
+
+	if (vk->vertexBufferMemory != NULL)
+	{
+		vkFreeMemory(vk->device, vk->vertexBufferMemory, NULL);
+		vk->vertexBufferMemory = NULL;
+	}
+
 	if (vk->descriptor_set_layout)
 		vkDestroyDescriptorSetLayout(vk->device, vk->descriptor_set_layout, NULL);
 	vk->descriptor_set_layout = NULL;
+
+	if (vk->descriptorPool)
+	{
+		vkDestroyDescriptorPool(vk->device, vk->descriptorPool, NULL);
+		vk->descriptorPool = NULL;
+		free(vk->descriptor_sets);
+
+		//vkFreeDescriptorSets(vk->device, vk->descriptorPool, vk->buffer_count, vk->descriptor_sets);
+		//vk->descriptor_sets = NULL;
+	}
 
 	if (vk->pipeline)
 		vkDestroyPipeline(vk->device, vk->pipeline, NULL);
@@ -180,6 +209,9 @@ void destroy_swapchain(VkInfo* vk)
 	vk->fragment_shader.module = NULL;
 	free(vk->fragment_shader.code);
 	vk->fragment_shader.code = 0;
+
+
+
 
 	free(vk->command_buffers);
 	vk->command_buffers = 0;

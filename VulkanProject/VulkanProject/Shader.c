@@ -6,6 +6,7 @@
 
 #include "Globals.h"
 #include "Util.h"
+#include "VulkanUtil.h"
 
 int compile_shaders()
 {
@@ -83,7 +84,7 @@ int create_descriptor_set_layout(VkInfo* vk_info)
 	uboLayoutBinding.binding = 0;
 	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	uboLayoutBinding.descriptorCount = 1;
-	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 	uboLayoutBinding.pImmutableSamplers = NULL; // Optional
 
 	VkDescriptorSetLayoutCreateInfo layoutInfo = {0};
@@ -112,51 +113,15 @@ int create_uniform_buffers(VkInfo* vk)
 	}
 	return SUCCESS;
 }
-
-int createBuffer(VkInfo* vk, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer* buffer, VkDeviceMemory* bufferMemory) {
-	VkBufferCreateInfo bufferInfo = {0};
-	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	bufferInfo.size = size;
-	bufferInfo.usage = usage;
-	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-	if (vkCreateBuffer(vk->device, &bufferInfo, NULL, buffer)) 
-		return err("Failed to create buffer");
-	VkMemoryRequirements memRequirements;
-	vkGetBufferMemoryRequirements(vk->device, *buffer, &memRequirements);
-
-	VkMemoryAllocateInfo allocInfo = {0};
-	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	allocInfo.allocationSize = memRequirements.size;
-	uint32_t memtype = findMemoryType(vk, memRequirements.memoryTypeBits, properties);
-	if (memtype == (uint32_t)-1) return err("Failed to find correct memory type");
-	allocInfo.memoryTypeIndex = memtype;
-
-	if (vkAllocateMemory(vk->device, &allocInfo, NULL, bufferMemory))
-		return err("Failed to allocate buffer memory");
-
-	vkBindBufferMemory(vk->device, *buffer, *bufferMemory, 0);
-	return SUCCESS;
-}
-
-uint32_t findMemoryType(VkInfo* vk, uint32_t typeFilter, VkMemoryPropertyFlags properties) {
-
-	for (uint32_t i = 0; i < vk->physical_device_memory_properties.memoryTypeCount; i++) {
-		if ((typeFilter & (1 << i)) && (vk->physical_device_memory_properties.memoryTypes[i].propertyFlags & properties) == properties) {
-			return i;
-		}
-	}
-	return -1;
-}
 int update_uniform_buffers(VkInfo* vk, uint32_t image_index) {
 	UniformBufferObject obj = {0};
-	obj.col[0] = 1;
-	obj.col[1] = 1;
-	obj.col[2] = 1;
+	obj.color[0] = 1;
+	obj.color[1] = 1;
+	obj.color[2] = 1;
 	void* data;
 	if (vkMapMemory(vk->device, vk->uniformBufferMemory[image_index], 0, sizeof(UniformBufferObject), 0, &data))
 		return err("Failed to map memory");
-	memcpy(data, &obj, sizeof(image_index));
+	memcpy(data, &obj, sizeof(UniformBufferObject));
 	vkUnmapMemory(vk->device, vk->uniformBufferMemory[image_index]);
 	return SUCCESS;
 }
@@ -200,7 +165,6 @@ int createDescriptorSets(VkInfo* vk)
 	if (vkAllocateDescriptorSets(vk->device, &allocInfo, vk->descriptor_sets) != VK_SUCCESS) {
 		return err("failed to allocate descriptor sets");
 	}
-
 	for (size_t i = 0; i < vk->buffer_count; i++) {
 		VkDescriptorBufferInfo bufferInfo = {0};
 		bufferInfo.buffer = vk->uniformBuffers[i];
@@ -218,5 +182,6 @@ int createDescriptorSets(VkInfo* vk)
 
 		vkUpdateDescriptorSets(vk->device, 1, &descriptorWrite, 0, NULL);
 	}
+	free(layouts);
 	return SUCCESS;
 }
