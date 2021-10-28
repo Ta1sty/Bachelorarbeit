@@ -166,6 +166,7 @@
   <ItemGroup>
     <ClInclude Include="Globals.h" />
     <ClInclude Include="Raster.h" />
+    <ClInclude Include="Scene.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Util.h" />
     <ClInclude Include="Vulkan.h" />

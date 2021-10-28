@@ -65,14 +65,21 @@ typedef struct vkInfo {
 	VkBuffer vertexBuffer;
 	VkDeviceMemory vertexBufferMemory;
 
+	VkDescriptorSetLayout frame_descriptor_layout;
+	VkDescriptorSet* frame_descriptor_sets;
 	VkBuffer* uniformBuffers;
 	VkDeviceMemory* uniformBufferMemory;
 
-	VkDescriptorPool descriptorPool;
-	VkDescriptorSet* descriptor_sets;
+	VkDescriptorSetLayout global_descriptor_layout;
+	VkDescriptorSet global_descriptor_set;
+	VkBuffer sceneDataBuffer;
+	VkDeviceMemory sceneDataMemory;
+	VkBuffer sphereDataBuffer;
+	VkDeviceMemory sphereDataBufferMemory;
+
+	VkDescriptorPool descriptor_pool;
 
 	VkRenderPass renderPass;
-	VkDescriptorSetLayout descriptor_set_layout;
 	VkPipelineLayout pipeline_layout;
 	VkPipeline pipeline;
 	VkSemaphore imageAvailableSemaphore;

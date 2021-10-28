@@ -38,7 +38,7 @@ int create_or_resize_swapchain(VkInfo* vk, GLFWwindow** window, uint32_t width, 
 	if (create_swapchain(vk, window, width, height) &&
 		create_image_views(vk) &&
 		create_render_pass(vk) &&
-		create_descriptor_set_layout(vk) &&
+		create_descriptor_layouts(vk) &&
 		create_pipeline(vk) &&
 		create_frame_buffers(vk) &&
 		create_vertex_buffer(vk) &&
@@ -61,8 +61,8 @@ int drawFrame(VkInfo* vk_info)
 
 	VkSemaphore signalSemaphores[] = { vk_info->renderFinishedSemaphore };
 
-	if (update_uniform_buffers(vk_info, imageIndex) != SUCCESS)
-		return err("failed to update uniform buffers");
+	//if (update_uniform_buffers(vk_info, imageIndex) != SUCCESS)
+	//	return err("failed to update uniform buffers");
 
 	VkSubmitInfo submitInfo = {
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
@@ -172,15 +172,15 @@ void destroy_swapchain(VkInfo* vk)
 		vk->vertexBufferMemory = NULL;
 	}
 
-	if (vk->descriptor_set_layout)
-		vkDestroyDescriptorSetLayout(vk->device, vk->descriptor_set_layout, NULL);
-	vk->descriptor_set_layout = NULL;
+	if (vk->frame_descriptor_layout)
+		vkDestroyDescriptorSetLayout(vk->device, vk->frame_descriptor_layout, NULL);
+	vk->frame_descriptor_layout = NULL;
 
-	if (vk->descriptorPool)
+	if (vk->descriptor_pool)
 	{
-		vkDestroyDescriptorPool(vk->device, vk->descriptorPool, NULL);
-		vk->descriptorPool = NULL;
-		free(vk->descriptor_sets);
+		vkDestroyDescriptorPool(vk->device, vk->descriptor_pool, NULL);
+		vk->descriptor_pool = NULL;
+		free(vk->frame_descriptor_sets);
 
 		//vkFreeDescriptorSets(vk->device, vk->descriptorPool, vk->buffer_count, vk->descriptor_sets);
 		//vk->descriptor_sets = NULL;
