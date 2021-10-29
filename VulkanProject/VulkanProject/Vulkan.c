@@ -61,8 +61,7 @@ int drawFrame(VkInfo* vk_info)
 
 	VkSemaphore signalSemaphores[] = { vk_info->renderFinishedSemaphore };
 
-	//if (update_uniform_buffers(vk_info, imageIndex) != SUCCESS)
-	//	return err("failed to update uniform buffers");
+	update_frame_buffers(vk_info, imageIndex);
 
 	VkSubmitInfo submitInfo = {
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,

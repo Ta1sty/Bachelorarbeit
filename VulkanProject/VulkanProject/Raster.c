@@ -11,15 +11,15 @@ uint32_t vertex_count = 3;
 void initVertexArray()
 {
 	Vertex v1 = {
-		.pos = {0.0f, -0.5f},
+		.pos = {-1.0f, -3.0f},
 		.color = {1.0f, 1.0f, 1.0f}
 	};
 	Vertex v2 = {
-	.pos = {0.5f, 0.5f},
+	.pos = {3.0f, 1.0f},
 	.color = {0.0f, 1.0f, 0.0f}
 	};
 	Vertex v3 = {
-		.pos = {-0.5f, 0.5f},
+		.pos = {-1.0f, 1.0f},
 		.color = {0.0f, 0.0f, 1.0f}
 	};
 	vertices = malloc(sizeof(Vertex) * vertex_count);

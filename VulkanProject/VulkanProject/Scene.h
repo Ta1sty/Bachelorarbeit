@@ -18,7 +18,9 @@ typedef struct triangle
 
 typedef struct sphere
 {
-	float pos[3];
+	float x;
+	float y;
+	float z;
 	float r;
 } Sphere;
 
@@ -32,3 +34,11 @@ typedef struct sceneData
 	uint32_t sphere_count;
 	SphereData sphere_data;
 } SceneData;
+
+typedef struct frameData {
+	float cameraPos[4];
+	float cameraDir[4];
+	uint32_t width;
+	uint32_t height;
+	uint32_t fov;
+} FrameData;
