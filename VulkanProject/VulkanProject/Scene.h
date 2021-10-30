@@ -35,10 +35,16 @@ typedef struct sceneData
 	SphereData sphere_data;
 } SceneData;
 
+typedef struct camera
+{
+	float pos[3];
+	float rotation_x;
+	float rotation_y;
+} Camera;
+
 typedef struct frameData {
-	float cameraPos[4];
-	float cameraDir[4];
+	float view_to_world[4][4];
 	uint32_t width;
 	uint32_t height;
-	uint32_t fov;
+	float fov;
 } FrameData;

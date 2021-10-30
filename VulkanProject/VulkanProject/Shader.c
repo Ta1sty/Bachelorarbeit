@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#define _USE_MATH_DEFINES // for C
+#include <math.h>
+#include <time.h>
 
 #include "Globals.h"
 #include "Util.h"
@@ -153,21 +156,27 @@ int create_uniform_buffers(VkInfo* vk)
 		&vk->sphereDataBuffer,
 		&vk->sphereDataBufferMemory);
 
-	uint32_t numSpheres = 2;
+	uint32_t numSpheres = 1;
 
 	Sphere s1 = {
 		.x = 0,
 		.y = 0,
-		.z = 1,
+		.z = 0.5f,
 		.r = 0.5f
 	};
 	Sphere s2 = {
 		.x = 1,
 		.y = 0,
-		.z = 2,
+		.z = 1,
 		.r = 0.5f
 	};
-	Sphere spheres[] = { s1, s2 };
+	Sphere s3 = {
+	.x = 0,
+	.y = -1,
+	.z = 0,
+	.r = 0.5f
+	};
+	Sphere spheres[] = { s1 };
 	SphereData sphereData = {
 		.spheres = spheres
 	};
@@ -190,15 +199,32 @@ int create_uniform_buffers(VkInfo* vk)
 }
 int update_frame_buffers(VkInfo* vk, uint32_t image_index) {
 	FrameData frame = {0};
-	frame.cameraPos[0] = 0;
-	frame.cameraPos[1] = 0;
-	frame.cameraPos[2] = 0;
-	frame.cameraDir[0] = 0;
-	frame.cameraDir[1] = 0;
-	frame.cameraDir[2] = 1;
+	Camera c = {
+	.pos = {0,0,0},
+	.rotation_x = 0,
+	.rotation_y = 0
+	};
+	float sec = (time(NULL) % 20) / 20.f;
+	//c.rotation_y = 90.f * sinf(2 * (float) M_PI * sec);
+
+
+	float x_radians = c.rotation_x* (float) M_PI / 180.0f;
+	float y_radians = c.rotation_y * (float)M_PI / 180.0f;
+
+	float cos_x = cosf(x_radians), sin_x = sinf(x_radians);
+	float cos_y = cosf(y_radians), sin_y = sinf(y_radians);
+
+
+	float mat[4][4] = {
+		{cos_y,	0,	sin_y,	0},
+		{0,	1,	0,	0},
+		{-sin_y,	0,	cos_y,	0},
+		{0, 0,	-2,	1}
+	};
+	memcpy(&frame.view_to_world, &mat, sizeof(float) * 4 * 4);
 	frame.width = WINDOW_WIDTH;
 	frame.height = WINDOW_HEIGHT;
-	frame.fov = 90;
+	frame.fov = (float) M_PI  / 180.f * 45.f;
 
 	void* data;
 	if (vkMapMemory(vk->device, vk->uniformBufferMemory[image_index], 0, sizeof(FrameData), 0, &data))
