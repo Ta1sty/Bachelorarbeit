@@ -205,7 +205,8 @@ int update_frame_buffers(VkInfo* vk, uint32_t image_index) {
 	.rotation_y = 0
 	};
 	float sec = (time(NULL) % 20) / 20.f;
-	//c.rotation_y = 90.f * sinf(2 * (float) M_PI * sec);
+	c.rotation_x = 20.f * sinf(2 * (float) M_PI * sec);
+	c.rotation_y = 20.f * cosf(2 * (float)M_PI * sec);
 
 
 	float x_radians = c.rotation_x* (float) M_PI / 180.0f;
@@ -216,9 +217,9 @@ int update_frame_buffers(VkInfo* vk, uint32_t image_index) {
 
 
 	float mat[4][4] = {
-		{cos_y,	0,	sin_y,	0},
-		{0,	1,	0,	0},
-		{-sin_y,	0,	cos_y,	0},
+		{cos_y,		-sin_y * sin_x,		sin_y*cos_x,		0},
+		{0,			cos_x,				sin_x,				0},
+		{-sin_y,	-cos_y*sin_x,		cos_y*cos_x,		0},
 		{0, 0,	-2,	1}
 	};
 	memcpy(&frame.view_to_world, &mat, sizeof(float) * 4 * 4);

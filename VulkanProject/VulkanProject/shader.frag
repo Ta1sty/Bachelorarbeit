@@ -75,17 +75,17 @@ void shadeSphere(vec3 P, vec3 N, vec3 V) {
 	vec3 k_d = vec3(0.8,0.2,0.5);
 	vec3 k_s = vec3(0.2,0.8,0.5);
 	float n = 8;
-	float i = 2;
+	float i = 5;
 	vec3 lightIntenstity = vec3(i,i,i);
-	vec3 lightWorldPos = vec3(0,-2,0);
+	vec3 lightWorldPos = vec3(0,2,0);
 	N = normalize(N);
 	vec3 R = normalize(reflect(V, N));
 	vec3 color = vec3(0.0);
-	vec3 L = normalize(P-lightWorldPos);
+	vec3 L = normalize(lightWorldPos-P);
 	vec3 kd = k_d * max(0,dot(L,N));
 	vec3 ks;
 	float t; int index;
-	if(!ray_trace_loop(P, L, length(P-lightWorldPos), t, index)){
+	if(!ray_trace_loop(P, L, length(lightWorldPos-P), t, index)){
 		ks = k_s * pow(max(0,dot(R,L)),n);
 
 	} else {
@@ -118,7 +118,6 @@ void main() {
 	rayDirection.z = -rayDirection.z;
 
 	float t_best = 500;
-
 	float t_max = 500;
 	float t;
 	int sphereIndex = -1;
