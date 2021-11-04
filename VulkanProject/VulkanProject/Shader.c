@@ -7,6 +7,7 @@
 #include <math.h>
 #include <time.h>
 
+#include "Descriptors.h"
 #include "Globals.h"
 #include "Util.h"
 #include "VulkanUtil.h"
@@ -82,81 +83,9 @@ int get_fragment_shader(VkInfo* vk_info, Shader* shader)
 	return SUCCESS;
 }
 
-int create_descriptor_layouts(VkInfo* vk_info)
+int set_global_buffers(VkInfo* vk)
 {
-	// Per-Frame
-	VkDescriptorSetLayoutBinding uboLayoutBinding = { 0 };
-	uboLayoutBinding.binding = 2;
-	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	uboLayoutBinding.descriptorCount = 1;
-	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-	uboLayoutBinding.pImmutableSamplers = NULL; // Optional
-
-	VkDescriptorSetLayoutCreateInfo framelayoutInfo = { 0 };
-	framelayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	framelayoutInfo.bindingCount = 1;
-	framelayoutInfo.pBindings = &uboLayoutBinding;
-
-	if (vkCreateDescriptorSetLayout(vk_info->device, &framelayoutInfo, NULL, &vk_info->frame_descriptor_layout))
-		return err("Failed to create per frame descriptor set layout");
-
-
-	// Global
-	VkDescriptorSetLayoutBinding sceneDataLayout = {0};
-	sceneDataLayout.binding = 0;
-	sceneDataLayout.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	sceneDataLayout.descriptorCount = 1;
-	sceneDataLayout.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-	sceneDataLayout.pImmutableSamplers = NULL; // Optional
-
-	VkDescriptorSetLayoutBinding sphereBufferLayout = {0};
-	sphereBufferLayout.binding = 1;
-	sphereBufferLayout.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-	sphereBufferLayout.descriptorCount = 1;
-	sphereBufferLayout.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-	sphereBufferLayout.pImmutableSamplers = NULL; // Optional
-	
-
-	VkDescriptorSetLayoutCreateInfo globalLayoutInfo = { 0 };
-	
-	VkDescriptorSetLayoutBinding bindings[] = { sceneDataLayout, sphereBufferLayout };
-	globalLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	globalLayoutInfo.bindingCount = 2;
-	globalLayoutInfo.pBindings = bindings;
-
-	if (vkCreateDescriptorSetLayout(vk_info->device, &globalLayoutInfo, NULL, &vk_info->global_descriptor_layout))
-		return err("Failed to create global descriptor set layout");
-
-	return SUCCESS;
-}
-
-int create_uniform_buffers(VkInfo* vk)
-{
-	VkDeviceSize bufferSize = sizeof(FrameData);
-	vk->uniformBuffers = malloc(vk->buffer_count * sizeof(VkBuffer));
-	vk->uniformBufferMemory = malloc(vk->buffer_count * sizeof(VkDeviceMemory));
-
-	for (int32_t i = 0; i < vk->buffer_count; i++) {
-		if (createBuffer(vk, 
-			bufferSize,
-			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			&vk->uniformBuffers[i],
-			&vk->uniformBufferMemory[i]) != SUCCESS)
-			return err("Failed to create buffer");
-	}
-
-	
-	createBuffer(vk, sizeof(SceneData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-		&vk->sceneDataBuffer,
-		&vk->sceneDataMemory);
-
-	createBuffer(vk, 50000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-		&vk->sphereDataBuffer,
-		&vk->sphereDataBufferMemory);
-
-	uint32_t numSpheres = 1;
+	uint32_t numSpheres = 3;
 
 	Sphere s1 = {
 		.x = 0,
@@ -176,7 +105,7 @@ int create_uniform_buffers(VkInfo* vk)
 	.z = 0,
 	.r = 0.5f
 	};
-	Sphere spheres[] = { s1 };
+	Sphere spheres[] = { s1, s2, s3 };
 	SphereData sphereData = {
 		.spheres = spheres
 	};
@@ -186,18 +115,18 @@ int create_uniform_buffers(VkInfo* vk)
 	};
 
 	void* data1;
-	vkMapMemory(vk->device, vk->sceneDataMemory, 0, sizeof(SceneData), 0, &data1);
+	vkMapMemory(vk->device, vk->global_buffers.buffer_container[0].buffers[0].vk_buffer_memory, 0, sizeof(SceneData), 0, &data1);
 	memcpy(data1, &sceneTest, sizeof(SceneData));
-	vkUnmapMemory(vk->device, vk->sceneDataMemory);
+	vkUnmapMemory(vk->device, vk->global_buffers.buffer_container[0].buffers[0].vk_buffer_memory);
 
 	void* data2;
-	vkMapMemory(vk->device, vk->sphereDataBufferMemory, 0, sizeof(Sphere) * numSpheres, 0, &data2);
+	vkMapMemory(vk->device, vk->global_buffers.buffer_container[0].buffers[1].vk_buffer_memory, 0, sizeof(Sphere) * numSpheres, 0, &data2);
 	memcpy(data2, spheres, sizeof(Sphere) * numSpheres);
-	vkUnmapMemory(vk->device, vk->sphereDataBufferMemory);
+	vkUnmapMemory(vk->device, vk->global_buffers.buffer_container[0].buffers[1].vk_buffer_memory);
 	
 	return SUCCESS;
 }
-int update_frame_buffers(VkInfo* vk, uint32_t image_index) {
+int set_frame_buffers(VkInfo* vk, uint32_t image_index) {
 	FrameData frame = {0};
 	Camera c = {
 	.pos = {0,0,0},
@@ -228,119 +157,44 @@ int update_frame_buffers(VkInfo* vk, uint32_t image_index) {
 	frame.fov = (float) M_PI  / 180.f * 45.f;
 
 	void* data;
-	if (vkMapMemory(vk->device, vk->uniformBufferMemory[image_index], 0, sizeof(FrameData), 0, &data))
+	if (vkMapMemory(vk->device, vk->per_frame_buffers.buffer_container[image_index].buffers[0].vk_buffer_memory, 0, sizeof(FrameData), 0, &data))
 		return err("Failed to map memory");
 	memcpy(data, &frame, sizeof(FrameData));
-	vkUnmapMemory(vk->device, vk->uniformBufferMemory[image_index]);
+	vkUnmapMemory(vk->device, vk->per_frame_buffers.buffer_container[image_index].buffers[0].vk_buffer_memory);
 	return SUCCESS;
 }
 
-int createDescriptorPool(VkInfo* vk)
+int create_descriptor_containers(VkInfo* info)
 {
-	VkDescriptorPoolSize uniCount = {0};
-	uniCount.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	uniCount.descriptorCount = 10;
+	if (info->global_buffers.completed == 1 && info->global_buffers.completed)
+		return SUCCESS;
+	
+	BufferInfo* globalInfos = malloc(sizeof(BufferInfo) * 2);
+	BufferInfo sceneInfo = create_buffer_info(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
+		sizeof(SceneData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	BufferInfo sphereInfo = create_buffer_info(1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
+		50000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	globalInfos[0] = sceneInfo;
+	globalInfos[1] = sphereInfo;
+	info->global_buffers = create_descriptor_set(info, 0, globalInfos, 2, 1);
 
-	VkDescriptorPoolSize uniDynCount = {0};
-	uniDynCount.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-	uniDynCount.descriptorCount = 10;
-
-	VkDescriptorPoolSize poolSizes[] = { uniCount, uniDynCount };
-
-	VkDescriptorPoolCreateInfo poolInfo = {0};
-	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	poolInfo.poolSizeCount = 2;
-	poolInfo.pPoolSizes = poolSizes;
-	poolInfo.maxSets = 10;
-
-	if (vkCreateDescriptorPool(vk->device, &poolInfo, NULL, &vk->descriptor_pool) != VK_SUCCESS) {
-		return FAILURE;
-	}
-
+	BufferInfo* frameInfos = malloc(sizeof(BufferInfo) * 1);
+	BufferInfo frameInfo = create_buffer_info(2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
+		sizeof(FrameData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	frameInfos[0] = frameInfo;
+	info->per_frame_buffers = create_descriptor_set(info, 1, frameInfos, 1, info->swapchain.image_count);
 	return SUCCESS;
 }
 
-int createDescriptorSets(VkInfo* vk)
+int init_descriptor_containers(VkInfo* info)
 {
-
-	// global
-	VkDescriptorSetAllocateInfo globalallocInfo = { 0 };
-	globalallocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	globalallocInfo.descriptorPool = vk->descriptor_pool;
-	globalallocInfo.descriptorSetCount = 1;
-	globalallocInfo.pSetLayouts = &vk->global_descriptor_layout;
-
-	if (vkAllocateDescriptorSets(vk->device, &globalallocInfo, &vk->global_descriptor_set) != VK_SUCCESS) {
-		return err("failed to allocate descriptor sets");
-	}
-	VkDescriptorBufferInfo sceneDataInfo = { 0 };
-	sceneDataInfo.buffer = vk->sceneDataBuffer;
-	sceneDataInfo.offset = 0;
-	sceneDataInfo.range = sizeof(SceneData);
-
-	VkWriteDescriptorSet sceneDataDescriptor = { 0 };
-	sceneDataDescriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	sceneDataDescriptor.dstSet = vk->global_descriptor_set;
-	sceneDataDescriptor.dstBinding = 0;
-	sceneDataDescriptor.dstArrayElement = 0;
-	sceneDataDescriptor.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	sceneDataDescriptor.descriptorCount = 1;
-	sceneDataDescriptor.pBufferInfo = &sceneDataInfo;
-
-	vkUpdateDescriptorSets(vk->device, 1, &sceneDataDescriptor, 0, NULL);
-
-	VkDescriptorBufferInfo sphereDataInfo = { 0 };
-	sphereDataInfo.buffer = vk->sphereDataBuffer;
-	sphereDataInfo.offset = 0;
-	sphereDataInfo.range = 50000;
-
-	VkWriteDescriptorSet sphereDataDescriptor = { 0 };
-	sphereDataDescriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	sphereDataDescriptor.dstSet = vk->global_descriptor_set;
-	sphereDataDescriptor.dstBinding = 1;
-	sphereDataDescriptor.dstArrayElement = 0;
-	sphereDataDescriptor.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-	sphereDataDescriptor.descriptorCount = 1;
-	sphereDataDescriptor.pBufferInfo = &sphereDataInfo;
-
-	vkUpdateDescriptorSets(vk->device, 1, &sphereDataDescriptor, 0, NULL);
-
-	// per frame
-	VkDescriptorSetLayout* layouts = malloc(vk->buffer_count * sizeof(VkDescriptorSetLayout));
-	for(uint32_t i = 0;i<vk->buffer_count;i++)
-	{
-		VkDescriptorSetLayout copy = { 0 };
-		memcpy(&copy, &vk->frame_descriptor_layout, sizeof(VkDescriptorSetLayout));
-		layouts[i] = copy;
-	}
-	VkDescriptorSetAllocateInfo frameallocInfo = {0};
-	frameallocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	frameallocInfo.descriptorPool = vk->descriptor_pool;
-	frameallocInfo.descriptorSetCount = vk->buffer_count;
-	frameallocInfo.pSetLayouts = layouts;
-
-	vk->frame_descriptor_sets = malloc(sizeof(VkDescriptorSet) * vk->buffer_count);
-
-	if (vkAllocateDescriptorSets(vk->device, &frameallocInfo, vk->frame_descriptor_sets) != VK_SUCCESS) {
-		return err("failed to allocate descriptor sets");
-	}
-	for (size_t i = 0; i < vk->buffer_count; i++) {
-		VkDescriptorBufferInfo bufferInfo = {0};
-		bufferInfo.buffer = vk->uniformBuffers[i];
-		bufferInfo.offset = 0;
-		bufferInfo.range = sizeof(FrameData);
-
-		VkWriteDescriptorSet descriptorWrite = {0};
-		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrite.dstSet = vk->frame_descriptor_sets[i];
-		descriptorWrite.dstBinding = 2;
-		descriptorWrite.dstArrayElement = 0;
-		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorWrite.descriptorCount = 1;
-		descriptorWrite.pBufferInfo = &bufferInfo;
-
-		vkUpdateDescriptorSets(vk->device, 1, &descriptorWrite, 0, NULL);
-	}
-	free(layouts);
+	if (info->global_buffers.completed == 1 && info->global_buffers.completed)
+		return SUCCESS;
+	create_buffers(info, &info->global_buffers);
+	create_buffers(info, &info->per_frame_buffers);
+	set_global_buffers(info);
+	create_descriptor_pool(info);
+	create_descriptor_sets(info, &info->global_buffers);
+	create_descriptor_sets(info, &info->per_frame_buffers);
 	return SUCCESS;
 }

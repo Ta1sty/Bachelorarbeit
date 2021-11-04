@@ -6,6 +6,45 @@
 extern int WINDOW_WIDTH;
 extern int WINDOW_HEIGHT;
 
+
+typedef struct buffer
+{
+	VkBufferUsageFlags usage;
+	VkMemoryPropertyFlags properties;
+	VkBuffer vk_buffer;
+	VkDeviceMemory vk_buffer_memory;
+	size_t buffer_size;
+} Buffer;
+
+typedef struct bufferContainer
+{
+	uint32_t buffer_count;
+	Buffer* buffers;
+} BufferContainer;
+
+typedef struct bufferInfo
+{
+	uint32_t binding;
+	VkDescriptorType type;
+	VkShaderStageFlags stage;
+	size_t buffer_size;
+	VkBufferUsageFlags buffer_usage;
+	VkMemoryPropertyFlags memory_property;
+} BufferInfo;
+
+typedef struct descriptorSet
+{
+	VkDescriptorSetLayout set_layout;
+	uint32_t sets_count; // number of sets 
+	VkDescriptorSet* descriptor_sets; // || = sets_count
+	uint32_t buffer_count; // number of buffers per set
+	BufferInfo* buffer_infos; // buffer_count
+	BufferContainer* buffer_container; // || = sets_count
+	uint32_t set_number;
+	uint32_t completed; // indicates that this container is fully operational
+} DescriptorSetContainer;
+
+
 typedef struct shader
 {
 	VkShaderModule module;
@@ -62,20 +101,12 @@ typedef struct vkInfo {
 	Shader vertex_shader;
 	Shader fragment_shader;
 
+	uint32_t numSets; // 2
+	DescriptorSetContainer global_buffers; // set 0
+	DescriptorSetContainer per_frame_buffers; // set 1
+
 	VkBuffer vertexBuffer;
 	VkDeviceMemory vertexBufferMemory;
-
-	VkDescriptorSetLayout frame_descriptor_layout;
-	VkDescriptorSet* frame_descriptor_sets;
-	VkBuffer* uniformBuffers;
-	VkDeviceMemory* uniformBufferMemory;
-
-	VkDescriptorSetLayout global_descriptor_layout;
-	VkDescriptorSet global_descriptor_set;
-	VkBuffer sceneDataBuffer;
-	VkDeviceMemory sceneDataMemory;
-	VkBuffer sphereDataBuffer;
-	VkDeviceMemory sphereDataBufferMemory;
 
 	VkDescriptorPool descriptor_pool;
 

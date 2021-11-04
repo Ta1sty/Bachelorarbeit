@@ -38,13 +38,11 @@ int create_or_resize_swapchain(VkInfo* vk, GLFWwindow** window, uint32_t width, 
 	if (create_swapchain(vk, window, width, height) &&
 		create_image_views(vk) &&
 		create_render_pass(vk) &&
-		create_descriptor_layouts(vk) &&
+		create_descriptor_containers(vk) && // out
 		create_pipeline(vk) &&
 		create_frame_buffers(vk) &&
-		create_vertex_buffer(vk) &&
-		create_uniform_buffers(vk) &&
-		createDescriptorPool(vk) &&
-		createDescriptorSets(vk) &&
+		create_vertex_buffer(vk) && // out
+		init_descriptor_containers(vk) && // out
 		create_command_buffers(vk)
 		)
 		return SUCCESS;
@@ -61,7 +59,7 @@ int drawFrame(VkInfo* vk_info)
 
 	VkSemaphore signalSemaphores[] = { vk_info->renderFinishedSemaphore };
 
-	update_frame_buffers(vk_info, imageIndex);
+	set_frame_buffers(vk_info, imageIndex);
 
 	VkSubmitInfo submitInfo = {
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
@@ -142,22 +140,6 @@ void destroy_swapchain(VkInfo* vk)
 
 	// everything in VK_info thats associated with the swapchain
 
-	if(vk->uniformBuffers != NULL)
-	{
-		for (size_t i = 0; i < vk->buffer_count; i++) {
-			vkDestroyBuffer(vk->device, vk->uniformBuffers[i], NULL);
-		}
-		free(vk->uniformBuffers);
-		vk->uniformBuffers = NULL;
-	}
-	if (vk->uniformBufferMemory != NULL)
-	{
-		for (size_t i = 0; i < vk->buffer_count; i++) {
-			vkFreeMemory(vk->device, vk->uniformBufferMemory[i], NULL);
-		}
-		free(vk->uniformBufferMemory);
-		vk->uniformBufferMemory = NULL;
-	}
 
 	if (vk->vertexBuffer != NULL)
 	{
@@ -171,19 +153,6 @@ void destroy_swapchain(VkInfo* vk)
 		vk->vertexBufferMemory = NULL;
 	}
 
-	if (vk->frame_descriptor_layout)
-		vkDestroyDescriptorSetLayout(vk->device, vk->frame_descriptor_layout, NULL);
-	vk->frame_descriptor_layout = NULL;
-
-	if (vk->descriptor_pool)
-	{
-		vkDestroyDescriptorPool(vk->device, vk->descriptor_pool, NULL);
-		vk->descriptor_pool = NULL;
-		free(vk->frame_descriptor_sets);
-
-		//vkFreeDescriptorSets(vk->device, vk->descriptorPool, vk->buffer_count, vk->descriptor_sets);
-		//vk->descriptor_sets = NULL;
-	}
 
 	if (vk->pipeline)
 		vkDestroyPipeline(vk->device, vk->pipeline, NULL);

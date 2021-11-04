@@ -5,6 +5,14 @@
       <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="GLTFCompiler|Win32">
+      <Configuration>GLTFCompiler</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="GLTFCompiler|x64">
+      <Configuration>GLTFCompiler</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Release|Win32">
       <Configuration>Release</Configuration>
       <Platform>Win32</Platform>
@@ -51,6 +59,12 @@
     <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='GLTFCompiler|Win32'">
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='GLTFCompiler|x64'">
+    <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -153,6 +167,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Descriptors.c" />
     <ClCompile Include="Globals.c" />
     <ClCompile Include="Raster.c" />
     <ClCompile Include="Shader.c" />
@@ -164,6 +179,7 @@
     <ClCompile Include="Window.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Descriptors.h" />
     <ClInclude Include="Globals.h" />
     <ClInclude Include="Raster.h" />
     <ClInclude Include="Scene.h" />

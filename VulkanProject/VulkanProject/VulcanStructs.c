@@ -459,7 +459,7 @@ int create_pipeline(VkInfo* info)
 	dynamicState.dynamicStateCount = 2;
 	dynamicState.pDynamicStates = dynamicStates;
 	*/
-	VkDescriptorSetLayout layouts[] = { info->global_descriptor_layout, info->frame_descriptor_layout};
+	VkDescriptorSetLayout layouts[] = { info->global_buffers.set_layout, info->per_frame_buffers.set_layout };
 
 	VkPipelineLayoutCreateInfo pipeline_layout_info = {0};
 	pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -610,8 +610,10 @@ int create_command_buffers(VkInfo* info)
 			VkDeviceSize offsets[] = { 0 };
 			vkCmdBindVertexBuffers(info->command_buffers[i], 0, 1, vertexBuffers, offsets);
 		}
-		vkCmdBindDescriptorSets(info->command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, info->pipeline_layout, 0, 1, &info->global_descriptor_set, 0, NULL);
-		vkCmdBindDescriptorSets(info->command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, info->pipeline_layout, 1, 1, &info->frame_descriptor_sets[i], 0, NULL);
+		vkCmdBindDescriptorSets(info->command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, info->pipeline_layout,
+			0, 1, &info->global_buffers.descriptor_sets[0], 0, NULL);
+		vkCmdBindDescriptorSets(info->command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, info->pipeline_layout,
+			1, 1, &info->per_frame_buffers.descriptor_sets[i], 0, NULL);
 		vkCmdDraw(info->command_buffers[i], 3, 1, 0, 0);
 		vkCmdEndRenderPass(info->command_buffers[i]);
 
