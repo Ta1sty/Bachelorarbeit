@@ -1,4 +1,6 @@
 ﻿#pragma once
+#include <stdint.h>
+
 // this is subject to change
 typedef struct viewData {
 	float pos[3];
@@ -15,6 +17,17 @@ typedef struct triangle
 	float v3[3];
 	float pad3[7];
 }Triangle;
+
+typedef struct sceneNode
+{
+	int32_t IndexBufferIndex; // if this nodes directly references geometry this is >-1					4
+	int32_t NumTriangles;	// the amount of triangles in the mesh,ie the range from					8
+							//[IndexBufferIndex, IndexBufferIndex + 3 * NumTriangles)					
+	int32_t NumChildren;	// the number of children this node references								12
+	int32_t childrenIndex; // points to an index array that in turn refers back to the sceneNode index	16
+	int32_t Index;			// the own index															20
+	float transform[4][4];
+} SceneNode;
 
 typedef struct sphere
 {

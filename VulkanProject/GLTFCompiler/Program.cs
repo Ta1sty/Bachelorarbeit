@@ -23,6 +23,7 @@ namespace GLTFCompiler
             s.DecodeBuffers();
             s.ParseMeshes();
             s.BuildSceneGraph();
+            s.WriteBytes();
             int a = 1;
             a = a + 1;
         }
