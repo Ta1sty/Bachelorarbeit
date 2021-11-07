@@ -169,7 +169,9 @@
   <ItemGroup>
     <ClCompile Include="Descriptors.c" />
     <ClCompile Include="Globals.c" />
+    <ClCompile Include="Presentation.c" />
     <ClCompile Include="Raster.c" />
+    <ClCompile Include="Scene.c" />
     <ClCompile Include="Shader.c" />
     <ClCompile Include="Util.c" />
     <ClCompile Include="VulcanStructs.c" />
@@ -181,6 +183,7 @@
   <ItemGroup>
     <ClInclude Include="Descriptors.h" />
     <ClInclude Include="Globals.h" />
+    <ClInclude Include="Presentation.h" />
     <ClInclude Include="Raster.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="Shader.h" />

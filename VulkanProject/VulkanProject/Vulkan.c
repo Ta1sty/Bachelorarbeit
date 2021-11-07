@@ -48,48 +48,6 @@ int create_or_resize_swapchain(VkInfo* vk, GLFWwindow** window, uint32_t width, 
 		return SUCCESS;
 	return FAILURE;
 }
-int drawFrame(VkInfo* vk_info)
-{
-	Swapchain* swapchain = &vk_info->swapchain;
-	uint32_t imageIndex;
-	vkAcquireNextImageKHR(vk_info->device, swapchain->vk_swapchain, 
-		UINT64_MAX, vk_info->imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
-	const VkSemaphore waitSemaphores[] = { vk_info->imageAvailableSemaphore };
-	const VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-
-	VkSemaphore signalSemaphores[] = { vk_info->renderFinishedSemaphore };
-
-	set_frame_buffers(vk_info, imageIndex);
-
-	VkSubmitInfo submitInfo = {
-	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-	.waitSemaphoreCount = 1,
-	.pWaitSemaphores = waitSemaphores,
-	.pWaitDstStageMask = waitStages,
-	.commandBufferCount = 1,
-	.pCommandBuffers = &vk_info->command_buffers[imageIndex],
-	.signalSemaphoreCount = 1,
-	.pSignalSemaphores = signalSemaphores,
-	};
-
-	if (vkQueueSubmit(vk_info->graphics_queue, 1, &submitInfo, VK_NULL_HANDLE)) return err("failed to submit draw command buffer!");
-	VkSwapchainKHR swapChains[] = { swapchain->vk_swapchain };
-
-	VkPresentInfoKHR presentInfo = {
-	.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-	.waitSemaphoreCount = 1,
-	.pWaitSemaphores = signalSemaphores,
-	.swapchainCount = 1,
-	.pSwapchains = swapChains,
-	.pImageIndices = &imageIndex,
-	.pResults = NULL // Optional
-	};
-	vkQueuePresentKHR(vk_info->present_queue, &presentInfo);
-
-	vkQueueWaitIdle(vk_info->present_queue);
-
-	return SUCCESS;
-}
 void destroy_vulkan(VkInfo* vk)
 {
 	if (vk->imageAvailableSemaphore) vkDestroySemaphore(vk->device, vk->imageAvailableSemaphore, NULL);

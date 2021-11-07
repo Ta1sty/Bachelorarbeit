@@ -3,6 +3,8 @@
 #include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
 
+#include "Scene.h"
+
 extern int WINDOW_WIDTH;
 extern int WINDOW_HEIGHT;
 
@@ -120,6 +122,7 @@ typedef struct vkInfo {
 typedef struct app {
 	VkInfo vk_info;
 	GLFWwindow* window;
+	Scene scene;
 } App;
 
 

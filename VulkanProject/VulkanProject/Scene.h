@@ -61,3 +61,10 @@ typedef struct frameData {
 	uint32_t height;
 	float fov;
 } FrameData;
+
+typedef struct scene
+{
+	Camera camera;
+} Scene;
+
+void init_scene(Scene* app);
