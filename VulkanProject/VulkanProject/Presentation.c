@@ -9,44 +9,27 @@
 
 int set_global_buffers(VkInfo* vk, Scene* scene)
 {
-	uint32_t numSpheres = 3;
 
-	Sphere s1 = {
-		.x = 0,
-		.y = 0,
-		.z = 0.5f,
-		.r = 0.5f
-	};
-	Sphere s2 = {
-		.x = 1,
-		.y = 0,
-		.z = 1,
-		.r = 0.5f
-	};
-	Sphere s3 = {
-	.x = 0,
-	.y = -1,
-	.z = 0,
-	.r = 0.5f
-	};
-	Sphere spheres[] = { s1, s2, s3 };
-	SphereData sphereData = {
-		.spheres = spheres
-	};
-	SceneData sceneTest = {
-		.sphere_count = numSpheres,
-		.sphere_data = sphereData
-	};
-
+	// Scene Data
 	void* data1;
-	vkMapMemory(vk->device, vk->global_buffers.buffer_container[0].buffers[0].vk_buffer_memory, 0, sizeof(SceneData), 0, &data1);
-	memcpy(data1, &sceneTest, sizeof(SceneData));
+	vkMapMemory(vk->device, vk->global_buffers.buffer_container[0].buffers[0].vk_buffer_memory,
+		0, sizeof(SceneData), 0, &data1);
+	memcpy(data1, &scene, sizeof(SceneData));
 	vkUnmapMemory(vk->device, vk->global_buffers.buffer_container[0].buffers[0].vk_buffer_memory);
 
+	// Vertex buffer
 	void* data2;
-	vkMapMemory(vk->device, vk->global_buffers.buffer_container[0].buffers[1].vk_buffer_memory, 0, sizeof(Sphere) * numSpheres, 0, &data2);
-	memcpy(data2, spheres, sizeof(Sphere) * numSpheres);
+	vkMapMemory(vk->device, vk->global_buffers.buffer_container[0].buffers[1].vk_buffer_memory, 
+		0, sizeof(Vertex) * scene->scene_data.numVertices, 0, &data2);
+	memcpy(data2, scene->vertices, sizeof(Vertex) * scene->scene_data.numVertices);
 	vkUnmapMemory(vk->device, vk->global_buffers.buffer_container[0].buffers[1].vk_buffer_memory);
+
+	// IndexBuffer
+	void* data3;
+	vkMapMemory(vk->device, vk->global_buffers.buffer_container[0].buffers[2].vk_buffer_memory,
+		0, sizeof(uint32_t) * scene->scene_data.numTriangles * 3, 0, &data3);
+	memcpy(data3, scene->indices, sizeof(uint32_t) * scene->scene_data.numTriangles * 3);
+	vkUnmapMemory(vk->device, vk->global_buffers.buffer_container[0].buffers[2].vk_buffer_memory);
 
 	return SUCCESS;
 }

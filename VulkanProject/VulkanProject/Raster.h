@@ -3,12 +3,12 @@
 
 #include "Globals.h"
 
-typedef struct vertex {
+typedef struct rasterVertex {
     float pos[2];
     float color[3];
-} Vertex;
+} RasterVertex;
 extern uint32_t vertex_count;
-Vertex* vertices;
+RasterVertex* vertices;
 void initVertexArray(void);
 void freeVertexArray(void);
 VkVertexInputBindingDescription getBindingDescription(void);

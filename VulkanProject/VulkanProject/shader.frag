@@ -1,22 +1,22 @@
 #version 450
-layout(binding = 0, set = 0) uniform sceneData
-{
-	int numSpheres;
-} SceneData;
 
-struct Sphere
-{
-float x;
-float y;
-float z;
-float r;
+struct Vertex{
+	vec3 position; // 0 - 16
+	float tex_x;   // 12 - 4
+	vec3 normal;   // 16 - 16
+	float tex_y;   // 28 - 4
 };
+layout(binding = 0, set = 0) buffer SceneData{
+	uint numVertices;
+	uint numTriangles;
+	uint numSceneNodes;
+	uint numNodeIndices;
+};
+layout(binding = 1, set = 0) buffer vertexBuffer { Vertex[] vertices; };
+layout(binding = 2, set = 0) buffer indexBuffer { int[] indices; };
 
-layout(binding = 1, set = 0) buffer sphereBuffer {
-	Sphere[] spheres;
-} SphereBuffer;
 
-layout(binding = 2, set = 1) uniform FrameData {
+layout(binding = 3, set = 1) uniform FrameData {
 	mat4 view_to_world;
 	uint width;
 	uint height;
@@ -29,37 +29,11 @@ layout(location = 0) out vec4 outColor;
 
 const float t_min = 1.0e-3f;
 
-bool sphereIntersect(vec3 rayOrigin, vec3 rayDir, int sphereIndex, out float t){
-	Sphere s = SphereBuffer.spheres[sphereIndex];
-	vec3 v = rayOrigin - vec3(s.x,s.y,s.z);
-	float a = rayDir.x * rayDir.x + rayDir.y * rayDir.y + rayDir.z * rayDir.z;
-	float b = 2 * rayDir.x * v.x + 2 * rayDir.y * v.y + 2 * rayDir.z * v.z;
-	float c = v.x * v.x + v.y * v.y + v.z * v.z - s.r * s.r;
-	float disciminant = b * b - 4 * a * c;
-	if (disciminant < 0) return false;
-
-	if (disciminant == 0) {
-		t = -b / (2 * a);
-		if (t < t_min) return false;
-		return true;
-	}
-	disciminant = sqrt(disciminant);
-	float t1 = (-b - disciminant)/(2*a);
-	float t2 = (-b + disciminant)/(2*a);
-	//this only works because a is strictly positive
-	if (t2 < t_min) return false;
-	if (t1 < t_min) {
-		t = t2;
-		return true;
-	}
-	t = t1;
-	return true;
-}
 bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, out float t, out int sphereIndex) {
 	float t_max_in = t_max;
-	for(int i = 0; i < SceneData.numSpheres; i++){
+	for(int i = 0; i < 1; i++){
 		t = t_max;
-		if(sphereIntersect(rayOrigin, rayDirection, i, t)) {
+		if(true) {
 			if(t<t_max) {
 				t_max = t;
 				sphereIndex = i;
@@ -71,7 +45,7 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, out float t,
 	return true;
 }
 
-void shadeSphere(vec3 P, vec3 N, vec3 V) {
+void shadeFragment(vec3 P, vec3 N, vec3 V) {
 	vec3 k_d = vec3(0.8,0.2,0.5);
 	vec3 k_s = vec3(0.2,0.8,0.5);
 	float n = 8;
@@ -127,9 +101,8 @@ void main() {
 		if(sphereIndex == 1)
 			outColor = vec4(0,1,0,1);
 		vec3 P = rayOrigin + t * rayDirection;
-		Sphere s = SphereBuffer.spheres[sphereIndex];
-		vec3 N = normalize(P - vec3(s.x, s.y, s.z));
-		shadeSphere(P, N, rayDirection);
+		vec3 N = normalize(P - vec3(1, 2, 3));
+		shadeFragment(P, N, rayDirection);
 	} else {
 		outColor = vec4(3, 215, 252, 255) /255;
 		//outColor = vec4(abs(x), abs(y) ,1, 1);

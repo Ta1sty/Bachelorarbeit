@@ -83,22 +83,27 @@ int get_fragment_shader(VkInfo* vk_info, Shader* shader)
 	return SUCCESS;
 }
 
-int create_descriptor_containers(VkInfo* info)
+int create_descriptor_containers(VkInfo* info, SceneData* data)
 {
 	if (info->global_buffers.completed == 1 && info->global_buffers.completed)
 		return SUCCESS;
-	
-	BufferInfo* globalInfos = malloc(sizeof(BufferInfo) * 2);
+
+	const uint32_t global_buffer_count = 3;
+
+	BufferInfo* globalInfos = malloc(sizeof(BufferInfo) * global_buffer_count);
 	BufferInfo sceneInfo = create_buffer_info(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
 		sizeof(SceneData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-	BufferInfo sphereInfo = create_buffer_info(1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
-		50000, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	BufferInfo vertexBuffer = create_buffer_info(1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
+		sizeof(Vertex) * data->numVertices, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	BufferInfo indexBuffer = create_buffer_info(2, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
+		sizeof(uint32_t) * data->numTriangles * 3, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 	globalInfos[0] = sceneInfo;
-	globalInfos[1] = sphereInfo;
-	info->global_buffers = create_descriptor_set(info, 0, globalInfos, 2, 1);
+	globalInfos[1] = vertexBuffer;
+	globalInfos[2] = indexBuffer;
+	info->global_buffers = create_descriptor_set(info, 0, globalInfos, global_buffer_count, 1);
 
 	BufferInfo* frameInfos = malloc(sizeof(BufferInfo) * 1);
-	BufferInfo frameInfo = create_buffer_info(2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
+	BufferInfo frameInfo = create_buffer_info(3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
 		sizeof(FrameData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 	frameInfos[0] = frameInfo;
 	info->per_frame_buffers = create_descriptor_set(info, 1, frameInfos, 1, info->swapchain.image_count);

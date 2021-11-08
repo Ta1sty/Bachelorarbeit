@@ -189,23 +189,27 @@ namespace GLTFCompiler.Scene
 
         public void WriteBytes()
         {
-            if(File.Exists("dump.bin"))
-                File.Delete("dump.bin");
-            using var str = File.Create("dump.bin");
+            var path = @"C:\Users\marku\Desktop\BA\VulkanProject\VulkanProject\VulkanProject\dump.bin";
+            if (File.Exists(path))
+                File.Delete(path);
+            using var str = File.Create(path);
             // first write vertices
             {
                 var vertices = new byte[32 * VertexBuffer.Count +4]; // first 4 bytes is uint32 numVertices
                 var pos = -4;
-                Reverse(BitConverter.GetBytes(VertexBuffer.Count)).CopyTo(vertices.AsSpan(pos += 4));
+                Reverse(BitConverter.GetBytes((uint) VertexBuffer.Count)).CopyTo(vertices.AsSpan(pos += 4));
                 foreach (var vertex in VertexBuffer)
                 {
                     Reverse(BitConverter.GetBytes(vertex.Position[0])).CopyTo(vertices.AsSpan(pos += 4));
                     Reverse(BitConverter.GetBytes(vertex.Position[1])).CopyTo(vertices.AsSpan(pos += 4));
                     Reverse(BitConverter.GetBytes(vertex.Position[2])).CopyTo(vertices.AsSpan(pos += 4));
+
+                    Reverse(BitConverter.GetBytes(vertex.TexCoords[0])).CopyTo(vertices.AsSpan(pos += 4));
+
                     Reverse(BitConverter.GetBytes(vertex.Normal[0])).CopyTo(vertices.AsSpan(pos += 4));
                     Reverse(BitConverter.GetBytes(vertex.Normal[1])).CopyTo(vertices.AsSpan(pos += 4));
                     Reverse(BitConverter.GetBytes(vertex.Normal[2])).CopyTo(vertices.AsSpan(pos += 4));
-                    Reverse(BitConverter.GetBytes(vertex.TexCoords[0])).CopyTo(vertices.AsSpan(pos += 4));
+
                     Reverse(BitConverter.GetBytes(vertex.TexCoords[1])).CopyTo(vertices.AsSpan(pos += 4));
                 }
                 str.Write(vertices);
@@ -227,16 +231,9 @@ namespace GLTFCompiler.Scene
                 var size = 20 + 64; // data + transform
                 var nodes = new byte[4 + Nodes.Count * size];
                 var pos = -4;
-                Reverse(BitConverter.GetBytes((uint)IndexBuffer.Count)).CopyTo(nodes.AsSpan(pos += 4));
+                Reverse(BitConverter.GetBytes((uint)Nodes.Count)).CopyTo(nodes.AsSpan(pos += 4));
                 foreach (var node in Nodes)
                 {
-                    Reverse(BitConverter.GetBytes(node.IndexBufferIndex)).CopyTo(nodes.AsSpan(pos += 4));
-                    Reverse(BitConverter.GetBytes(node.NumTriangles)).CopyTo(nodes.AsSpan(pos += 4));
-                    Reverse(BitConverter.GetBytes(node.NumChildren)).CopyTo(nodes.AsSpan(pos += 4));
-                    Reverse(BitConverter.GetBytes(node.NumChildren > 0 ? indices.Count : -1)).CopyTo(nodes.AsSpan(pos += 4)); // children index
-                    Reverse(BitConverter.GetBytes(node.Index)).CopyTo(nodes.AsSpan(pos += 4));
-                    indices.AddRange(node.Children.Select(x=>x.Index));
-
                     Reverse(BitConverter.GetBytes(node.Transform.M11)).CopyTo(nodes.AsSpan(pos += 4));
                     Reverse(BitConverter.GetBytes(node.Transform.M12)).CopyTo(nodes.AsSpan(pos += 4));
                     Reverse(BitConverter.GetBytes(node.Transform.M13)).CopyTo(nodes.AsSpan(pos += 4));
@@ -256,6 +253,13 @@ namespace GLTFCompiler.Scene
                     Reverse(BitConverter.GetBytes(node.Transform.M42)).CopyTo(nodes.AsSpan(pos += 4));
                     Reverse(BitConverter.GetBytes(node.Transform.M43)).CopyTo(nodes.AsSpan(pos += 4));
                     Reverse(BitConverter.GetBytes(node.Transform.M44)).CopyTo(nodes.AsSpan(pos += 4));
+
+                    Reverse(BitConverter.GetBytes(node.IndexBufferIndex)).CopyTo(nodes.AsSpan(pos += 4));
+                    Reverse(BitConverter.GetBytes(node.NumTriangles)).CopyTo(nodes.AsSpan(pos += 4));
+                    Reverse(BitConverter.GetBytes(node.NumChildren)).CopyTo(nodes.AsSpan(pos += 4));
+                    Reverse(BitConverter.GetBytes(node.NumChildren > 0 ? indices.Count : -1)).CopyTo(nodes.AsSpan(pos += 4)); // children index
+                    Reverse(BitConverter.GetBytes(node.Index)).CopyTo(nodes.AsSpan(pos += 4));
+                    indices.AddRange(node.Children.Select(x => x.Index));
                 }
                 str.Write(nodes);
             }
@@ -274,6 +278,7 @@ namespace GLTFCompiler.Scene
 
         public byte[] Reverse(byte[] arr)
         {
+            return arr;
             byte v0 = arr[0];
             byte v1 = arr[1];
             arr[0] = arr[3];

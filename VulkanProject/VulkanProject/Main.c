@@ -153,9 +153,9 @@ int main()
     App* appPtr = &app;
     globalApplication = appPtr;
     app.vk_info.rasterize = VK_TRUE;
-    if(init_window(&app.window) && init_vulkan(&app.vk_info, &app.window))
+    init_scene(&app.scene);
+    if(init_window(&app.window) && init_vulkan(&app.vk_info, &app.window, &app.scene.scene_data))
     {
-        init_scene(&app.scene);
         glfwSetFramebufferSizeCallback(app.window, resize_callback);
         glfwSetCursorPosCallback(app.window, mouse__move_callback);
         glfwSetMouseButtonCallback(app.window, mouse_button_callback);
@@ -174,7 +174,7 @@ int main()
 
             if (resizeW >= 0 || resizeH >= 0)
             {
-                create_or_resize_swapchain(&app.vk_info, &app.window, resizeW, resizeH);
+                create_or_resize_swapchain(&app.vk_info, &app.window, resizeW, resizeH, &app.scene.scene_data);
                 WINDOW_WIDTH = resizeW;
                 WINDOW_HEIGHT = resizeH;
                 resizeW = -1;
