@@ -2,7 +2,7 @@
 {
     public class MeshData
     {
-        public int IndexStart;
-        public int Length;
+        public uint IndexStart;
+        public uint Length;
     }
 }

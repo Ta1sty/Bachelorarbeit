@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <stdint.h>
+#include <vulkan/vulkan_core.h>
 
 // this is subject to change
 typedef struct viewData {
@@ -23,11 +24,15 @@ typedef struct sceneNode
 
 typedef struct vertex
 {
-	float position[3];
-	float tex_x;
-	float normal[3];
-	float tex_y;
-} Vertex; // 32 bytes
+	float position[3];			//0 - 48%16 = 0
+	float pad1;					//12
+	float normal[3];			//16
+	float pad2;					//28
+	float tex_x;				//32
+	float tex_y;				//36
+	uint32_t samplerIndex;		//40
+	float pad3;					//44
+} Vertex; // 48 bytes
 
 typedef struct sceneData
 {
@@ -51,10 +56,32 @@ typedef struct frameData {
 	float fov;
 } FrameData;
 
+
+
+typedef struct texture
+{
+	uint32_t index;
+	uint32_t image_size;
+	uint32_t image_width;
+	uint32_t image_height;
+	char* pixel_data;
+	VkImage texture_image;
+	VkImageView texture_image_view;
+	VkDeviceMemory texture_image_memory;
+	VkSampler sampler;
+} Texture;
+
+typedef struct texture_data
+{
+	uint32_t num_textures;
+	Texture* textures;
+} TextureData;
+
 typedef struct scene
 {
 	Camera camera;
 	SceneData scene_data;
+	TextureData texture_data;
 	Vertex* vertices;
 	uint32_t* indices;
 	SceneNode* scene_nodes;

@@ -10,7 +10,7 @@
 #include "Raster.h"
 #include "Shader.h"
 #include "VulkanStructs.h"
-int init_vulkan(VkInfo* info, GLFWwindow** window, SceneData* scene_data)
+int init_vulkan(VkInfo* info, GLFWwindow** window, Scene* scene)
 {
 	if(info->rasterize == VK_TRUE)
 	{
@@ -24,11 +24,11 @@ int init_vulkan(VkInfo* info, GLFWwindow** window, SceneData* scene_data)
 #endif
 		create_device(info) &&
 		create_vertex_buffer(info) &&
-		create_or_resize_swapchain(info, window, WINDOW_WIDTH, WINDOW_HEIGHT, scene_data) &&
+		create_or_resize_swapchain(info, window, WINDOW_WIDTH, WINDOW_HEIGHT, scene) &&
 		create_semaphores(info)) return SUCCESS;
 	return FAILURE;
 }
-int create_or_resize_swapchain(VkInfo* vk, GLFWwindow** window, uint32_t width, uint32_t height, SceneData* scene_data)
+int create_or_resize_swapchain(VkInfo* vk, GLFWwindow** window, uint32_t width, uint32_t height, Scene* scene)
 {
 	vkDeviceWaitIdle(vk->device);
 
@@ -39,11 +39,11 @@ int create_or_resize_swapchain(VkInfo* vk, GLFWwindow** window, uint32_t width, 
 	if (create_swapchain(vk, window, width, height) &&
 		create_image_views(vk) &&
 		create_render_pass(vk) &&
-		create_descriptor_containers(vk, scene_data) && // out
+		create_descriptor_containers(vk, scene) && // out
 		create_pipeline(vk) &&
 		create_frame_buffers(vk) &&
 		create_vertex_buffer(vk) && // out
-		init_descriptor_containers(vk) && // out
+		init_descriptor_containers(vk, scene) && // out
 		create_command_buffers(vk)
 		)
 		return SUCCESS;

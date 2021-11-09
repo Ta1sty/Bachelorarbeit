@@ -2,9 +2,9 @@
 
 struct Vertex{
 	vec3 position; // 0 - 16
-	float tex_x;   // 12 - 4
 	vec3 normal;   // 16 - 16
-	float tex_y;   // 28 - 4
+	vec2 tex_coord;// 32 - 8
+	uint tex_index;   // 40 - 4 - the index of the sampler to use
 };
 layout(binding = 0, set = 0) buffer SceneData{
 	uint numVertices;
@@ -14,9 +14,10 @@ layout(binding = 0, set = 0) buffer SceneData{
 };
 layout(binding = 1, set = 0) buffer vertexBuffer { Vertex[] vertices; };
 layout(binding = 2, set = 0) buffer indexBuffer { int[] indices; };
+layout(binding = 3, set = 1) uniform sampler samp;
+layout(binding = 4, set = 1) uniform texture2D textures[];
 
-
-layout(binding = 3, set = 1) uniform FrameData {
+layout(binding = 5, set = 2) uniform FrameData {
 	mat4 view_to_world;
 	uint width;
 	uint height;

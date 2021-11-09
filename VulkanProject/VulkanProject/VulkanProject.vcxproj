@@ -173,6 +173,7 @@
     <ClCompile Include="Raster.c" />
     <ClCompile Include="Scene.c" />
     <ClCompile Include="Shader.c" />
+    <ClCompile Include="Textures.c" />
     <ClCompile Include="Util.c" />
     <ClCompile Include="VulcanStructs.c" />
     <ClCompile Include="Vulkan.c" />
@@ -187,6 +188,7 @@
     <ClInclude Include="Raster.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="Shader.h" />
+    <ClInclude Include="Textures.h" />
     <ClInclude Include="Util.h" />
     <ClInclude Include="Vulkan.h" />
     <ClInclude Include="VulkanStructs.h" />

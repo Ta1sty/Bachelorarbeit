@@ -35,7 +35,7 @@ namespace GLTFCompiler.Scene
         {
             foreach (var mesh in file.Meshes)
             {
-                int start = IndexBuffer.Count;
+                uint start = (uint) IndexBuffer.Count;
                 foreach (var arr in mesh.Primitives)
                 {
                     var positionAccessor = file.Accessors[arr.Attributes.Position];
@@ -54,6 +54,9 @@ namespace GLTFCompiler.Scene
                     usedBuffers.Add(posReader);
                     usedBuffers.Add(norReader);
                     usedBuffers.Add(texReader);
+
+                    uint vertexStart = (uint)VertexBuffer.Count;
+
                     for (var i = 0; i < numElements; i++)
                     {
                         var ver = new Vertex
@@ -66,6 +69,7 @@ namespace GLTFCompiler.Scene
                     }
                     var faceAccessor = file.Accessors[arr.Indices];
                     var faceReader = new BufferReader(this, faceAccessor);
+
                     usedBuffers.Add(faceReader);
                     if (arr.Indices == -1) // vertex array
                     {
@@ -74,9 +78,10 @@ namespace GLTFCompiler.Scene
                             uint v1 = faceReader.GetUshort();
                             uint v2 = faceReader.GetUshort();
                             uint v3 = faceReader.GetUshort();
-                            IndexBuffer.Add(v1);
-                            IndexBuffer.Add(v2);
-                            IndexBuffer.Add(v3);
+                            if (v1 == v2 || v2 == v3 || v3 == v1) continue; // just a line
+                            IndexBuffer.Add(v1 + vertexStart);
+                            IndexBuffer.Add(v2 + vertexStart);
+                            IndexBuffer.Add(v3 + vertexStart);
                         }
                     }
                     else // triangle strip
@@ -91,15 +96,16 @@ namespace GLTFCompiler.Scene
                             v3 = faceReader.GetUshort();
                             if (v1 != uint.MaxValue)
                             {
-                                IndexBuffer.Add(v1);
-                                IndexBuffer.Add(v2);
-                                IndexBuffer.Add(v3);
+                                if(v1 == v2 || v2 == v3 || v3 == v1) continue; // just a line
+                                IndexBuffer.Add(v1 + vertexStart);
+                                IndexBuffer.Add(v2 + vertexStart);
+                                IndexBuffer.Add(v3 + vertexStart);
                             }
                         }
                     }
                 }
 
-                var end = IndexBuffer.Count;
+                uint end = (uint) IndexBuffer.Count;
                 var length = end - start;
                 Meshes.Add(new MeshData
                 {
@@ -125,8 +131,8 @@ namespace GLTFCompiler.Scene
                     scNode.NumChildren = scNode.Children.Count;
 
 
-                    scNode.IndexBufferIndex = Meshes[node.Mesh].IndexStart;
-                    scNode.NumTriangles = Meshes[node.Mesh].Length / 3;
+                    scNode.IndexBufferIndex = (int) Meshes[node.Mesh].IndexStart;
+                    scNode.NumTriangles = (int) Meshes[node.Mesh].Length / 3;
                 }
 
                 var rotation = Matrix4x4.Identity;
@@ -187,15 +193,14 @@ namespace GLTFCompiler.Scene
             }
         }
 
-        public void WriteBytes()
+        public void WriteBytes(string dst)
         {
-            var path = @"C:\Users\marku\Desktop\BA\VulkanProject\VulkanProject\VulkanProject\dump.bin";
-            if (File.Exists(path))
-                File.Delete(path);
-            using var str = File.Create(path);
+            if (File.Exists(dst))
+                File.Delete(dst);
+            using var str = File.Create(dst);
             // first write vertices
             {
-                var vertices = new byte[32 * VertexBuffer.Count +4]; // first 4 bytes is uint32 numVertices
+                var vertices = new byte[48 * VertexBuffer.Count +4]; // first 4 bytes is uint32 numVertices
                 var pos = -4;
                 Reverse(BitConverter.GetBytes((uint) VertexBuffer.Count)).CopyTo(vertices.AsSpan(pos += 4));
                 foreach (var vertex in VertexBuffer)
@@ -203,14 +208,19 @@ namespace GLTFCompiler.Scene
                     Reverse(BitConverter.GetBytes(vertex.Position[0])).CopyTo(vertices.AsSpan(pos += 4));
                     Reverse(BitConverter.GetBytes(vertex.Position[1])).CopyTo(vertices.AsSpan(pos += 4));
                     Reverse(BitConverter.GetBytes(vertex.Position[2])).CopyTo(vertices.AsSpan(pos += 4));
-
-                    Reverse(BitConverter.GetBytes(vertex.TexCoords[0])).CopyTo(vertices.AsSpan(pos += 4));
+                    Reverse(BitConverter.GetBytes(0)).CopyTo(vertices.AsSpan(pos += 4));  // pad1
 
                     Reverse(BitConverter.GetBytes(vertex.Normal[0])).CopyTo(vertices.AsSpan(pos += 4));
                     Reverse(BitConverter.GetBytes(vertex.Normal[1])).CopyTo(vertices.AsSpan(pos += 4));
                     Reverse(BitConverter.GetBytes(vertex.Normal[2])).CopyTo(vertices.AsSpan(pos += 4));
+                    Reverse(BitConverter.GetBytes(0)).CopyTo(vertices.AsSpan(pos += 4));  // pad2
 
+
+                    Reverse(BitConverter.GetBytes(vertex.TexCoords[0])).CopyTo(vertices.AsSpan(pos += 4));
                     Reverse(BitConverter.GetBytes(vertex.TexCoords[1])).CopyTo(vertices.AsSpan(pos += 4));
+                    Reverse(BitConverter.GetBytes(0)).CopyTo(vertices.AsSpan(pos += 4));  // material index, TODO
+                    Reverse(BitConverter.GetBytes(0)).CopyTo(vertices.AsSpan(pos += 4));  // pad3
+                    if ((pos) % 16 != 0) throw new Exception();
                 }
                 str.Write(vertices);
             }

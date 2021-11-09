@@ -5,6 +5,7 @@
 
 #include "Globals.h"
 #include "Util.h"
+#include "Presentation.h"
 
 
 int set_global_buffers(VkInfo* vk, Scene* scene)
@@ -32,6 +33,11 @@ int set_global_buffers(VkInfo* vk, Scene* scene)
 	vkUnmapMemory(vk->device, vk->global_buffers.buffer_container[0].buffers[2].vk_buffer_memory);
 
 	return SUCCESS;
+}
+
+int set_texture_buffers(VkInfo* vk, Scene* scene)
+{
+	return 0;
 }
 
 int set_frame_buffers(VkInfo* vk, Scene* scene, uint32_t image_index) {

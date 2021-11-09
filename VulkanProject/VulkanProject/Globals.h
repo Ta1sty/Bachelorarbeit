@@ -8,6 +8,10 @@
 extern int WINDOW_WIDTH;
 extern int WINDOW_HEIGHT;
 
+typedef struct textureContainer
+{
+	VkDescriptorSetLayout layout;
+} TextureContainer;
 
 typedef struct buffer
 {
@@ -103,9 +107,11 @@ typedef struct vkInfo {
 	Shader vertex_shader;
 	Shader fragment_shader;
 
-	uint32_t numSets; // 2
+	uint32_t numSets; // 3
 	DescriptorSetContainer global_buffers; // set 0
-	DescriptorSetContainer per_frame_buffers; // set 1
+	TextureContainer texture_container; // set 1
+	DescriptorSetContainer per_frame_buffers; // set 2
+
 
 	VkBuffer vertexBuffer;
 	VkDeviceMemory vertexBufferMemory;

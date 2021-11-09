@@ -154,7 +154,7 @@ int main()
     globalApplication = appPtr;
     app.vk_info.rasterize = VK_TRUE;
     init_scene(&app.scene);
-    if(init_window(&app.window) && init_vulkan(&app.vk_info, &app.window, &app.scene.scene_data))
+    if(init_window(&app.window) && init_vulkan(&app.vk_info, &app.window, &app.scene))
     {
         glfwSetFramebufferSizeCallback(app.window, resize_callback);
         glfwSetCursorPosCallback(app.window, mouse__move_callback);

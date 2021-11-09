@@ -4,6 +4,7 @@
 
 #include "Globals.h"
 #include "Util.h"
+#include "VulkanUtil.h"
 
 uint32_t findMemoryType(VkInfo* vk, uint32_t type_filter, VkMemoryPropertyFlags properties) {
 
@@ -38,4 +39,38 @@ int createBuffer(VkInfo* vk, VkDeviceSize size, VkBufferUsageFlags usage, VkMemo
 
 	vkBindBufferMemory(vk->device, *buffer, *bufferMemory, 0);
 	return SUCCESS;
+}
+
+VkCommandBuffer beginSingleTimeCommands(VkInfo* vk)
+{
+	VkCommandBufferAllocateInfo allocInfo = {0};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandPool = vk->command_pool;
+	allocInfo.commandBufferCount = 1;
+
+	VkCommandBuffer commandBuffer;
+	vkAllocateCommandBuffers(vk->device, &allocInfo, &commandBuffer);
+
+	VkCommandBufferBeginInfo beginInfo = {0};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+	vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+	return commandBuffer;
+}
+
+void endSingleTimeCommands(VkInfo* vk, VkCommandBuffer commandBuffer) {
+	vkEndCommandBuffer(commandBuffer);
+
+	VkSubmitInfo submitInfo = {0};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffer;
+
+	vkQueueSubmit(vk->graphics_queue, 1, &submitInfo, VK_NULL_HANDLE);
+	vkQueueWaitIdle(vk->graphics_queue);
+
+	vkFreeCommandBuffers(vk->device, vk->command_pool, 1, &commandBuffer);
 }
