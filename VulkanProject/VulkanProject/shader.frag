@@ -75,8 +75,18 @@ void shadeFragment(vec3 P, vec3 N, vec3 V) {
 void main() {
 	// from https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-generating-camera-rays/generating-camera-rays
 	ivec2 xy = ivec2(gl_FragCoord.xy);
-	int x = xy.x;
-	int y = xy.y;
+	float x = xy.x;
+	float y = xy.y;
+
+	float tex_x = x/frame.width;
+	float tex_y = y/frame.height;
+	
+	outColor = vec4(tex_x, tex_y, 0, 1);
+
+	outColor = texture(sampler2D(textures[1], samp), vec2(tex_x, tex_y));
+	//outColor = texture(samp, vec2(tex_x, tex_y));
+	return;
+
 
 	float flt_height = frame.height;
 	float flt_width = frame.width;

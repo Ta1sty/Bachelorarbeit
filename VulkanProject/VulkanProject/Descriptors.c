@@ -83,13 +83,25 @@ int create_descriptor_pool(VkInfo* vk)
 	uniDynCount.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 	uniDynCount.descriptorCount = 10;
 
-	VkDescriptorPoolSize poolSizes[] = { uniCount, uniDynCount };
+	VkDescriptorPoolSize sampler_image = { 0 };
+	sampler_image.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	sampler_image.descriptorCount = 10;
+
+	VkDescriptorPoolSize sampler = { 0 };
+	sampler.type = VK_DESCRIPTOR_TYPE_SAMPLER;
+	sampler.descriptorCount = 10;
+
+	VkDescriptorPoolSize texture_image = { 0 };
+	texture_image.type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+	texture_image.descriptorCount = 10;
+
+	VkDescriptorPoolSize poolSizes[] = { uniCount, uniDynCount , sampler_image, sampler, texture_image };
 
 	VkDescriptorPoolCreateInfo poolInfo = { 0 };
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	poolInfo.poolSizeCount = 2;
+	poolInfo.poolSizeCount = 5;
 	poolInfo.pPoolSizes = poolSizes;
-	poolInfo.maxSets = 10;
+	poolInfo.maxSets = 30;
 
 	if (vkCreateDescriptorPool(vk->device, &poolInfo, NULL, &vk->descriptor_pool) != VK_SUCCESS) {
 		return FAILURE;

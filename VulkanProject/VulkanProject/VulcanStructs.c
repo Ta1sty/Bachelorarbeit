@@ -613,6 +613,8 @@ int create_command_buffers(VkInfo* info)
 		vkCmdBindDescriptorSets(info->command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, info->pipeline_layout,
 			0, 1, &info->global_buffers.descriptor_sets[0], 0, NULL);
 		vkCmdBindDescriptorSets(info->command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, info->pipeline_layout,
+			1, 1, &info->texture_container.descriptor_set, 0, NULL);
+		vkCmdBindDescriptorSets(info->command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, info->pipeline_layout,
 			2, 1, &info->per_frame_buffers.descriptor_sets[i], 0, NULL);
 		vkCmdDraw(info->command_buffers[i], 3, 1, 0, 0);
 		vkCmdEndRenderPass(info->command_buffers[i]);

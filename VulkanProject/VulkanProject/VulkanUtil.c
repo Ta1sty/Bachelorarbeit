@@ -61,7 +61,7 @@ VkCommandBuffer beginSingleTimeCommands(VkInfo* vk)
 	return commandBuffer;
 }
 
-void endSingleTimeCommands(VkInfo* vk, VkCommandBuffer commandBuffer) {
+void endSingleTimeCommands(VkInfo* vk, VkCommandBuffer commandBuffer){
 	vkEndCommandBuffer(commandBuffer);
 
 	VkSubmitInfo submitInfo = {0};
@@ -73,4 +73,14 @@ void endSingleTimeCommands(VkInfo* vk, VkCommandBuffer commandBuffer) {
 	vkQueueWaitIdle(vk->graphics_queue);
 
 	vkFreeCommandBuffers(vk->device, vk->command_pool, 1, &commandBuffer);
+}
+
+void copyBuffer(VkInfo* vk, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
+	VkCommandBuffer commandBuffer = beginSingleTimeCommands(vk);
+
+	VkBufferCopy copyRegion = {0};
+	copyRegion.size = size;
+	vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+	endSingleTimeCommands(vk, commandBuffer);
 }

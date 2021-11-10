@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <stdint.h>
+#include <stdio.h>
 #include <vulkan/vulkan_core.h>
 
 // this is subject to change
@@ -64,11 +65,10 @@ typedef struct texture
 	uint32_t image_size;
 	uint32_t image_width;
 	uint32_t image_height;
-	char* pixel_data;
+	uint32_t* pixel_data;
 	VkImage texture_image;
 	VkImageView texture_image_view;
 	VkDeviceMemory texture_image_memory;
-	VkSampler sampler;
 } Texture;
 
 typedef struct texture_data
@@ -79,6 +79,7 @@ typedef struct texture_data
 
 typedef struct scene
 {
+	VkSampler sampler;
 	Camera camera;
 	SceneData scene_data;
 	TextureData texture_data;
@@ -90,3 +91,5 @@ typedef struct scene
 
 void init_scene(Scene* scene);
 int load_scene(Scene* scene, char** path);
+void load_textures(TextureData* data, FILE* file);
+void load_texture(Texture* texture, FILE* file);

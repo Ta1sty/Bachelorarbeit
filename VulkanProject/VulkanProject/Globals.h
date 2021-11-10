@@ -11,6 +11,9 @@ extern int WINDOW_HEIGHT;
 typedef struct textureContainer
 {
 	VkDescriptorSetLayout layout;
+	VkDescriptorSet descriptor_set;
+	uint32_t sampler_binding;
+	uint32_t texture_binding;
 } TextureContainer;
 
 typedef struct buffer

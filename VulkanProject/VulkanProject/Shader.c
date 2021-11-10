@@ -106,7 +106,7 @@ int create_descriptor_containers(VkInfo* info, Scene* scene)
 	info->global_buffers = create_descriptor_set(info, 0, globalInfos, global_buffer_count, 1);
 
 	// set 1 - samplers and textures
-	create_texture_descriptor(info, scene, 3);
+	create_texture_descriptors(info, scene, 3, 4);
 
 	// set 2 - frame buffers
 
@@ -127,6 +127,7 @@ int init_descriptor_containers(VkInfo* info, Scene* scene)
 	create_texture_buffers(info, scene);
 	create_descriptor_pool(info);
 	create_descriptor_sets(info, &info->global_buffers);
+	init_texture_descriptor(info, scene);
 	create_descriptor_sets(info, &info->per_frame_buffers);
 	return SUCCESS;
 }
