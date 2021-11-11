@@ -10,7 +10,7 @@ void init_scene(Scene* scene)
 {
 	scene->camera.pos[0] = 0;
 	scene->camera.pos[1] = 0;
-	scene->camera.pos[2] = -2;
+	scene->camera.pos[2] = 3;
 	scene->camera.rotation_x = 0;
 	scene->camera.rotation_y = 0;
 
@@ -45,10 +45,91 @@ int load_scene(Scene* scene, char** path)
 	fread(scene->node_indices, sizeof(uint32_t), scene->scene_data.numNodeIndices, file);
 
 	load_textures(&scene->texture_data, file);
-
 	fclose(file);
+
+	flatten_scene(scene);
+
 	return 0;
 }
+void flatten_scene(Scene* scene)
+{
+	SceneNode* node = &scene->scene_nodes[scene->scene_data.numSceneNodes - 1];
+
+	FlatNodeResult result = flatten_node(scene, node, node);
+	int a = 0;
+	scene->scene_data.numTriangles = result.num_vertices / 3;
+	scene->scene_data.numVertices = result.num_vertices;
+
+	free(scene->vertices);
+	scene->vertices = result.vertices;
+	scene->indices = malloc(sizeof(uint32_t) * result.num_vertices);
+	for(uint32_t i = 0;i < result.num_vertices;i++)
+	{
+		scene->indices[i] = i;
+	}
+}
+
+FlatNodeResult flatten_node(Scene* scene, SceneNode* parent, SceneNode* node)
+{
+	FlatNodeResult result = { 0 };
+	float tr[4][4];
+	for (uint32_t r = 0; r != 4; r++) {
+		for (uint32_t s = 0; s != 4; s++){
+			tr[r][s] = parent->transform[r][0] * node->transform[0][s]
+				+ parent->transform[r][1] * node->transform[1][s]
+				+ parent->transform[r][2] * node->transform[2][s]
+				+ parent->transform[r][3] * node->transform[3][s];
+		}
+	}
+
+	// TODO multiply transforms
+	if (node->NumTriangles > 0)
+	{
+		result.vertices = malloc(sizeof(Vertex) * node->NumTriangles * 3);
+		result.num_vertices = node->NumTriangles * 3;
+		for(int32_t i = 0;i <node->NumTriangles*3;i++)
+		{
+			Vertex v = scene->vertices[scene->indices[node->IndexBufferIndex + i]];
+			float px = tr[0][0] * v.position[0] + tr[0][1] * v.position[1] + tr[0][2] * v.position[2] + tr[0][3];
+			float py = tr[1][0] * v.position[0] + tr[1][1] * v.position[1] + tr[1][2] * v.position[2] + tr[1][3];
+			float pz = tr[2][0] * v.position[0] + tr[2][1] * v.position[1] + tr[2][2] * v.position[2] + tr[2][3];
+
+			result.vertices[i] = v; // TODO transform vertex
+			result.vertices[i].position[0] = px;
+			result.vertices[i].position[1] = py;
+			result.vertices[i].position[2] = pz;
+			int a = 1;
+		}
+	}
+
+	if (node->NumChildren > 0)
+	{
+		for (int32_t i = 0;i<node->NumChildren;i++)
+		{
+			uint32_t child_idx = scene->node_indices[node->childrenIndex + i];
+			SceneNode* child = &scene->scene_nodes[child_idx];
+
+			FlatNodeResult childResult = flatten_node(scene, tr, child);
+
+			Vertex* newVertArray = malloc(sizeof(Vertex) * (childResult.num_vertices + result.num_vertices));
+			for (uint32_t j = 0;j<result.num_vertices;j++)
+			{
+				newVertArray[j] = result.vertices[j];
+			}
+			for (uint32_t j = 0; j < childResult.num_vertices; j++){
+				newVertArray[result.num_vertices + j] = childResult.vertices[j];
+			}
+			free(childResult.vertices);
+			free(result.vertices);
+			
+			result.num_vertices = result.num_vertices + childResult.num_vertices;
+			result.vertices = newVertArray;
+		}
+	}
+
+	return result;
+}
+
 
 void load_textures(TextureData* data, FILE* file)
 {

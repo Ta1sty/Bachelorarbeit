@@ -15,7 +15,7 @@ int set_global_buffers(VkInfo* vk, Scene* scene)
 	void* data1;
 	vkMapMemory(vk->device, vk->global_buffers.buffer_container[0].buffers[0].vk_buffer_memory,
 		0, sizeof(SceneData), 0, &data1);
-	memcpy(data1, &scene, sizeof(SceneData));
+	memcpy(data1, &scene->scene_data, sizeof(SceneData));
 	vkUnmapMemory(vk->device, vk->global_buffers.buffer_container[0].buffers[0].vk_buffer_memory);
 
 	// Vertex buffer

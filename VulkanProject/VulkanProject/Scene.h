@@ -31,7 +31,7 @@ typedef struct vertex
 	float pad2;					//28
 	float tex_x;				//32
 	float tex_y;				//36
-	uint32_t samplerIndex;		//40
+	int32_t materialIndex;		//40
 	float pad3;					//44
 } Vertex; // 48 bytes
 
@@ -57,7 +57,13 @@ typedef struct frameData {
 	float fov;
 } FrameData;
 
-
+typedef struct material
+{
+	float k_a;
+	float k_d;
+	float k_s;
+	int32_t texture_index;
+} Material;
 
 typedef struct texture
 {
@@ -89,7 +95,15 @@ typedef struct scene
 	uint32_t* node_indices;
 } Scene;
 
+typedef struct flatNodeResult
+{
+	uint32_t num_vertices;
+	Vertex* vertices;
+} FlatNodeResult;
+
 void init_scene(Scene* scene);
 int load_scene(Scene* scene, char** path);
 void load_textures(TextureData* data, FILE* file);
 void load_texture(Texture* texture, FILE* file);
+void flatten_scene(Scene* scene);
+FlatNodeResult flatten_node(Scene* scene, SceneNode* parent, SceneNode* node);
