@@ -7,6 +7,7 @@
 #include <GLFW/glfw3.h>
 #define GLFW_EXPOSE_NATIVE_WIN32
 
+#include <corecrt_math_defines.h>
 #include <math.h>
 #include <string.h>
 
@@ -39,7 +40,7 @@ void mouse__move_callback (GLFWwindow* window, double x, double y)
     mouseY = y;
     if(dragging)
     {
-        globalApplication->scene.camera.rotation_x = dragRotX + ((mouseY - dragY)/10);
+        globalApplication->scene.camera.rotation_x = dragRotX - ((mouseY - dragY)/10);
         globalApplication->scene.camera.rotation_y = dragRotY + ((mouseX - dragX)/10);
     }
 }
@@ -61,88 +62,37 @@ void mouse_button_callback(GLFWwindow* window, int button, int pressed, int idk)
         }
     }
 }
-ULONGLONG pressedKeys[] = {0,0,0,0}; // WASD 87 65 83 68
-void setKey(int index, int pressed)
+double last_time = 0;
+void updatePosition(GLFWwindow* window, Camera* camera)
 {
-    if (pressed == 0) pressedKeys[index] = 0;
-    if (pressed == 1) pressedKeys[index] = GetTickCount64();
-}
+    double now = glfwGetTime();
+    double diff = now - last_time;
+    last_time = now;
 
-void key_callback(GLFWwindow* window, int key, int scanCode, int action, int mods)
-{
-    int pressed = -1;
-    if (action == GLFW_PRESS) {
-        pressed = 1;
-    }
-    if (action == GLFW_RELEASE) {
-        pressed = 0;
-    }
+    float straight = 0;
+    float sideways = 0;
+    float up = 0;
 
-    if (pressed == -1) return;
+    float spd = 1;
+    float dst = spd * (float) diff;
+    straight += (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) * dst;
+    straight -= (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) * dst;
+    sideways -= (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) * dst;
+    sideways += (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) * dst;
+    up += (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) * dst;
+    up -= (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) * dst;
 
-    switch (key)
-    {
-		case 87: {
-            setKey(0, pressed);
-            break;
-		}
-        case 65: {
-            setKey(1, pressed);
-            break;
-        }
-        case 83: {
-            setKey(2, pressed);
-            break;
-        }
-        case 68: {
-            setKey(3, pressed);
-            break;
-        }
-        default:return;
-    }
-}
+    float y_radians = camera->rotation_y * (float)M_PI / 180.0f;
+    float cos_y = cosf(y_radians), sin_y = sinf(y_radians);
 
-void updatePosition()
-{
-    ULONGLONG diffL;
-    ULONGLONG now = GetTickCount64();
-    float diff;
-    // W
-    if(pressedKeys[0])
-    {
-        diffL = now - pressedKeys[0];
-        diff = (float)diffL;
-        float zAdd = diff / 2000.f * 5;
-        globalApplication->scene.camera.pos[2] += zAdd;
-        pressedKeys[0] = now;
-    }
-    // A
-    if (pressedKeys[1])
-    {
-        diffL = now - pressedKeys[1];
-        diff = (float)diffL;
-        float xSub = diff / 2000.f * 5;
-        globalApplication->scene.camera.pos[0] -= xSub;
-        pressedKeys[1] = now;
-    }
-    // S
-    if (pressedKeys[2])
-    {
-        diffL = now - pressedKeys[2];
-        diff = (float)diffL;
-        float zSub = diff / 2000.f * 5;
-        globalApplication->scene.camera.pos[2] -= zSub;
-        pressedKeys[2] = now;
-    }
-    // D
-    if (pressedKeys[3])
-    {
-        diffL = now - pressedKeys[3];
-        diff = (float)diffL;
-        float xAdd = diff / 2000.f * 5;
-        globalApplication->scene.camera.pos[0] += xAdd;
-        pressedKeys[3] = now;
-    }
+
+    camera->pos[0] += sin_y * straight;
+    camera->pos[2] -= cos_y * straight;
+
+	camera->pos[1] += up;
+
+    camera->pos[0] += cos_y * sideways;
+    camera->pos[2] += sin_y * sideways;
 }
 
 
@@ -159,13 +109,12 @@ int main()
         glfwSetFramebufferSizeCallback(app.window, resize_callback);
         glfwSetCursorPosCallback(app.window, mouse__move_callback);
         glfwSetMouseButtonCallback(app.window, mouse_button_callback);
-        glfwSetKeyCallback(app.window, key_callback);
         set_global_buffers(&app.vk_info, &app.scene);
         while (!glfwWindowShouldClose(app.window)) {
             glfwPollEvents();
             if(WINDOW_WIDTH != 0 && WINDOW_HEIGHT != 0)
             {
-                updatePosition();
+                updatePosition(app.window, &app.scene.camera);
                 if (drawFrame(&app.vk_info, &app.scene) == FAILURE)
                 {
                     break;

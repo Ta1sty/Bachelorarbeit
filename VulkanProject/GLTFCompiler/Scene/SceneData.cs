@@ -155,7 +155,7 @@ namespace GLTFCompiler.Scene
                     translation = Matrix4x4.CreateTranslation(node.Translation[0], node.Translation[1], node.Translation[2]);
                 }
 
-                scNode.Transform = translation * rotation * scale; 
+                scNode.Transform =  scale * rotation * translation; 
                 scNode.Source = node;
                 Nodes.Add(scNode);
             }
@@ -186,7 +186,16 @@ namespace GLTFCompiler.Scene
             Nodes = Nodes.Where(x => x.Brother == null).ToList();
             end.Children = end.Children.Select(x => x.ThisOrBrother()).ToList();
             end.Children = end.Children
-                .Where(x => !(x.Source.Translation?[0] == 0 && x.Source.Translation?[1] == 0 && x.Source.Translation?[2] == 0)).ToList();
+                .Where(x =>
+                {
+                    if (x.Source.Mesh<0) return true;
+                    if (x.Children.Count > 0) return true;
+                    if (x.Transform.M41 != 0) return true;
+                    if (x.Transform.M42 != 0) return true;
+                    if (x.Transform.M43 != 0) return true;
+                    return false;
+                }).ToList();
+            end.NumChildren = end.Children.Count;
             var index = 0;
             Nodes.Add(end);
             foreach (var node in Nodes)

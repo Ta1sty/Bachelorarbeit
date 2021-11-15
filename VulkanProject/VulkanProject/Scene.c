@@ -9,7 +9,7 @@
 void init_scene(Scene* scene)
 {
 	scene->camera.pos[0] = 0;
-	scene->camera.pos[1] = 0;
+	scene->camera.pos[1] = 1;
 	scene->camera.pos[2] = 3;
 	scene->camera.rotation_x = 0;
 	scene->camera.rotation_y = 0;
@@ -94,10 +94,19 @@ FlatNodeResult flatten_node(Scene* scene, SceneNode* parent, SceneNode* node)
 			float py = tr[1][0] * v.position[0] + tr[1][1] * v.position[1] + tr[1][2] * v.position[2] + tr[1][3];
 			float pz = tr[2][0] * v.position[0] + tr[2][1] * v.position[1] + tr[2][2] * v.position[2] + tr[2][3];
 
+			float nx = tr[0][0] * v.normal[0] + tr[0][1] * v.normal[1] + tr[0][2] * v.normal[2];
+			float ny = tr[1][0] * v.normal[0] + tr[1][1] * v.normal[1] + tr[1][2] * v.normal[2];
+			float nz = tr[2][0] * v.normal[0] + tr[2][1] * v.normal[1] + tr[2][2] * v.normal[2];
+
+
 			result.vertices[i] = v; // TODO transform vertex
 			result.vertices[i].position[0] = px;
 			result.vertices[i].position[1] = py;
 			result.vertices[i].position[2] = pz;
+
+			result.vertices[i].normal[0] = nx;
+			result.vertices[i].normal[1] = ny;
+			result.vertices[i].normal[2] = nz;
 			int a = 1;
 		}
 	}
@@ -109,7 +118,7 @@ FlatNodeResult flatten_node(Scene* scene, SceneNode* parent, SceneNode* node)
 			uint32_t child_idx = scene->node_indices[node->childrenIndex + i];
 			SceneNode* child = &scene->scene_nodes[child_idx];
 
-			FlatNodeResult childResult = flatten_node(scene, tr, child);
+			FlatNodeResult childResult = flatten_node(scene, node, child);
 
 			Vertex* newVertArray = malloc(sizeof(Vertex) * (childResult.num_vertices + result.num_vertices));
 			for (uint32_t j = 0;j<result.num_vertices;j++)

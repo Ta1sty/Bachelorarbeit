@@ -120,7 +120,7 @@ void shadeFragment(vec3 P, vec3 N, vec3 V) {
 	float n = 8;
 	float i = 5;
 	vec3 lightIntenstity = vec3(i,i,i);
-	vec3 lightWorldPos = vec3(0.5f,2,-1.5f);
+	vec3 lightWorldPos = vec3(0,2,2);
 	N = normalize(N);
 	vec3 R = normalize(reflect(V, N));
 	vec3 color = vec3(0.0);
@@ -159,7 +159,6 @@ void main() {
 	vec4 direction_world_space = frame.view_to_world * direction_view_space;
 
 	vec3 rayOrigin = origin_world_space.xyz;
-	rayOrigin.y = rayOrigin.y+1;
 	vec3 rayDirection = direction_world_space.xyz;
 
 	int triangle_index = -1;
@@ -169,8 +168,6 @@ void main() {
 	vec3 tuv;
 	if(ray_trace_loop(rayOrigin, rayDirection, t_max, tuv, triangle_index)){
 		Vertex vert_v0 = vertexBuffer.vertices[indexBuffer.indices[triangle_index * 3]];
-		outColor = vec4(0,0,0,1);
-		return;
 		vec3 P = rayOrigin + tuv.x * rayDirection;
 		vec3 N = vert_v0.normal;
 		shadeFragment(P, N, rayDirection);
@@ -190,6 +187,10 @@ void main() {
 				outColor = vec4(0,0,1,1);
 				return;
 			}
+			if(vertexIntersect(rayOrigin, rayDirection, vec3(0,0,0))){
+				outColor = vec4(1,1,1,1);
+				return;
+			}		
 		}
 		outColor = vec4(3, 215, 252, 255) /255;
 	}

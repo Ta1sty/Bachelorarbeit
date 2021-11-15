@@ -51,13 +51,32 @@ int set_frame_buffers(VkInfo* vk, Scene* scene, uint32_t image_index) {
 	float cos_x = cosf(x_radians), sin_x = sinf(x_radians);
 	float cos_y = cosf(y_radians), sin_y = sinf(y_radians);
 
+	float rotation_x[3][3] = {
+		{1.0f, 0.0f, 0.0f},
+		{0.0f, cos_x, sin_x},
+		{0.0f, -sin_x, cos_x}
+	};
+	float rotation_z[3][3] = {
+		{cos_y, 0, sin_y},
+		{0, 1, 0},
+		{-sin_y, 0.0f, cos_y}
+	};
+	float rotation[3][3] = {0};
+	for (uint32_t i = 0; i != 3; i++)
+		for (uint32_t j = 0; j != 3; j++)
+			for (uint32_t k = 0; k != 3; k++)
+				rotation[i][j] += rotation_x[i][k] * rotation_z[k][j];
+
 
 	float mat[4][4] = {
-		{cos_y,		-sin_y * sin_x,		sin_y * cos_x,		0},
-		{0,			cos_x,				sin_x,				0},
-		{-sin_y,	-cos_y * sin_x,		cos_y * cos_x,		0},
-		{c.pos[0], c.pos[1],	c.pos[2],	1}
+		{rotation[0][0], rotation[0][1], rotation[0][2], 0},
+		{rotation[1][0], rotation[1][1], rotation[1][2], 0},
+		{rotation[2][0], rotation[2][1], rotation[2][2], 0},
+		{c.pos[0], c.pos[1], c.pos[2], 1.0f}
 	};
+
+
+
 	memcpy(&frame.view_to_world, &mat, sizeof(float) * 4 * 4);
 	frame.width = WINDOW_WIDTH;
 	frame.height = WINDOW_HEIGHT;
