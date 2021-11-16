@@ -114,22 +114,40 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, out vec3 tuv
 	return true;
 }
 
-void shadeFragment(vec3 P, vec3 N, vec3 V) {
+void shadeFragment(vec3 P, vec3 V, vec3 tuv, int triangle) {
+	Vertex v0 = vertexBuffer.vertices[indexBuffer.indices[triangle * 3]];
+	Vertex v1 = vertexBuffer.vertices[indexBuffer.indices[triangle * 3] + 1];
+	Vertex v2 = vertexBuffer.vertices[indexBuffer.indices[triangle * 3] + 2];
+
+
+	float w = 1 - tuv.y - tuv.z;
+	float u = tuv.y;
+	float v = tuv.z;
+
+
+
+	vec3 N = w * v0.normal + u * v1.normal + v * v2.normal;
+	vec2 tex = w * v0.tex_coord + v * v1.tex_coord + u * v2.tex_coord;
+
+	//outColor = vec4(tex.x, 0, tex.y, 1);
+	outColor = texture(sampler2D(textures[0], samp), tex);
+	return;
+	N = normalize(N);
+
 	vec3 k_d = vec3(0.8,0.8,0.8);
 	vec3 k_s = vec3(0.8,0.8,0.8);
 	float n = 8;
 	float i = 5;
 	vec3 lightIntenstity = vec3(i,i,i);
 	vec3 lightWorldPos = vec3(0,2,2);
-	N = normalize(N);
 	vec3 R = normalize(reflect(V, N));
 	vec3 color = vec3(0.0);
 	vec3 L = normalize(lightWorldPos-P);
 	vec3 kd = k_d * max(0,dot(L,N));
 	vec3 ks;
-	vec3 tuv;
+	vec3 tuv2;
 	float t; int index;
-	if(!ray_trace_loop(P, L, length(lightWorldPos-P), tuv, index)){
+	if(!ray_trace_loop(P, L, length(lightWorldPos-P), tuv2, index)){
 		ks = k_s * pow(max(0,dot(R,L)),n);
 	} else {
 		ks = vec3(0);
@@ -149,6 +167,7 @@ void main() {
 	float tex_x = x/frame.width;
 	float tex_y = y/frame.height;
 
+
 	float flt_height = frame.height;
 	float flt_width = frame.width;
 	vec4 origin_view_space = vec4(0,0,0,1);
@@ -163,14 +182,11 @@ void main() {
 
 	int triangle_index = -1;
 
-
 	float t_max = 300;
 	vec3 tuv;
 	if(ray_trace_loop(rayOrigin, rayDirection, t_max, tuv, triangle_index)){
-		Vertex vert_v0 = vertexBuffer.vertices[indexBuffer.indices[triangle_index * 3]];
 		vec3 P = rayOrigin + tuv.x * rayDirection;
-		vec3 N = vert_v0.normal;
-		shadeFragment(P, N, rayDirection);
+		shadeFragment(P, rayDirection, tuv, triangle_index);
 	}
 	else {
 		
@@ -196,7 +212,5 @@ void main() {
 	}
 	return;
 
-	outColor = texture(sampler2D(textures[1], samp), vec2(tex_x, tex_y));
-	//outColor = texture(samp, vec2(tex_x, tex_y));
 	return;
 }

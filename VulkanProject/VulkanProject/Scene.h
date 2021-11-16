@@ -79,6 +79,8 @@ typedef struct texture
 
 typedef struct texture_data
 {
+	uint32_t num_materials;
+	Material* materials;
 	uint32_t num_textures;
 	Texture* textures;
 } TextureData;

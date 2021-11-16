@@ -188,6 +188,7 @@ namespace GLTFCompiler.Scene
             end.Children = end.Children
                 .Where(x =>
                 {
+                    return true;
                     if (x.Source.Mesh<0) return true;
                     if (x.Children.Count > 0) return true;
                     if (x.Transform.M41 != 0) return true;
@@ -211,6 +212,8 @@ namespace GLTFCompiler.Scene
             writer.WriteVertices(VertexBuffer);
             writer.WriteIndices(IndexBuffer);
             writer.WriteSceneNodes(Nodes);
+            writer.WriteMaterials(file.Materials);
+            writer.WriteTextures(this);
         }
     }
 }

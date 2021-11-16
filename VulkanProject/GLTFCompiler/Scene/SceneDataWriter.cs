@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using GLTFCompiler.GltfFileTypes;
+using System.Drawing.Imaging;
+using System.Drawing;
 
 namespace GLTFCompiler.Scene
 {
@@ -115,7 +117,7 @@ namespace GLTFCompiler.Scene
             {
                 BitConverter.GetBytes(0.2f).CopyTo(materialBuffer.AsSpan(pos += 4)); // ka
                 BitConverter.GetBytes(0.4f).CopyTo(materialBuffer.AsSpan(pos += 4)); // kd
-                BitConverter.GetBytes(0.4f).CopyTo(materialBuffer.AsSpan(pos += 4)); // ks
+                BitConverter.GetBytes(0.6f).CopyTo(materialBuffer.AsSpan(pos += 4)); // ks
                 BitConverter.GetBytes(material.PbrMetallicRoughness.BaseColorTexture.Index).CopyTo(materialBuffer.AsSpan(pos += 4)); // textureIndex
             }
             str.Write(materialBuffer);
@@ -123,15 +125,36 @@ namespace GLTFCompiler.Scene
 
         public void WriteTextures(SceneData data)
         {
+            str.Write(BitConverter.GetBytes(data.file.Textures.Count));
             foreach (var texture in data.file.Textures)
             {
-                var image = data.file.Images[texture.Source];
-                var view = data.file.BufferViews[image.BufferView];
+                var imagePtr = data.file.Images[texture.Source];
+                var view = data.file.BufferViews[imagePtr.BufferView];
                 var bufferReader = new BufferReader(data, view);
                 data.usedBuffers.Add(bufferReader);
                 var imgData = bufferReader.GetAllBytes();
 
-                var memStr = new MemoryStream(imgData);
+                using var srcStr = new MemoryStream(imgData);
+                using var image = Image.FromStream(srcStr);
+                using var bmp = new Bitmap(image);
+                var size = bmp.Width * bmp.Height * sizeof(int);
+                str.Write(BitConverter.GetBytes(bmp.Width));
+                str.Write(BitConverter.GetBytes(bmp.Height));
+                str.Write(BitConverter.GetBytes(size));
+
+                var dst = new byte[size];
+                var i = 0;
+                for (var y = 0; y < bmp.Height; y++) {
+                    for (var x = 0; x < bmp.Width; x++) { 
+                        var col = bmp.GetPixel(x, y);
+                        dst[i] = col.R;
+                        dst[i + 1] = col.G;
+                        dst[i + 2] = col.B;
+                        dst[i + 3] = col.A;
+                        i += 4;
+                    }
+                }
+                str.Write(dst);
             }
         }
 

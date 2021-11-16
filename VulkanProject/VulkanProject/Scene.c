@@ -43,7 +43,7 @@ int load_scene(Scene* scene, char** path)
 	fread(&scene->scene_data.numNodeIndices, sizeof(uint32_t), 1, file);
 	scene->node_indices = malloc(sizeof(uint32_t) * scene->scene_data.numNodeIndices);
 	fread(scene->node_indices, sizeof(uint32_t), scene->scene_data.numNodeIndices, file);
-
+	
 	load_textures(&scene->texture_data, file);
 	fclose(file);
 
@@ -139,12 +139,15 @@ FlatNodeResult flatten_node(Scene* scene, SceneNode* parent, SceneNode* node)
 	return result;
 }
 
-
 void load_textures(TextureData* data, FILE* file)
 {
 	memset(data, 0, sizeof(TextureData));
 
-	data->num_textures = 2;
+	fread(&data->num_materials, sizeof(uint32_t), 1, file);
+	data->materials = malloc(sizeof(Material) * data->num_materials);
+	fread(data->materials, sizeof(Material), data->num_materials, file);
+
+	fread(&data->num_textures, sizeof(uint32_t), 1, file);
 	data->textures = malloc(sizeof(Texture) * data->num_textures);
 	for (uint32_t i = 0; i< data->num_textures; i++)
 	{
@@ -153,6 +156,16 @@ void load_textures(TextureData* data, FILE* file)
 }
 void load_texture(Texture* texture, FILE* file)
 {
+	memset(texture, 0, sizeof(Texture));
+	fread(&texture->image_width, sizeof(uint32_t), 1, file);
+	fread(&texture->image_height, sizeof(uint32_t), 1, file);
+	fread(&texture->image_size, sizeof(uint32_t), 1, file);
+
+	texture->pixel_data = malloc(texture->image_size);
+	fread(texture->pixel_data, sizeof(char), texture->image_size, file);
+	uint32_t test = texture->pixel_data[0];
+	test = test;
+	return;
 	int w = 2;
 	int h = 2;
 	texture->image_size = w * h * sizeof(uint32_t); // width * height * bytePerPixel
