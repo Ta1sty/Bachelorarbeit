@@ -8,39 +8,38 @@
 #include "Presentation.h"
 
 
-int set_global_buffers(VkInfo* vk, Scene* scene)
+void set_global_buffers(VkInfo* vk, Scene* scene)
 {
 
 	// Scene Data
 	void* data1;
-	vkMapMemory(vk->device, vk->global_buffers.buffer_container[0].buffers[0].vk_buffer_memory,
-		0, sizeof(SceneData), 0, &data1);
+	check(vkMapMemory(vk->device, vk->global_buffers.buffer_containers[0].buffers[0].vk_buffer_memory,
+		0, sizeof(SceneData), 0, &data1), "");
 	memcpy(data1, &scene->scene_data, sizeof(SceneData));
-	vkUnmapMemory(vk->device, vk->global_buffers.buffer_container[0].buffers[0].vk_buffer_memory);
+	vkUnmapMemory(vk->device, vk->global_buffers.buffer_containers[0].buffers[0].vk_buffer_memory);
 
 	// Vertex buffer
 	void* data2;
-	vkMapMemory(vk->device, vk->global_buffers.buffer_container[0].buffers[1].vk_buffer_memory, 
-		0, sizeof(Vertex) * scene->scene_data.numVertices, 0, &data2);
+	check(vkMapMemory(vk->device, vk->global_buffers.buffer_containers[0].buffers[1].vk_buffer_memory, 
+		0, sizeof(Vertex) * scene->scene_data.numVertices, 0, &data2), "");
 	memcpy(data2, scene->vertices, sizeof(Vertex) * scene->scene_data.numVertices);
-	vkUnmapMemory(vk->device, vk->global_buffers.buffer_container[0].buffers[1].vk_buffer_memory);
+	vkUnmapMemory(vk->device, vk->global_buffers.buffer_containers[0].buffers[1].vk_buffer_memory);
 
 	// IndexBuffer
 	void* data3;
-	vkMapMemory(vk->device, vk->global_buffers.buffer_container[0].buffers[2].vk_buffer_memory,
-		0, sizeof(uint32_t) * scene->scene_data.numTriangles * 3, 0, &data3);
+	check(vkMapMemory(vk->device, vk->global_buffers.buffer_containers[0].buffers[2].vk_buffer_memory,
+		0, sizeof(uint32_t) * scene->scene_data.numTriangles * 3, 0, &data3), "");
 	memcpy(data3, scene->indices, sizeof(uint32_t) * scene->scene_data.numTriangles * 3);
-	vkUnmapMemory(vk->device, vk->global_buffers.buffer_container[0].buffers[2].vk_buffer_memory);
+	vkUnmapMemory(vk->device, vk->global_buffers.buffer_containers[0].buffers[2].vk_buffer_memory);
 
-	return SUCCESS;
+	void* data4;
+	check(vkMapMemory(vk->device, vk->global_buffers.buffer_containers[0].buffers[3].vk_buffer_memory,
+		0, sizeof(Material) * scene->texture_data.num_materials, 0, &data4), "");
+	memcpy(data4, scene->texture_data.materials, sizeof(Material) * scene->texture_data.num_materials);
+	vkUnmapMemory(vk->device, vk->global_buffers.buffer_containers[0].buffers[3].vk_buffer_memory);
 }
 
-int set_texture_buffers(VkInfo* vk, Scene* scene)
-{
-	return 0;
-}
-
-int set_frame_buffers(VkInfo* vk, Scene* scene, uint32_t image_index) {
+void set_frame_buffers(VkInfo* vk, Scene* scene, uint32_t image_index) {
 	FrameData frame = { 0 };
 	Camera c = scene->camera;
 
@@ -83,14 +82,13 @@ int set_frame_buffers(VkInfo* vk, Scene* scene, uint32_t image_index) {
 	frame.fov = (float)M_PI / 180.f * 45.f;
 
 	void* data;
-	if (vkMapMemory(vk->device, vk->per_frame_buffers.buffer_container[image_index].buffers[0].vk_buffer_memory, 0, sizeof(FrameData), 0, &data))
-		return err("Failed to map memory");
+	check(vkMapMemory(vk->device, vk->per_frame_buffers.buffer_containers[image_index].buffers[0].vk_buffer_memory, 
+		0, sizeof(FrameData), 0, &data), "");
 	memcpy(data, &frame, sizeof(FrameData));
-	vkUnmapMemory(vk->device, vk->per_frame_buffers.buffer_container[image_index].buffers[0].vk_buffer_memory);
-	return SUCCESS;
+	vkUnmapMemory(vk->device, vk->per_frame_buffers.buffer_containers[image_index].buffers[0].vk_buffer_memory);
 }
 
-int drawFrame(VkInfo* vk_info, Scene* scene)
+void drawFrame(VkInfo* vk_info, Scene* scene)
 {
 	Swapchain* swapchain = &vk_info->swapchain;
 	uint32_t imageIndex;
@@ -114,7 +112,7 @@ int drawFrame(VkInfo* vk_info, Scene* scene)
 	.pSignalSemaphores = signalSemaphores,
 	};
 
-	if (vkQueueSubmit(vk_info->graphics_queue, 1, &submitInfo, VK_NULL_HANDLE)) return err("failed to submit draw command buffer!");
+	check(vkQueueSubmit(vk_info->graphics_queue, 1, &submitInfo, VK_NULL_HANDLE),"failed to submit draw command buffer!");
 	VkSwapchainKHR swapChains[] = { swapchain->vk_swapchain };
 
 	VkPresentInfoKHR presentInfo = {
@@ -129,6 +127,4 @@ int drawFrame(VkInfo* vk_info, Scene* scene)
 	vkQueuePresentKHR(vk_info->present_queue, &presentInfo);
 
 	vkQueueWaitIdle(vk_info->present_queue);
-
-	return SUCCESS;
 }

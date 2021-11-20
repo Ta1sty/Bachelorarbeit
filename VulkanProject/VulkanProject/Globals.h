@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include <stdbool.h>
 #include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
 
@@ -48,7 +49,7 @@ typedef struct descriptorSet
 	VkDescriptorSet* descriptor_sets; // || = sets_count
 	uint32_t buffer_count; // number of buffers per set
 	BufferInfo* buffer_infos; // buffer_count
-	BufferContainer* buffer_container; // || = sets_count
+	BufferContainer* buffer_containers; // || = sets_count
 	uint32_t set_number;
 	uint32_t completed; // indicates that this container is fully operational
 } DescriptorSetContainer;
@@ -134,5 +135,10 @@ typedef struct app {
 	Scene scene;
 } App;
 
+typedef void (*ExceptionCallback)(void);
+extern ExceptionCallback exception_callback;
 
-int err(char* err);
+void check(VkResult result, char* errorMsg);
+void check_b(VkBool32 boolean, char* errorMsg);
+void error(char* err);
+void setExceptionCallback(ExceptionCallback callback);

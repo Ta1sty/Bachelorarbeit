@@ -56,16 +56,15 @@ VkVertexInputAttributeDescription* getAttributeDescriptions() {
 	return desc;
 }
 
-int create_vertex_buffer(VkInfo* vk)
+void create_vertex_buffer(VkInfo* vk)
 {
-	if (vk->rasterize == VK_FALSE) return SUCCESS;
+	if (vk->rasterize == VK_FALSE) return;
 	VkBufferCreateInfo bufferInfo = {0};
 	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	bufferInfo.size = sizeof(RasterVertex) * vertex_count;
 	bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	if (vkCreateBuffer(vk->device, &bufferInfo, NULL, &vk->vertexBuffer))
-		return err("Failed to create vertex buffer");
+	check(vkCreateBuffer(vk->device, &bufferInfo, NULL, &vk->vertexBuffer),"Failed to create vertex buffer");
 
 	VkMemoryRequirements memRequirements;
 	vkGetBufferMemoryRequirements(vk->device, vk->vertexBuffer, &memRequirements);
@@ -75,15 +74,13 @@ int create_vertex_buffer(VkInfo* vk)
 	allocInfo.allocationSize = memRequirements.size;
 	allocInfo.memoryTypeIndex = findMemoryType(vk, memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-	if (vkAllocateMemory(vk->device, &allocInfo, NULL, &vk->vertexBufferMemory)) return err("Failed to allocate vertex memory");
+	check(vkAllocateMemory(vk->device, &allocInfo, NULL, &vk->vertexBufferMemory),"Failed to allocate vertex memory");
 
-	vkBindBufferMemory(vk->device, vk->vertexBuffer, vk->vertexBufferMemory, 0);
+	check(vkBindBufferMemory(vk->device, vk->vertexBuffer, vk->vertexBufferMemory, 0), "");
 
 	void* data;
-	vkMapMemory(vk->device, vk->vertexBufferMemory, 0, bufferInfo.size, 0, &data);
+	check(vkMapMemory(vk->device, vk->vertexBufferMemory, 0, bufferInfo.size, 0, &data), "");
 	memcpy(data, vertices, bufferInfo.size);
 	vkUnmapMemory(vk->device, vk->vertexBufferMemory);
-
-	return SUCCESS;
 }
 

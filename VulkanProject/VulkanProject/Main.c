@@ -20,7 +20,17 @@
 int resizeW = -1;
 int resizeH = -1;
 
+
 App* globalApplication;
+void exception_callback_impl()
+{
+	if(globalApplication!=NULL)
+	{
+        destroy_vulkan(&globalApplication->vk_info, &globalApplication->scene);
+        destroy_scene(&globalApplication->scene);
+        destroy_window(globalApplication->window);
+	}
+}
 
 void resize_callback(GLFWwindow* window, int width, int height) {
     resizeW = width;
@@ -102,42 +112,34 @@ int main()
     memset(&app, 0, sizeof(app));
     App* appPtr = &app;
     globalApplication = appPtr;
+    setExceptionCallback(exception_callback_impl);
     app.vk_info.rasterize = VK_TRUE;
     init_scene(&app.scene);
-    if(init_window(&app.window) && init_vulkan(&app.vk_info, &app.window, &app.scene))
-    {
-        glfwSetFramebufferSizeCallback(app.window, resize_callback);
-        glfwSetCursorPosCallback(app.window, mouse__move_callback);
-        glfwSetMouseButtonCallback(app.window, mouse_button_callback);
-        set_global_buffers(&app.vk_info, &app.scene);
-        while (!glfwWindowShouldClose(app.window)) {
-            glfwPollEvents();
-            if(WINDOW_WIDTH != 0 && WINDOW_HEIGHT != 0)
+    init_window(&app.window);
+    init_vulkan(&app.vk_info, &app.window, &app.scene);
+	glfwSetFramebufferSizeCallback(app.window, resize_callback);
+	glfwSetCursorPosCallback(app.window, mouse__move_callback);
+	glfwSetMouseButtonCallback(app.window, mouse_button_callback);
+	set_global_buffers(&app.vk_info, &app.scene);
+	while (!glfwWindowShouldClose(app.window)) {
+		glfwPollEvents();
+		if(WINDOW_WIDTH != 0 && WINDOW_HEIGHT != 0)
             {
                 updatePosition(app.window, &app.scene.camera);
-                if (drawFrame(&app.vk_info, &app.scene) == FAILURE)
-                {
-                    break;
-                }
+                drawFrame(&app.vk_info, &app.scene);
             }
-
-            if (resizeW >= 0 || resizeH >= 0)
-            {
-                create_or_resize_swapchain(&app.vk_info, &app.window, resizeW, resizeH, &app.scene.scene_data);
-                WINDOW_WIDTH = resizeW;
-                WINDOW_HEIGHT = resizeH;
-                resizeW = -1;
-                resizeH = -1;
-            }
-        }
-        destroy_vulkan(&app.vk_info);
-        destroy_window(app.window);
-        int a = 5;
-        return 0;
-    }
-    printf("Init failed\n");
-    destroy_vulkan(&app.vk_info);
-    destroy_window(app.window);
-    return -1;
+		if (resizeW >= 0 || resizeH >= 0)
+		{
+			create_or_resize_swapchain(&app.vk_info, &app.window, resizeW, resizeH, &app.scene);
+			WINDOW_WIDTH = resizeW;
+			WINDOW_HEIGHT = resizeH;
+			resizeW = -1;
+			resizeH = -1;
+		}
+	}
+	destroy_vulkan(&app.vk_info, &app.scene);
+	destroy_scene(&app.scene);
+	destroy_window(app.window);
+	int a = 5;
+	return 0;
 }
- 

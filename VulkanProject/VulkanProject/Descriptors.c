@@ -39,41 +39,41 @@ DescriptorSetContainer create_descriptor_set(VkInfo* vk, uint32_t set_number, Bu
 	layout_create_info.bindingCount = buffer_count;
 	layout_create_info.pBindings = bindings;
 
-	vkCreateDescriptorSetLayout(vk->device, &layout_create_info, NULL, &set.set_layout);
+	check(vkCreateDescriptorSetLayout(vk->device, &layout_create_info, NULL, &set.set_layout), "");
 	set.buffer_infos = buffer_infos;
 	set.buffer_count = buffer_count;
 	set.sets_count = sets_count;
 	set.set_number = set_number;
 	set.completed = 0;
+
+	free(bindings);
 	return set;
 }
-int create_buffers(VkInfo* vk, DescriptorSetContainer* set)
+void create_buffers(VkInfo* vk, DescriptorSetContainer* set)
 {
-	set->buffer_container = malloc(sizeof(BufferContainer) * set->sets_count); // one container per set
+	set->buffer_containers = malloc(sizeof(BufferContainer) * set->sets_count); // one container per set
 	for (uint32_t set_number = 0; set_number <set->sets_count; set_number++)
 	{
-		BufferContainer* container = &set->buffer_container[set_number];
+		BufferContainer* container = &set->buffer_containers[set_number];
 		container->buffer_count = set->buffer_count;
 		container->buffers = malloc(sizeof(Buffer) * container->buffer_count);
 		for (uint32_t buffer_number = 0; buffer_number< set->buffer_count; buffer_number++)
 		{
 			Buffer* buffer = &container->buffers[buffer_number];
 			BufferInfo* info = &set->buffer_infos[buffer_number];
-			if (createBuffer(vk,
+			createBuffer(vk,
 				info->buffer_size,
 				info->buffer_usage, info->memory_property,
 				&buffer->vk_buffer,
-				&buffer->vk_buffer_memory) != SUCCESS)
-				return err("failed to create buffer");
+				&buffer->vk_buffer_memory);
 			buffer->buffer_size = info->buffer_size;
 			buffer->usage = info->buffer_usage;
 			buffer->properties = info->memory_property;
 		}
 	}
-	return SUCCESS;
 }
 
-int create_descriptor_pool(VkInfo* vk)
+void create_descriptor_pool(VkInfo* vk)
 {
 	VkDescriptorPoolSize uniCount = { 0 };
 	uniCount.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -103,14 +103,10 @@ int create_descriptor_pool(VkInfo* vk)
 	poolInfo.pPoolSizes = poolSizes;
 	poolInfo.maxSets = 30;
 
-	if (vkCreateDescriptorPool(vk->device, &poolInfo, NULL, &vk->descriptor_pool) != VK_SUCCESS) {
-		return FAILURE;
-	}
-
-	return SUCCESS;
+	check(vkCreateDescriptorPool(vk->device, &poolInfo, NULL, &vk->descriptor_pool), "");
 }
 
-int create_descriptor_sets(VkInfo* info, DescriptorSetContainer* container)
+void create_descriptor_sets(VkInfo* info, DescriptorSetContainer* container)
 {
 	VkDescriptorSetLayout* layouts = malloc(container->sets_count * sizeof(VkDescriptorSetLayout));
 	for (uint32_t i = 0; i < container->sets_count; i++)
@@ -127,12 +123,10 @@ int create_descriptor_sets(VkInfo* info, DescriptorSetContainer* container)
 
 	container->descriptor_sets = malloc(sizeof(VkDescriptorSet) * container->sets_count);
 
-	if (vkAllocateDescriptorSets(info->device, &allocInfo, container->descriptor_sets) != VK_SUCCESS) {
-		return err("failed to allocate descriptor sets");
-	}
+	check(vkAllocateDescriptorSets(info->device, &allocInfo, container->descriptor_sets), "");
 
 	for (size_t set = 0; set < container->sets_count; set++) {
-		BufferContainer* buf_con = &container->buffer_container[set];
+		BufferContainer* buf_con = &container->buffer_containers[set];
 		for(uint32_t buf = 0;buf<container->buffer_count;buf++)
 		{
 			BufferInfo buf_info = container->buffer_infos[buf];
@@ -157,5 +151,22 @@ int create_descriptor_sets(VkInfo* info, DescriptorSetContainer* container)
 	}
 	free(layouts);
 	container->completed = 1;
-	return SUCCESS;
+}
+void destroy_buffer(VkInfo* vk, DescriptorSetContainer* container)
+{
+	for (uint32_t con = 0;con<container->sets_count;con++)
+	{
+		BufferContainer bufContainer = container->buffer_containers[con];
+		for(uint32_t buf = 0;buf < bufContainer.buffer_count;buf++)
+		{
+			Buffer buffer = bufContainer.buffers[buf];
+			vkFreeMemory(vk->device, buffer.vk_buffer_memory, NULL);
+			vkDestroyBuffer(vk->device, buffer.vk_buffer, NULL);
+		}
+		free(bufContainer.buffers);
+	}
+	free(container->buffer_infos);
+	free(container->descriptor_sets);
+	free(container->buffer_containers);
+	vkDestroyDescriptorSetLayout(vk->device, container->set_layout, NULL);
 }

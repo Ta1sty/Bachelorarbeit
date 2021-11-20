@@ -185,17 +185,24 @@ namespace GLTFCompiler.Scene
 
             Nodes = Nodes.Where(x => x.Brother == null).ToList();
             end.Children = end.Children.Select(x => x.ThisOrBrother()).ToList();
-            end.Children = end.Children
-                .Where(x =>
-                {
-                    return true;
-                    if (x.Source.Mesh<0) return true;
-                    if (x.Children.Count > 0) return true;
-                    if (x.Transform.M41 != 0) return true;
-                    if (x.Transform.M42 != 0) return true;
-                    if (x.Transform.M43 != 0) return true;
-                    return false;
-                }).ToList();
+            if (end.Children.Count(x => x.Source.Mesh >= 0) == 1) // scene consists of only one mesh with a scene node
+            {
+
+            }
+            else // scene consists of more than one, assume instancing
+            {
+                end.Children = end.Children
+                    .Where(x =>
+                    {
+                        if (x.Source.Mesh < 0) return true;
+                        if (x.Children.Count > 0) return true;
+                        if (x.Transform.M41 != 0) return true;
+                        if (x.Transform.M42 != 0) return true;
+                        if (x.Transform.M43 != 0) return true;
+                        return false;
+                    }).ToList();
+            }
+
             end.NumChildren = end.Children.Count;
             var index = 0;
             Nodes.Add(end);

@@ -8,7 +8,7 @@
 #include "Util.h"
 #include "VulkanStructs.h"
 
-int create_instance(VkInfo* vk_info)
+void create_instance(VkInfo* vk_info)
 {
 	VkApplicationInfo app_info = {
 		.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
@@ -16,7 +16,7 @@ int create_instance(VkInfo* vk_info)
 		.pEngineName = "Vulkan renderer",
 		.applicationVersion = 100,
 		.engineVersion = 100,
-		.apiVersion = VK_MAKE_VERSION(1, 2, 0)
+		.apiVersion = VK_MAKE_API_VERSION(0, 1, 2, 0)
 	};
 
 	const int layer_count = 1;
@@ -43,19 +43,15 @@ int create_instance(VkInfo* vk_info)
 		.ppEnabledLayerNames = layer_names
 	};
 
-	if (vkCreateInstance(&create_info, NULL, &vk_info->instance)) return err("Failed to create Vulkan instance");
+	check(vkCreateInstance(&create_info, NULL, &vk_info->instance),"Failed to create Vulkan instance");
 
 	uint32_t extensionCount = 0;
-	if (vkEnumerateInstanceExtensionProperties(NULL, &extensionCount, NULL))
-		return err(
-			"Failed to enumerate extension properties");
+	check(vkEnumerateInstanceExtensionProperties(NULL, &extensionCount, NULL), "Failed to enumerate extension properties");
 
 	if (extensionCount > 0)
 	{
 		VkExtensionProperties* extensions = malloc(sizeof(VkExtensionProperties) * extensionCount);
-		if (vkEnumerateInstanceExtensionProperties(NULL, &extensionCount, extensions))
-			return err(
-				"Failed to enumerate extension properties");
+		check(vkEnumerateInstanceExtensionProperties(NULL, &extensionCount, extensions), "Failed to enumerate extension properties");
 		printf("Supported Extensions:\n");
 		for (uint32_t i = 0; i < extensionCount; ++i)
 		{
@@ -66,14 +62,10 @@ int create_instance(VkInfo* vk_info)
 	}
 
 	vk_info->physical_device_count = 0;
-	if (vkEnumeratePhysicalDevices(vk_info->instance, &vk_info->physical_device_count, NULL))
-		return err(
-			"Failed to enumerate physical devices");
-	if (vk_info->physical_device_count == 0) return err("No GPU found with Vulkan support");
+	check(vkEnumeratePhysicalDevices(vk_info->instance, &vk_info->physical_device_count, NULL), "Failed to enumerate physical devices");
+	if (vk_info->physical_device_count == 0) error("No GPU found with Vulkan support");
 	vk_info->physical_devices = malloc(sizeof(VkPhysicalDevice) * vk_info->physical_device_count);
-	if (vkEnumeratePhysicalDevices(vk_info->instance, &vk_info->physical_device_count, vk_info->physical_devices))
-		return err(
-			"Failed to enumerate physical devices");
+	check(vkEnumeratePhysicalDevices(vk_info->instance, &vk_info->physical_device_count, vk_info->physical_devices), "Failed to enumerate physical devices");
 	printf("The following physical devices (GPUs) are available to Vulkan:\n");
 	for (uint32_t i = 0; i != vk_info->physical_device_count; ++i)
 	{
@@ -88,7 +80,7 @@ int create_instance(VkInfo* vk_info)
 	// Learn about available queues
 	uint32_t queue_family_count = 0;
 	vkGetPhysicalDeviceQueueFamilyProperties(vk_info->physical_device, &queue_family_count, NULL);
-	if (!queue_family_count) return err("No Vulkan queue family available");
+	if (!queue_family_count) error("No Vulkan queue family available");
 	vk_info->queue_family_properties = malloc(sizeof(VkQueueFamilyProperties) * queue_family_count);
 	vkGetPhysicalDeviceQueueFamilyProperties(vk_info->physical_device, &queue_family_count,
 	                                         vk_info->queue_family_properties);
@@ -102,8 +94,7 @@ int create_instance(VkInfo* vk_info)
 	{
 	}
 	if (vk_info->queue_family_index == queue_family_count)
-		return err(
-			"No Vulkan queue family supports graphics and compute.");
+		error("No Vulkan queue family supports graphics and compute.");
 	// Figure out whether ray queries are supported
 	/* TODO Ray tracing stuff
 	if (request_ray_tracing) {
@@ -118,10 +109,9 @@ int create_instance(VkInfo* vk_info)
 		free(extensions);
 	}
 	*/
-	return SUCCESS;
 }
 
-int create_device(VkInfo* vk_info)
+void create_device(VkInfo* vk_info)
 {
 	// Select device extensions
 	const uint32_t ext_base_num = 3;
@@ -174,6 +164,7 @@ int create_device(VkInfo* vk_info)
 		.uniformAndStorageBuffer8BitAccess = VK_TRUE,
 		.shaderSampledImageArrayNonUniformIndexing = VK_TRUE,
 		.bufferDeviceAddress = vk_info->ray_tracing,
+		.runtimeDescriptorArray = VK_TRUE
 	};
 	VkDeviceCreateInfo device_info = {
 		.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
@@ -182,7 +173,7 @@ int create_device(VkInfo* vk_info)
 		.pQueueCreateInfos = &queue_info,
 		.enabledExtensionCount = vk_info->device_extension_count,
 		.ppEnabledExtensionNames = vk_info->device_extension_names,
-		.pEnabledFeatures = &enabled_features
+		.pEnabledFeatures = &enabled_features,
 	};
 	if (vkCreateDevice(vk_info->physical_device, &device_info, NULL, &vk_info->device))
 	{
@@ -191,7 +182,7 @@ int create_device(VkInfo* vk_info)
 		{
 			printf("%s\n", device_info.ppEnabledExtensionNames[i]);
 		}
-		return FAILURE;
+		error("");
 	}
 	// Create a command pool for each queue
 	VkCommandPoolCreateInfo command_pool_info = {
@@ -199,9 +190,7 @@ int create_device(VkInfo* vk_info)
 		.queueFamilyIndex = vk_info->queue_family_index,
 		.flags = 0
 	};
-	if (vkCreateCommandPool(vk_info->device, &command_pool_info, NULL, &vk_info->command_pool))
-		return err(
-			"Failed to create command pool for queue");
+	check(vkCreateCommandPool(vk_info->device, &command_pool_info, NULL, &vk_info->command_pool), "Failed to create command pool for queue");
 	// Grab the selected queue
 	vkGetDeviceQueue(vk_info->device, vk_info->queue_family_index, 0, &vk_info->graphics_queue);
 	vkGetDeviceQueue(vk_info->device, vk_info->queue_family_index, 0, &vk_info->present_queue);
@@ -210,37 +199,32 @@ int create_device(VkInfo* vk_info)
 		printf("Ray tracing is available.\n");
 	else
 		printf("No ray tracing for u\n");
-	return SUCCESS;
 }
 
-int create_validation_layer(VkInfo* vk_info)
+void create_validation_layer(VkInfo* vk_info)
 {
 	printf("Currently debugging\n");
 	//TODO validation if I feel like it
-	return SUCCESS;
 }
 
-int create_swapchain(VkInfo* vk_info, GLFWwindow** window, uint32_t width, uint32_t height)
+void create_swapchain(VkInfo* vk_info, GLFWwindow** window, uint32_t width, uint32_t height)
 {
 	Swapchain* swapchain = &vk_info->swapchain;
 	memset(swapchain, 0, sizeof(Swapchain));
-	if (glfwCreateWindowSurface(vk_info->instance, *window, NULL, &swapchain->surface)) return err("Failed to create surface");
+	check(glfwCreateWindowSurface(vk_info->instance, *window, NULL, &swapchain->surface),"Failed to create surface");
 
 	VkBool32 presentation_supported;
-	if (vkGetPhysicalDeviceSurfaceSupportKHR(vk_info->physical_device, vk_info->queue_family_index, swapchain->surface,
-	                                         &presentation_supported)
-		|| presentation_supported == VK_FALSE)
-		return err("Physical device does not support presentation");
+	check(vkGetPhysicalDeviceSurfaceSupportKHR(vk_info->physical_device, vk_info->queue_family_index, 
+		swapchain->surface, &presentation_supported), "");
+	check_b(presentation_supported, "Physical device does not support presentation");
 
-	if (vkGetPhysicalDeviceSurfaceFormatsKHR(vk_info->physical_device, swapchain->surface,
-	                                         &swapchain->surface_format_count, NULL))
-		return err(
-			"Failed to get physical device surface formats");
+	check(vkGetPhysicalDeviceSurfaceFormatsKHR(vk_info->physical_device, 
+			swapchain->surface,&swapchain->surface_format_count, NULL),
+		"Failed to get physical device surface formats");
 	swapchain->surface_formats = malloc(sizeof(VkSurfaceFormatKHR) * swapchain->surface_format_count);
-	if (vkGetPhysicalDeviceSurfaceFormatsKHR(vk_info->physical_device, swapchain->surface,
-	                                         &swapchain->surface_format_count, swapchain->surface_formats))
-		return err(
-			"Failed to get physical device surface formats");
+	check(vkGetPhysicalDeviceSurfaceFormatsKHR(vk_info->physical_device, swapchain->surface,
+			&swapchain->surface_format_count, swapchain->surface_formats),
+		"Failed to get physical device surface formats");
 
 	if (swapchain->surface_format_count == 1 && swapchain->surface_formats[0].format == VK_FORMAT_UNDEFINED)
 		swapchain->format = VK_FORMAT_B8G8R8A8_UNORM;
@@ -279,23 +263,19 @@ int create_swapchain(VkInfo* vk_info, GLFWwindow** window, uint32_t width, uint3
 		.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
 		.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
 	};
-	if (vkCreateSwapchainKHR(vk_info->device, &create_info, NULL, &swapchain->vk_swapchain) != VK_SUCCESS)
-		return err(
-			"Failed to create swapchain");
-	return SUCCESS;
+	check(vkCreateSwapchainKHR(vk_info->device, &create_info, NULL, &swapchain->vk_swapchain), "Failed to create swapchain");
 }
 
-int create_image_views(VkInfo* info)
+void create_image_views(VkInfo* info)
 {
 	Swapchain* swapchain = &info->swapchain;
 	swapchain->image_count = 0;
-	if (vkGetSwapchainImagesKHR(info->device, swapchain->vk_swapchain, &swapchain->image_count, NULL))
-		return err("Failed to get swapchain images");
+	check(vkGetSwapchainImagesKHR(info->device, swapchain->vk_swapchain, &swapchain->image_count, NULL),
+		"Failed to get swapchain images");
 	info->buffer_count = swapchain->image_count;
 	swapchain->images = malloc(sizeof(VkImage) * swapchain->image_count);
-	if (vkGetSwapchainImagesKHR(info->device, swapchain->vk_swapchain, &swapchain->image_count,
-	                            swapchain->images))
-		return err("Failed to get swapchain images");
+	check(vkGetSwapchainImagesKHR(info->device, swapchain->vk_swapchain, &swapchain->image_count,
+	                            swapchain->images),"Failed to get swapchain images");
 	swapchain->image_views = malloc(sizeof(VkImageView) * swapchain->image_count);
 	for (uint32_t i = 0; i < swapchain->image_count; i++)
 	{
@@ -314,14 +294,12 @@ int create_image_views(VkInfo* info)
 			.subresourceRange.baseArrayLayer = 0,
 			.subresourceRange.layerCount = 1,
 		};
-		if (vkCreateImageView(info->device, &createInfo, NULL, &swapchain->image_views[i]))
-			return err(
-				"Failed to create image view");
+		check(vkCreateImageView(info->device, &createInfo, NULL, &swapchain->image_views[i]),
+			"Failed to create image view");
 	}
-	return SUCCESS;
 }
 
-int create_pipeline(VkInfo* info)
+void create_pipeline(VkInfo* info)
 {
 	Swapchain* swapchain = &info->swapchain;
 	compile_shaders();
@@ -459,16 +437,19 @@ int create_pipeline(VkInfo* info)
 	dynamicState.dynamicStateCount = 2;
 	dynamicState.pDynamicStates = dynamicStates;
 	*/
-	VkDescriptorSetLayout layouts[] = { info->global_buffers.set_layout, info->texture_container.layout ,info->per_frame_buffers.set_layout };
+	VkDescriptorSetLayout layouts[] = {
+		info->global_buffers.set_layout,
+		info->texture_container.layout ,
+		info->per_frame_buffers.set_layout
+	};
 
 	VkPipelineLayoutCreateInfo pipeline_layout_info = {0};
 	pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipeline_layout_info.setLayoutCount = info->numSets;
 	pipeline_layout_info.pSetLayouts = layouts;
 
-	if (vkCreatePipelineLayout(info->device, &pipeline_layout_info, NULL,
-	                           &info->pipeline_layout))
-		return err("Failed to create pipeline layout");
+	check(vkCreatePipelineLayout(info->device, &pipeline_layout_info, NULL,&info->pipeline_layout), 
+		"Failed to create pipeline layout");
 
 	VkGraphicsPipelineCreateInfo pipeline_info = {
 		.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
@@ -487,16 +468,13 @@ int create_pipeline(VkInfo* info)
 		.subpass = 0,
 		.basePipelineHandle = VK_NULL_HANDLE, // Optional
 	};
-	if (vkCreateGraphicsPipelines(info->device, VK_NULL_HANDLE, 1, &pipeline_info, NULL,
-	                              &info->pipeline))
-		return err("Failed to create pipeline");
+	check(vkCreateGraphicsPipelines(info->device, VK_NULL_HANDLE, 
+		1, &pipeline_info, NULL,&info->pipeline),"Failed to create pipeline");
 
 	free(attributeDescriptions);
-
-	return SUCCESS;
 }
 
-int create_render_pass(VkInfo* info)
+void create_render_pass(VkInfo* info)
 {
 	VkAttachmentDescription color_attachment = {
 		.format = info->swapchain.format,
@@ -535,12 +513,10 @@ int create_render_pass(VkInfo* info)
 		.dependencyCount = 1,
 		.pDependencies = &dependency,
 	};
-	if (vkCreateRenderPass(info->device, &render_pass_info, NULL, &info->renderPass)) return
-		printf("failed to create render pass");
-	return SUCCESS;
+	check(vkCreateRenderPass(info->device, &render_pass_info, NULL, &info->renderPass), "failed to create render pass");
 }
 
-int create_frame_buffers(VkInfo* info)
+void create_frame_buffers(VkInfo* info)
 {
 	Swapchain* swapchain = &info->swapchain;
 	swapchain->frame_buffers = malloc(sizeof(VkFramebuffer) * swapchain->image_count);
@@ -559,13 +535,12 @@ int create_frame_buffers(VkInfo* info)
 			.height = swapchain->extent.height,
 			.layers = 1,
 		};
-		if (vkCreateFramebuffer(info->device, &framebufferInfo, NULL, &swapchain->frame_buffers[i]))
-			return err("Failed to create Framebuffer");
+		check(vkCreateFramebuffer(info->device, &framebufferInfo, NULL, &swapchain->frame_buffers[i]),
+			"Failed to create Framebuffer");
 	}
-	return SUCCESS;
 }
 
-int create_command_buffers(VkInfo* info)
+void create_command_buffers(VkInfo* info)
 {
 	Swapchain* swapchain = &info->swapchain;
 	VkCommandBufferAllocateInfo allocInfo = {
@@ -575,7 +550,8 @@ int create_command_buffers(VkInfo* info)
 	.commandBufferCount = swapchain->image_count,
 	};
 	info->command_buffers = malloc(sizeof(VkCommandBuffer) * info->buffer_count);
-	if (vkAllocateCommandBuffers(info->device, &allocInfo, info->command_buffers)) return err("failed to allocate command buffers");
+	check(vkAllocateCommandBuffers(info->device, &allocInfo, info->command_buffers),
+		"failed to allocate command buffers");
 
 	for (size_t i = 0; i < swapchain->image_count; i++) {
 		VkCommandBufferBeginInfo beginInfo = {
@@ -584,10 +560,8 @@ int create_command_buffers(VkInfo* info)
 		.pInheritanceInfo = NULL, // Optional
 		};
 
-		if (vkBeginCommandBuffer(info->command_buffers[i], &beginInfo)) {
-			printf("failed to begin command buffer");
-			return FAILURE;
-		}
+		check(vkBeginCommandBuffer(info->command_buffers[i], &beginInfo),
+			"failed to begin command buffer");
 		VkOffset2D offset = { .x = 0, .y = 0 };
 		VkClearValue clearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
 
@@ -619,19 +593,19 @@ int create_command_buffers(VkInfo* info)
 		vkCmdDraw(info->command_buffers[i], 3, 1, 0, 0);
 		vkCmdEndRenderPass(info->command_buffers[i]);
 
-		if (vkEndCommandBuffer(info->command_buffers[i])) return err("failed to end command buffer");
+		check(vkEndCommandBuffer(info->command_buffers[i]), "failed to end command buffer");
 	}
-	return SUCCESS;
 }
 
-int create_semaphores(VkInfo* info)
+void create_semaphores(VkInfo* info)
 {
 	VkSemaphoreCreateInfo semaphore_info = {
-		semaphore_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
+		semaphore_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+		.pNext = NULL
 	};
 
-	if (vkCreateSemaphore(info->device, &semaphore_info, NULL, &info->imageAvailableSemaphore) ||
-		vkCreateSemaphore(info->device, &semaphore_info, NULL, &info->renderFinishedSemaphore))
-		return err("Failed to create semaphores");
-	return SUCCESS;
+	check(vkCreateSemaphore(info->device, &semaphore_info, NULL, &info->imageAvailableSemaphore),
+		"Failed to create semaphore");
+	check(vkCreateSemaphore(info->device, &semaphore_info, NULL, &info->renderFinishedSemaphore),
+		"Failed to create semaphores");
 }

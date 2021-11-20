@@ -30,7 +30,7 @@ void create_texture_descriptors(VkInfo* vk, Scene* scene, uint32_t samplerBindin
 	layout_create_info.bindingCount = 2;
 	layout_create_info.pBindings = bindings;
 
-	vkCreateDescriptorSetLayout(vk->device, &layout_create_info, NULL, &vk->texture_container.layout);
+	check(vkCreateDescriptorSetLayout(vk->device, &layout_create_info, NULL, &vk->texture_container.layout), "");
 	vk->texture_container.sampler_binding = samplerBinding;
 	vk->texture_container.texture_binding = textureBinding;
 }
@@ -52,7 +52,7 @@ void create_image(VkInfo* vk, Texture* texture, VkFormat format, VkImageTiling t
 	imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 	imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-	vkCreateImage(vk->device, &imageInfo, NULL, &texture->texture_image);
+	check(vkCreateImage(vk->device, &imageInfo, NULL, &texture->texture_image), "");
 
 	VkMemoryRequirements mem_req;
 	vkGetImageMemoryRequirements(vk->device, texture->texture_image, &mem_req);
@@ -63,11 +63,9 @@ void create_image(VkInfo* vk, Texture* texture, VkFormat format, VkImageTiling t
 		.memoryTypeIndex = findMemoryType(vk, mem_req.memoryTypeBits, properties)
 	};
 
-	if (vkAllocateMemory(vk->device, &allocInfo, NULL, &texture->texture_image_memory))
-		err("failed to allocate");
+	check(vkAllocateMemory(vk->device, &allocInfo, NULL, &texture->texture_image_memory),"failed to allocate");
 
-	if (vkBindImageMemory(vk->device, texture->texture_image, texture->texture_image_memory, 0))
-		err("failed to bind image memory");
+	check(vkBindImageMemory(vk->device, texture->texture_image, texture->texture_image_memory, 0), "failed to bind image memory");
 
 }
 
@@ -105,8 +103,8 @@ void transitionImageLayout(VkInfo* vk, VkImage image, VkFormat format, VkImageLa
 		destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 	}
 	else {
-		err("Invalid layout transition");
-		return; 
+		error("Invalid layout transition");
+		return;
 	}
 
 	vkCmdPipelineBarrier(
@@ -152,7 +150,7 @@ void create_texture_image(VkInfo* vk, Texture* texture)
 		&stagingBuffer, &stagingBufferMemory);
 
 	void* data;
-	vkMapMemory(vk->device, stagingBufferMemory, 0, texture->image_size, 0, &data);
+	check(vkMapMemory(vk->device, stagingBufferMemory, 0, texture->image_size, 0, &data), "");
 	memcpy(data, texture->pixel_data, texture->image_size);
 	vkUnmapMemory(vk->device, stagingBufferMemory);
 
@@ -184,8 +182,7 @@ void create_texture_image_view(VkInfo* vk, Texture* texture)
 	viewInfo.subresourceRange.baseArrayLayer = 0;
 	viewInfo.subresourceRange.layerCount = 1;
 
-	if (vkCreateImageView(vk->device, &viewInfo, NULL, &texture->texture_image_view) != VK_SUCCESS)
-		err("failed to create texture image view");
+	check(vkCreateImageView(vk->device, &viewInfo, NULL, &texture->texture_image_view), "failed to create texture image view");
 }
 
 void create_texture_sampler(VkInfo* vk, Scene* scene)
@@ -208,8 +205,7 @@ void create_texture_sampler(VkInfo* vk, Scene* scene)
 	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
 	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 
-	if (vkCreateSampler(vk->device, &samplerInfo, NULL, &scene->sampler) != VK_SUCCESS)
-		err("failed to create sampler");
+	check(vkCreateSampler(vk->device, &samplerInfo, NULL, &scene->sampler), "failed to create sampler");
 }
 
 void create_texture_buffers(VkInfo* vk, Scene* scene)
@@ -277,15 +273,13 @@ void init_texture_descriptor(VkInfo* vk, Scene* scene)
 	allocInfo.descriptorSetCount = 1;
 	allocInfo.pSetLayouts = &vk->texture_container.layout;
 
-	if (vkAllocateDescriptorSets(vk->device, &allocInfo, &vk->texture_container.descriptor_set))
-		err("Failed to allocate descriptor sets");
-
+	check(vkAllocateDescriptorSets(vk->device, &allocInfo, &vk->texture_container.descriptor_set), "Failed to allocate descriptor sets");
 
 	VkDescriptorImageInfo samplerInfo = {0};
 	samplerInfo.sampler = scene->sampler;
 
 	VkWriteDescriptorSet samplerWrite = {0};
-
+	
 	samplerWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	samplerWrite.dstSet = vk->texture_container.descriptor_set;
 	samplerWrite.dstBinding = vk->texture_container.sampler_binding;

@@ -5,7 +5,7 @@
 #include "Util.h"
 #include "Globals.h"
 
-int init_window(GLFWwindow** window)
+void init_window(GLFWwindow** window)
 {
 	glfwInit();
 
@@ -13,11 +13,7 @@ int init_window(GLFWwindow** window)
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
 	*window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Vulkan", NULL, NULL);
-	if (window == NULL) {
-		printf("Failed to create Window\n");
-		return FAILURE;
-	}
-	return SUCCESS;
+	if (window == NULL) error("Failed to create Window\n");
 }
 
 void destroy_window(GLFWwindow* window)

@@ -5,6 +5,9 @@
 #include <string.h>
 
 #include "Util.h"
+#include <math.h>
+
+#include "Globals.h"
 
 void init_scene(Scene* scene)
 {
@@ -17,13 +20,13 @@ void init_scene(Scene* scene)
 	load_scene(scene, "asd");
 }
 
-int load_scene(Scene* scene, char** path)
+void load_scene(Scene* scene, char** path)
 {
 	FILE* file;
 	fopen_s(&file, "dump.bin", "rb");
 
 	if (!file)
-		return FAILURE;
+		error("failed to open scene file");
 
 
 	fread(&scene->scene_data.numVertices, sizeof(uint32_t), 1, file);
@@ -48,8 +51,6 @@ int load_scene(Scene* scene, char** path)
 	fclose(file);
 
 	flatten_scene(scene);
-
-	return 0;
 }
 void flatten_scene(Scene* scene)
 {
@@ -61,6 +62,7 @@ void flatten_scene(Scene* scene)
 	scene->scene_data.numVertices = result.num_vertices;
 
 	free(scene->vertices);
+	free(scene->indices);
 	scene->vertices = result.vertices;
 	scene->indices = malloc(sizeof(uint32_t) * result.num_vertices);
 	for(uint32_t i = 0;i < result.num_vertices;i++)
@@ -85,29 +87,39 @@ FlatNodeResult flatten_node(Scene* scene, SceneNode* parent, SceneNode* node)
 	// TODO multiply transforms
 	if (node->NumTriangles > 0)
 	{
+		float normal[3][3];
+		normal[0][0] = -tr[1][2] * tr[2][1] + tr[1][1] * tr[2][2];
+		normal[0][1] = tr[1][2] * tr[2][0] - tr[1][0] * tr[2][2];
+		normal[0][2] = -tr[1][1] * tr[2][0] + tr[1][0] * tr[2][1];
+		normal[1][0] = tr[0][2] * tr[2][1] - tr[0][1] * tr[2][2];
+		normal[1][1] = -tr[0][2] * tr[2][0] + tr[0][0] * tr[2][2];
+		normal[1][2] = tr[0][1] * tr[2][0] - tr[0][0] * tr[2][1];
+		normal[2][0] = -tr[0][2] * tr[1][1] + tr[0][1] * tr[1][2];
+		normal[2][1] = tr[0][2] * tr[1][0] - tr[0][0] * tr[1][2];
+		normal[2][2] = -tr[0][1] * tr[1][0] + tr[0][0] * tr[1][1];
+
 		result.vertices = malloc(sizeof(Vertex) * node->NumTriangles * 3);
 		result.num_vertices = node->NumTriangles * 3;
 		for(int32_t i = 0;i <node->NumTriangles*3;i++)
 		{
 			Vertex v = scene->vertices[scene->indices[node->IndexBufferIndex + i]];
-			float px = tr[0][0] * v.position[0] + tr[0][1] * v.position[1] + tr[0][2] * v.position[2] + tr[0][3];
-			float py = tr[1][0] * v.position[0] + tr[1][1] * v.position[1] + tr[1][2] * v.position[2] + tr[1][3];
-			float pz = tr[2][0] * v.position[0] + tr[2][1] * v.position[1] + tr[2][2] * v.position[2] + tr[2][3];
+			
+			result.vertices[i] = v;
+			result.vertices[i].position[0] = tr[0][0] * v.position[0] + tr[0][1] * v.position[1] + tr[0][2] * v.position[2] + tr[0][3];
+			result.vertices[i].position[1] = tr[1][0] * v.position[0] + tr[1][1] * v.position[1] + tr[1][2] * v.position[2] + tr[1][3];
+			result.vertices[i].position[2] = tr[2][0] * v.position[0] + tr[2][1] * v.position[1] + tr[2][2] * v.position[2] + tr[2][3];
 
-			float nx = tr[0][0] * v.normal[0] + tr[0][1] * v.normal[1] + tr[0][2] * v.normal[2];
-			float ny = tr[1][0] * v.normal[0] + tr[1][1] * v.normal[1] + tr[1][2] * v.normal[2];
-			float nz = tr[2][0] * v.normal[0] + tr[2][1] * v.normal[1] + tr[2][2] * v.normal[2];
+			result.vertices[i].normal[0] = normal[0][0] * v.normal[0] + normal[0][1] * v.normal[1] + normal[0][2] * v.normal[2];
+			result.vertices[i].normal[1] = normal[1][0] * v.normal[0] + normal[1][1] * v.normal[1] + normal[1][2] * v.normal[2];
+			result.vertices[i].normal[2] = normal[2][0] * v.normal[0] + normal[2][1] * v.normal[1] + normal[2][2] * v.normal[2];
 
-
-			result.vertices[i] = v; // TODO transform vertex
-			result.vertices[i].position[0] = px;
-			result.vertices[i].position[1] = py;
-			result.vertices[i].position[2] = pz;
-
-			result.vertices[i].normal[0] = nx;
-			result.vertices[i].normal[1] = ny;
-			result.vertices[i].normal[2] = nz;
-			int a = 1;
+			float invSqrt = sqrtf(result.vertices->normal[0] * result.vertices->normal[0]
+				+ result.vertices->normal[1] * result.vertices->normal[1]
+				+ result.vertices->normal[2] * result.vertices->normal[2]);
+			invSqrt = 1 / invSqrt;
+			result.vertices->normal[0] = invSqrt * result.vertices->normal[0];
+			result.vertices->normal[1] = invSqrt * result.vertices->normal[1];
+			result.vertices->normal[2] = invSqrt * result.vertices->normal[2];
 		}
 	}
 
@@ -143,11 +155,13 @@ void load_textures(TextureData* data, FILE* file)
 {
 	memset(data, 0, sizeof(TextureData));
 
+	// TODO create dummy materials so buffers have size > 0 if there are no textures
 	fread(&data->num_materials, sizeof(uint32_t), 1, file);
 	data->materials = malloc(sizeof(Material) * data->num_materials);
 	fread(data->materials, sizeof(Material), data->num_materials, file);
 
 	fread(&data->num_textures, sizeof(uint32_t), 1, file);
+	//data->num_textures = 1;
 	data->textures = malloc(sizeof(Texture) * data->num_textures);
 	for (uint32_t i = 0; i< data->num_textures; i++)
 	{
@@ -156,6 +170,7 @@ void load_textures(TextureData* data, FILE* file)
 }
 void load_texture(Texture* texture, FILE* file)
 {
+	
 	memset(texture, 0, sizeof(Texture));
 	fread(&texture->image_width, sizeof(uint32_t), 1, file);
 	fread(&texture->image_height, sizeof(uint32_t), 1, file);
@@ -163,9 +178,8 @@ void load_texture(Texture* texture, FILE* file)
 
 	texture->pixel_data = malloc(texture->image_size);
 	fread(texture->pixel_data, sizeof(char), texture->image_size, file);
-	uint32_t test = texture->pixel_data[0];
-	test = test;
 	return;
+
 	int w = 2;
 	int h = 2;
 	texture->image_size = w * h * sizeof(uint32_t); // width * height * bytePerPixel
@@ -180,3 +194,16 @@ void load_texture(Texture* texture, FILE* file)
 	texture->pixel_data[3] = 0x00000000;
 }
 
+void destroy_scene(Scene* scene)
+{
+	free(scene->indices);
+	free(scene->node_indices);
+	free(scene->vertices);
+	free(scene->scene_nodes);
+	free(scene->texture_data.materials);
+	for (uint32_t i = 0; i < scene->texture_data.num_textures; i++)
+	{
+		free(scene->texture_data.textures[i].pixel_data);
+	}
+	free(scene->texture_data.textures);
+}

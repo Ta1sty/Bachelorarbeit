@@ -1,23 +1,33 @@
-#version 450
+#version 460
+#extension GL_EXT_nonuniform_qualifier : enable
 
 struct Vertex{
 	vec3 position; // 0 - 16
 	vec3 normal;   // 16 - 16
 	vec2 tex_coord;// 32 - 8
-	uint tex_index;   // 40 - 4 - the index of the sampler to use
+	uint material_index;   // 40 - 4 - the index of the material to use
 };
+struct Material{
+	float k_a;
+	float k_d;
+	float k_s;
+	int texture_index;
+};
+
 layout(binding = 0, set = 0) uniform SceneData{
 	uint numVertices;
 	uint numTriangles;
 	uint numSceneNodes;
 	uint numNodeIndices;
 };
-layout(binding = 1, set = 0) buffer VertexBuffer { Vertex[] vertices; } vertexBuffer;
-layout(binding = 2, set = 0) buffer IndexBuffer { int[] indices; } indexBuffer;
-layout(binding = 3, set = 1) uniform sampler samp;
-layout(binding = 4, set = 1) uniform texture2D textures[];
 
-layout(binding = 5, set = 2) uniform FrameData {
+layout(binding = 1, set = 0) buffer VertexBuffer { Vertex[] vertices; };
+layout(binding = 2, set = 0) buffer IndexBuffer { int[] indices; };
+layout(binding = 3, set = 0) buffer MaterialBuffer { Material[] materials; };
+layout(binding = 4, set = 1) uniform sampler samp;
+layout(binding = 5, set = 1) uniform texture2D textures[];
+
+layout(binding = 6, set = 2) uniform FrameData {
 	mat4 view_to_world;
 	uint width;
 	uint height;
@@ -58,7 +68,6 @@ bool rayTriangleIntersect(vec3 rayOrigin, vec3 rayDirection, out vec3 tuv, vec3 
     else // This means that there is a line intersection but not a ray intersection.
         return false;
 } 
-
 bool vertexIntersect(vec3 rayOrigin, vec3 rayDir, vec3 postion){
 	float t;
 	float epsilon = 0.1f;
@@ -86,17 +95,14 @@ bool vertexIntersect(vec3 rayOrigin, vec3 rayDir, vec3 postion){
 	t = t1;
 	return true;
 }
-
-
-
 bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, out vec3 tuv, out int triangle_index) {
 	vec3 tuv_next;
 	tuv.x = t_max;
 	triangle_index = -1;
 	for(int i = 0;i<numTriangles;i++){
-		Vertex vert_v0 = vertexBuffer.vertices[indexBuffer.indices[i * 3]];
-		Vertex vert_v1 = vertexBuffer.vertices[indexBuffer.indices[i * 3 + 1]];
-		Vertex vert_v2 = vertexBuffer.vertices[indexBuffer.indices[i * 3 + 2]];
+		Vertex vert_v0 = vertices[indices[i * 3]];
+		Vertex vert_v1 = vertices[indices[i * 3 + 1]];
+		Vertex vert_v2 = vertices[indices[i * 3 + 2]];
 
 		vec3 v0 = vert_v0.position;
 		vec3 v2 = vert_v1.position;
@@ -115,9 +121,9 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, out vec3 tuv
 }
 
 void shadeFragment(vec3 P, vec3 V, vec3 tuv, int triangle) {
-	Vertex v0 = vertexBuffer.vertices[indexBuffer.indices[triangle * 3]];
-	Vertex v1 = vertexBuffer.vertices[indexBuffer.indices[triangle * 3] + 1];
-	Vertex v2 = vertexBuffer.vertices[indexBuffer.indices[triangle * 3] + 2];
+	Vertex v0 = vertices[indices[triangle * 3]];
+	Vertex v1 = vertices[indices[triangle * 3] + 1];
+	Vertex v2 = vertices[indices[triangle * 3] + 2];
 
 
 	float w = 1 - tuv.y - tuv.z;
@@ -127,34 +133,36 @@ void shadeFragment(vec3 P, vec3 V, vec3 tuv, int triangle) {
 
 
 	vec3 N = w * v0.normal + u * v1.normal + v * v2.normal;
+	N = normalize(N);
 	vec2 tex = w * v0.tex_coord + v * v1.tex_coord + u * v2.tex_coord;
 
-	//outColor = vec4(tex.x, 0, tex.y, 1);
-	outColor = texture(sampler2D(textures[0], samp), tex);
-	return;
-	N = normalize(N);
+	Material m = materials[v0.material_index];
 
-	vec3 k_d = vec3(0.8,0.8,0.8);
-	vec3 k_s = vec3(0.8,0.8,0.8);
+	float ka = m.k_a;
+	float kd = m.k_d;
+	float ks = m.k_s;
+
+	vec3 color = texture(sampler2D(textures[m.texture_index], samp), tex).xyz;
+
 	float n = 8;
-	float i = 5;
+	float i = 2;
 	vec3 lightIntenstity = vec3(i,i,i);
-	vec3 lightWorldPos = vec3(0,2,2);
+	vec3 lightWorldPos = vec3(0,1.4f,0);
 	vec3 R = normalize(reflect(V, N));
-	vec3 color = vec3(0.0);
 	vec3 L = normalize(lightWorldPos-P);
-	vec3 kd = k_d * max(0,dot(L,N));
-	vec3 ks;
 	vec3 tuv2;
 	float t; int index;
-	if(!ray_trace_loop(P, L, length(lightWorldPos-P), tuv2, index)){
-		ks = k_s * pow(max(0,dot(R,L)),n);
+	if(!ray_trace_loop(P, L, length(lightWorldPos-P), tuv2, index)){ // is light source visible?
+		kd = kd * max(dot(L, N), dot(L,-N)); // this should be N but it isnt, 
+		// i think this is due to either the model being weird with normal orientation
+		ks = ks * pow(max(0,dot(R,L)),n);
 	} else {
-		ks = vec3(0);
+		ks = 0;
+		kd = 0;
 	}
 	vec3 light = lightIntenstity/(dot(P - lightWorldPos,P - lightWorldPos));
-	color += (ks+kd)*light;
-	outColor = vec4(color, 1);
+	light = (kd+ks)*light;
+	outColor = vec4(color * light + color * ka, 1);
 }
 
 
@@ -210,7 +218,5 @@ void main() {
 		}
 		outColor = vec4(3, 215, 252, 255) /255;
 	}
-	return;
-
 	return;
 }

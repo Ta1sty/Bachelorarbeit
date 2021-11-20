@@ -5,56 +5,56 @@
 #include <string.h>
 #include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
+
 #include "Util.h"
 #include "Globals.h"
 #include "Raster.h"
 #include "Shader.h"
 #include "VulkanStructs.h"
-int init_vulkan(VkInfo* info, GLFWwindow** window, Scene* scene)
+void init_vulkan(VkInfo* info, GLFWwindow** window, Scene* scene)
 {
 	if(info->rasterize == VK_TRUE)
 	{
 		initVertexArray();
 	}
-	if (
-		create_instance(info) &&
+	create_instance(info);
 #ifdef NDEBUG
 #else
-		create_validation_layer(info) &&
+	create_validation_layer(info);
 #endif
-		create_device(info) &&
-		create_vertex_buffer(info) &&
-		create_or_resize_swapchain(info, window, WINDOW_WIDTH, WINDOW_HEIGHT, scene) &&
-		create_semaphores(info)) return SUCCESS;
-	return FAILURE;
+	create_device(info);
+	create_vertex_buffer(info);
+	create_or_resize_swapchain(info, window, WINDOW_WIDTH, WINDOW_HEIGHT, scene);
+	create_semaphores(info);
 }
-int create_or_resize_swapchain(VkInfo* vk, GLFWwindow** window, uint32_t width, uint32_t height, Scene* scene)
+void create_or_resize_swapchain(VkInfo* vk, GLFWwindow** window, uint32_t width, uint32_t height, Scene* scene)
 {
 	vkDeviceWaitIdle(vk->device);
 
 	destroy_swapchain(vk); // destroys the old one
 
-	if (width == 0 || height == 0) return SUCCESS;
+	if (width == 0 || height == 0) return;
 
-	if (create_swapchain(vk, window, width, height) &&
-		create_image_views(vk) &&
-		create_render_pass(vk) &&
-		create_descriptor_containers(vk, scene) && // out
-		create_pipeline(vk) &&
-		create_frame_buffers(vk) &&
-		create_vertex_buffer(vk) && // out
-		init_descriptor_containers(vk, scene) && // out
-		create_command_buffers(vk)
-		)
-		return SUCCESS;
-	return FAILURE;
+	create_swapchain(vk, window, width, height);
+	create_image_views(vk);
+	create_render_pass(vk);
+	create_descriptor_containers(vk, scene); // out
+	create_pipeline(vk);
+	create_frame_buffers(vk);
+	create_vertex_buffer(vk); // out
+	init_descriptor_containers(vk, scene); // out
+	create_command_buffers(vk);
 }
-void destroy_vulkan(VkInfo* vk)
+void destroy_vulkan(VkInfo* vk, Scene* scene)
 {
 	if (vk->imageAvailableSemaphore) vkDestroySemaphore(vk->device, vk->imageAvailableSemaphore, NULL);
 	if (vk->renderFinishedSemaphore) vkDestroySemaphore(vk->device, vk->renderFinishedSemaphore, NULL);
 
+	destroy_shaders(vk, scene);
 	destroy_swapchain(vk);
+	vkDestroySampler(vk->device, scene->sampler, NULL);
+
+	vkDestroyDescriptorPool(vk->device, vk->descriptor_pool, NULL);
 
 	if (vk->command_pool) vkDestroyCommandPool(vk->device, vk->command_pool, NULL);
 	free(vk->device_extension_names);

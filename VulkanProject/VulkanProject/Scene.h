@@ -104,8 +104,9 @@ typedef struct flatNodeResult
 } FlatNodeResult;
 
 void init_scene(Scene* scene);
-int load_scene(Scene* scene, char** path);
+void load_scene(Scene* scene, char** path);
 void load_textures(TextureData* data, FILE* file);
 void load_texture(Texture* texture, FILE* file);
 void flatten_scene(Scene* scene);
 FlatNodeResult flatten_node(Scene* scene, SceneNode* parent, SceneNode* node);
+void destroy_scene(Scene* scene);
