@@ -1,0 +1,14 @@
+NEXT
+AccelerationStructure creation (c side)
+Shader Layout and buffer passing (maybe draw more than just one triangle),
+	in genral how to pass values to shaders - works somewhat
+FIGURE OUT HOW TO GET INSTANCE/AABB or WHATEVER
+Check for required extension GL_EXT_nonuniform_qualifier
+
+Performance
+caching, register spilling, nvidea nsight graphics
+
+
+Base TLAS
+Fix Normals, pass materials to shader
+Imgui vulkan backend

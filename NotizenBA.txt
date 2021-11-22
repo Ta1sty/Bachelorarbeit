@@ -1,0 +1,71 @@
+killian.herveau@kit.edu
+Do: 14:00
+
+watch video for paper
+
+1.rasterisiere scene für visibility buffer(visibility_pass) (nicht zwangsweise nötig, bzw. in diesem Fall unnötig, rasterisierung wird "nicht wirklich" gebraucht
+2.zeichne bildschirmfüllendes dreieck und führe raytracing dann im fragment shader aus(shading_pass_t)
+3.rendere UI(imgui shader)
+
+
+Theorie:
+BLAS enthält nicht nur primitve und instances sondern auch programmable instances (PI), können laut paper auch in TLAS referenziert werden.
+PI wird mit traversal shader assoziert, dieser erhält den Ray (für z.B. LoD) und die PI-Node
+
+
+traversal shader:
+	Aufgabe: Traversiere BLAS und gebe die nächste ebene an Nodes zurück (oder nur die nächste Node wenn man ein offset angibt)
+	input: Ray und Parent Node (also die node von der er aufgerufen wurde, wird verwendet um z.b. strahl zu transformieren)
+	output: Die nodes die als nächstes traversiert werden müssen (mit ausgewähltem level of detail)
+	=> Level of detail: auswahl im traversal shader, vermeidung von TLAS neukonstruktion
+	=> MultiLevel Instancing: Mehere PIs können auf dieselbe BLAS zeigen(im allgemeinen mit unterschiedlicher transformation)
+
+Vorgang ist abgeschlossen sobald Level0 (TLAS) komplett traversiert, wird durch einen stack an indizes getrackt.
+	Bei weiterem abstieg weiteres stacklevel, diese BLAS ist erst dann abgeschlossen sobald vollständig traversiert, erkennung anhand des stacks(bzw. keine weiteren schnitte mehr vorhanden)
+
+Wie werden die resultate gespeichert? Wird nach jedem durchgang tmin aktualisiert? oder gibt der prozess am ende nur die node zurück die den closest hit beinhaltet?
+
+Multi-level instancing, level of detail is only ONE applicion for traversal shaders
+
+Praxis:
+	Setup
+	AS limitiert auf 2 ebenen
+	interpretiere tiefere blas mit geradem index (startet mit 0) als TLAS mit BLAS
+		falls in dieser primitive sind, schreibe diese in eigene BLAS
+		Verweise also auf eigene primitve (1.BLAS, optimierbar) und tiefere liegende instanzen (n. BLAS)
+	
+	Vorgehen:
+	Wir machen Raytracing per Pixel
+	Vertexshader: zeichne Bildschirmfüllendes Dreieck, könnte auch einen geometry shader dafür nehmen
+	Fragmentshader: ein fragment pro pixel.
+	Schieße primärstrahl mit ray query, und lasse diese durchlaufen (oberste TLAS)
+		1. Falls Dreieck Speichere nähstes primitv beim durchlauf, tmax (in the end closest hit)+ triangleindex
+		2. Falls Primitv Implementiere schnitttest
+		3. Falls Programmable instance speichere node in liste mit
+
+	solange nodes.notEmpty()
+		1.wähle level of detail anhand der entfernung zur kamera
+		2.transformiere strahl in koordiantensystem der node
+			Experiment: Verwende DFS statt BFS also last in first out queue, verwende deque dummys die den strahl zurücktransformieren
+				=> vermeidung mehrfacher transformation des strahl + nutzen des stacks nicht nötig, einfach strahl zurücktransformieren
+		3. führe ray query für node aus.
+			1. Falls Dreieck Speichere nähstes primitv beim durchlauf, tmin + triangleindex
+			2. Falls Primitv Implementiere schnitttest
+			3. Falls Traversal Node speichere node in liste mit transformiertem strahl
+
+	doShading()
+
+
+	Level of detail:
+		Auswahl beim durchgehen der liste (zusatz instanzen die von der BLAS referenziert wurden sind in der regel auch bereits auf dem richtigen level of detail.
+				ist sogar vorteilhaft wegen self occlusion)
+			prinzip: ist der Baum weit weg, ist es sein Ast auch
+		Ohne traversal: bestimme das level of detail für jedes frame anhand der entfernung zum betrachter im vorraus
+			und passe TLAS entsprechend an und rendere dann frame. Problem wird mit traversalShader komplett umgangen
+
+	Multilevel instancing:
+		Offensichtlich
+		Tree lässt sich weiter fortführen durch die verwendung von TLAS als "leafs" im BLAS
+		2 Level of instancing möglich pro AS (1 von TLAS auf BLAS und 1 von TraversalNode auf TLAS)
+
+scene ptext format, parser
