@@ -1,41 +1,80 @@
-#version 450
-layout(binding = 0, set = 0) uniform sceneData
-{
-	int numSpheres;
-} SceneData;
+#version 460
+#extension GL_EXT_nonuniform_qualifier : enable
 
-struct Sphere
-{
-float x;
-float y;
-float z;
-float r;
+struct Vertex{
+	vec3 position; // 0 - 16
+	vec3 normal;   // 16 - 16
+	vec2 tex_coord;// 32 - 8
+	uint material_index;   // 40 - 4 - the index of the material to use
+};
+struct Material{
+	float k_a;
+	float k_d;
+	float k_s;
+	int texture_index;
 };
 
-layout(binding = 1, set = 0) buffer sphereBuffer {
-	Sphere[] spheres;
-} SphereBuffer;
+layout(binding = 0, set = 0) uniform SceneData{
+	uint numVertices;
+	uint numTriangles;
+	uint numSceneNodes;
+	uint numNodeIndices;
+};
 
-layout(binding = 2, set = 1) uniform FrameData {
-    vec4 cameraPosition;
-	vec4 cameraDirection;
+layout(binding = 1, set = 0) buffer VertexBuffer { Vertex[] vertices; };
+layout(binding = 2, set = 0) buffer IndexBuffer { int[] indices; };
+layout(binding = 3, set = 0) buffer MaterialBuffer { Material[] materials; };
+layout(binding = 4, set = 1) uniform sampler samp;
+layout(binding = 5, set = 1) uniform texture2D textures[];
+
+layout(binding = 6, set = 2) uniform FrameData {
+	mat4 view_to_world;
 	uint width;
 	uint height;
-	int fov;
+	float fov;
 } frame;
 
 layout(location = 0) in vec3 fragColor;
 
 layout(location = 0) out vec4 outColor;
 
-const float t_min = 1.0e-3f;
+const float t_min = 1.0e-4f;
+const float EPSILON = 0.0000001;
 
-bool sphereIntersect(vec3 rayOrigin, vec3 rayDir, int sphereIndex, out float t){
-	Sphere s = SphereBuffer.spheres[sphereIndex];
-	vec3 v = rayOrigin - vec3(s.x,s.y,s.z);
+bool rayTriangleIntersect(vec3 rayOrigin, vec3 rayDirection, out vec3 tuv, vec3 v0, vec3 v1, vec3 v2) { 
+    vec3 edge1 = v1 - v0;
+	vec3 edge2 = v2 - v0;
+    vec3 h = cross(rayDirection, edge2);
+    float a = dot(edge1, h);
+    if (a > -EPSILON && a < EPSILON)
+        return false;    // This ray is parallel to this triangle.
+    float f = 1.0f/a;
+    vec3 s = rayOrigin - v0;
+    float u = f * dot(s, h);
+    if (u < 0.0 || u > 1.0)
+        return false;
+    vec3 q = cross(s, edge1);
+    float v = f * dot(rayDirection, q);
+    if (v < 0.0 || u + v > 1.0)
+        return false;
+    // At this stage we can compute t to find out where the intersection point is on the line.
+    float t = f * dot(edge2, q);
+    if (t > t_min) // ray intersection
+    {
+		tuv = vec3(t,u,v);
+        vec3 outIntersectionPoint = rayOrigin + rayDirection * t;
+        return true;
+    }
+    else // This means that there is a line intersection but not a ray intersection.
+        return false;
+} 
+bool vertexIntersect(vec3 rayOrigin, vec3 rayDir, vec3 postion){
+	float t;
+	float epsilon = 0.1f;
+	vec3 v = rayOrigin - postion;
 	float a = rayDir.x * rayDir.x + rayDir.y * rayDir.y + rayDir.z * rayDir.z;
 	float b = 2 * rayDir.x * v.x + 2 * rayDir.y * v.y + 2 * rayDir.z * v.z;
-	float c = v.x * v.x + v.y * v.y + v.z * v.z - s.r * s.r;
+	float c = v.x * v.x + v.y * v.y + v.z * v.z - epsilon * epsilon;
 	float disciminant = b * b - 4 * a * c;
 	if (disciminant < 0) return false;
 
@@ -56,88 +95,128 @@ bool sphereIntersect(vec3 rayOrigin, vec3 rayDir, int sphereIndex, out float t){
 	t = t1;
 	return true;
 }
-bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, out float t, out int sphereIndex) {
-	float t_max_in = t_max;
-	for(int i = 0; i < SceneData.numSpheres; i++){
-		t = t_max;
-		if(sphereIntersect(rayOrigin, rayDirection, i, t)) {
-			if(t<t_max) {
-				t_max = t;
-				sphereIndex = i;
+bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, out vec3 tuv, out int triangle_index) {
+	vec3 tuv_next;
+	tuv.x = t_max;
+	triangle_index = -1;
+	for(int i = 0;i<numTriangles;i++){
+		Vertex vert_v0 = vertices[indices[i * 3]];
+		Vertex vert_v1 = vertices[indices[i * 3 + 1]];
+		Vertex vert_v2 = vertices[indices[i * 3 + 2]];
+
+		vec3 v0 = vert_v0.position;
+		vec3 v2 = vert_v1.position;
+		vec3 v1 = vert_v2.position;
+		if(rayTriangleIntersect(rayOrigin, rayDirection, tuv_next, v0, v1, v2) ){
+			if(tuv_next.x < tuv.x) {
+				tuv = tuv_next;
+				triangle_index = i;
 			}
 		}
 	}
-	if(t_max == t_max_in) return false;
-	t = t_max;
+	if(triangle_index == -1){
+		return false;
+	}
 	return true;
 }
 
-void shadeSphere(vec3 P, vec3 N, vec3 V) {
-	vec3 k_d = vec3(0.4,0.4,0.4);
-	vec3 k_s = vec3(0.6,0.6,0.6);
-	float n = 0.3;
-	float i = 3;
-	vec3 lightIntenstity = vec3(i,i,i);
-	vec3 lightWorldPos = vec3(0.5f,1,0);
+void shadeFragment(vec3 P, vec3 V, vec3 tuv, int triangle) {
+	Vertex v0 = vertices[indices[triangle * 3]];
+	Vertex v1 = vertices[indices[triangle * 3] + 1];
+	Vertex v2 = vertices[indices[triangle * 3] + 2];
+
+
+	float w = 1 - tuv.y - tuv.z;
+	float u = tuv.y;
+	float v = tuv.z;
+
+
+
+	vec3 N = w * v0.normal + u * v1.normal + v * v2.normal;
 	N = normalize(N);
-	vec3 R = normalize(reflect(-V, N));
-	vec3 color = vec3(0.0);
+	vec2 tex = w * v0.tex_coord + v * v1.tex_coord + u * v2.tex_coord;
+
+	Material m = materials[v0.material_index];
+
+	float ka = m.k_a;
+	float kd = m.k_d;
+	float ks = m.k_s;
+
+	vec3 color = texture(sampler2D(textures[m.texture_index], samp), tex).xyz;
+
+	float n = 8;
+	float i = 2;
+	vec3 lightIntenstity = vec3(i,i,i);
+	vec3 lightWorldPos = vec3(0,1.4f,0);
+	vec3 R = normalize(reflect(V, N));
 	vec3 L = normalize(lightWorldPos-P);
-	vec3 kd = k_d * max(0,dot(L,N));
-	vec3 ks;
+	vec3 tuv2;
 	float t; int index;
-	if(!ray_trace_loop(P, L, length(P-lightWorldPos), t, index)){
-		ks = k_s * pow(max(0,dot(R,L)),n);
+	if(!ray_trace_loop(P, L, length(lightWorldPos-P), tuv2, index)){ // is light source visible?
+		kd = kd * max(dot(L, N), dot(L,-N)); // this should be N but it isnt, 
+		// i think this is due to either the model being weird with normal orientation
+		ks = ks * pow(max(0,dot(R,L)),n);
 	} else {
-		ks = vec3(0);
+		ks = 0;
+		kd = 0;
 	}
 	vec3 light = lightIntenstity/(dot(P - lightWorldPos,P - lightWorldPos));
-	color += (kd)*light;
-	outColor = vec4(color, 1);
+	light = (kd+ks)*light;
+	outColor = vec4(color * light + color * ka, 1);
 }
 
 
-
 void main() {
-    float scale = tan(radians(frame.fov * 0.5)); 
+	// from https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-generating-camera-rays/generating-camera-rays
+	ivec2 xy = ivec2(gl_FragCoord.xy);
+	float x = xy.x;
+	float y = xy.y;
+
+	float tex_x = x/frame.width;
+	float tex_y = y/frame.height;
+
+
+	float flt_height = frame.height;
 	float flt_width = frame.width;
-	float flt_hight = frame.height;
-	float imageAspectRatio = flt_width / flt_hight;
+	vec4 origin_view_space = vec4(0,0,0,1);
+	vec4 origin_world_space = frame.view_to_world * origin_view_space;
 
-	ivec2 ij = ivec2(gl_FragCoord.xy);
-	
-	float x = (2 * (ij.x + 0.5) / flt_width - 1) * imageAspectRatio * scale; 
-	float y = (1 - 2 * (ij.y + 0.5) / flt_hight) * scale;
-	float z = 1;
+	float z = flt_height/tan(frame.fov);
+	vec4 direction_view_space = vec4(normalize(vec3((x - flt_width/2.f),  flt_height/2.f - y, -z)) , 0);
+	vec4 direction_world_space = frame.view_to_world * direction_view_space;
 
-	vec3 rayOrigin = vec3(0); 
-	vec3 rayDirection = vec3(x, y, 1) - rayOrigin;
+	vec3 rayOrigin = origin_world_space.xyz;
+	vec3 rayDirection = direction_world_space.xyz;
 
-	rayDirection = normalize(rayDirection);
+	int triangle_index = -1;
 
-	float t_best = 500;
-
-	//for debugging
-	bool debug = false;
-	if(debug && SphereBuffer.spheres[1].r ==2) {
-		outColor = vec4(1,1,1,1);
-		return;
+	float t_max = 300;
+	vec3 tuv;
+	if(ray_trace_loop(rayOrigin, rayDirection, t_max, tuv, triangle_index)){
+		vec3 P = rayOrigin + tuv.x * rayDirection;
+		shadeFragment(P, rayDirection, tuv, triangle_index);
 	}
-
-	float t_max = 500;
-	float t;
-	int sphereIndex = -1;
-	if(ray_trace_loop(rayOrigin, rayDirection, t_max, t, sphereIndex)){
-		if(sphereIndex == 0)
-		outColor = vec4(1,0,0,1);
-		if(sphereIndex == 1)
-		outColor = vec4(0,1,0,1);
-		vec3 P = rayOrigin + t * rayDirection;
-		Sphere s = SphereBuffer.spheres[sphereIndex];
-		vec3 N = normalize(P - vec3(s.x, s.y, s.z));
-		shadeSphere(P, N, rayDirection);
-	} else {
+	else {
+		
+		for(int i = 0;i<1;i++){
+			if(vertexIntersect(rayOrigin, rayDirection, vec3(1,0,0))){
+				outColor = vec4(1,0,0,1);
+				return;
+			}
+			if(vertexIntersect(rayOrigin, rayDirection, vec3(0,1,0))){
+				outColor = vec4(0,1,0,1);
+				return;
+			}
+			if(vertexIntersect(rayOrigin, rayDirection, vec3(0,0,-1))){
+				outColor = vec4(0,0,1,1);
+				return;
+			}
+			if(vertexIntersect(rayOrigin, rayDirection, vec3(0,0,0))){
+				outColor = vec4(1,1,1,1);
+				return;
+			}		
+		}
 		outColor = vec4(3, 215, 252, 255) /255;
-		//outColor = vec4(abs(x), abs(y) ,1, 1);
 	}
+	return;
 }

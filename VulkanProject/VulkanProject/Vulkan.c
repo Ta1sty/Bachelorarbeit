@@ -5,99 +5,56 @@
 #include <string.h>
 #include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
+
 #include "Util.h"
 #include "Globals.h"
 #include "Raster.h"
 #include "Shader.h"
 #include "VulkanStructs.h"
-int init_vulkan(VkInfo* info, GLFWwindow** window)
+void init_vulkan(VkInfo* info, GLFWwindow** window, Scene* scene)
 {
 	if(info->rasterize == VK_TRUE)
 	{
 		initVertexArray();
 	}
-	if (
-		create_instance(info) &&
+	create_instance(info);
 #ifdef NDEBUG
 #else
-		create_validation_layer(info) &&
+	create_validation_layer(info);
 #endif
-		create_device(info) &&
-		create_or_resize_swapchain(info, window, WINDOW_WIDTH, WINDOW_HEIGHT) &&
-		create_semaphores(info)) return SUCCESS;
-	return FAILURE;
+	create_device(info);
+	create_vertex_buffer(info);
+	create_or_resize_swapchain(info, window, WINDOW_WIDTH, WINDOW_HEIGHT, scene);
+	create_semaphores(info);
 }
-int create_or_resize_swapchain(VkInfo* vk, GLFWwindow** window, uint32_t width, uint32_t height)
+void create_or_resize_swapchain(VkInfo* vk, GLFWwindow** window, uint32_t width, uint32_t height, Scene* scene)
 {
 	vkDeviceWaitIdle(vk->device);
 
 	destroy_swapchain(vk); // destroys the old one
 
-	if (width == 0 || height == 0) return SUCCESS;
+	if (width == 0 || height == 0) return;
 
-	if (create_swapchain(vk, window, width, height) &&
-		create_image_views(vk) &&
-		create_render_pass(vk) &&
-		create_descriptor_layouts(vk) &&
-		create_pipeline(vk) &&
-		create_frame_buffers(vk) &&
-		create_vertex_buffer(vk) &&
-		create_uniform_buffers(vk) &&
-		createDescriptorPool(vk) &&
-		createDescriptorSets(vk) &&
-		create_command_buffers(vk)
-		)
-		return SUCCESS;
-	return FAILURE;
+	create_swapchain(vk, window, width, height);
+	create_image_views(vk);
+	create_render_pass(vk);
+	create_descriptor_containers(vk, scene); // out
+	create_pipeline(vk);
+	create_frame_buffers(vk);
+	create_vertex_buffer(vk); // out
+	init_descriptor_containers(vk, scene); // out
+	create_command_buffers(vk);
 }
-int drawFrame(VkInfo* vk_info)
-{
-	Swapchain* swapchain = &vk_info->swapchain;
-	uint32_t imageIndex;
-	vkAcquireNextImageKHR(vk_info->device, swapchain->vk_swapchain, 
-		UINT64_MAX, vk_info->imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
-	const VkSemaphore waitSemaphores[] = { vk_info->imageAvailableSemaphore };
-	const VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-
-	VkSemaphore signalSemaphores[] = { vk_info->renderFinishedSemaphore };
-
-	update_frame_buffers(vk_info, imageIndex);
-
-	VkSubmitInfo submitInfo = {
-	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-	.waitSemaphoreCount = 1,
-	.pWaitSemaphores = waitSemaphores,
-	.pWaitDstStageMask = waitStages,
-	.commandBufferCount = 1,
-	.pCommandBuffers = &vk_info->command_buffers[imageIndex],
-	.signalSemaphoreCount = 1,
-	.pSignalSemaphores = signalSemaphores,
-	};
-
-	if (vkQueueSubmit(vk_info->graphics_queue, 1, &submitInfo, VK_NULL_HANDLE)) return err("failed to submit draw command buffer!");
-	VkSwapchainKHR swapChains[] = { swapchain->vk_swapchain };
-
-	VkPresentInfoKHR presentInfo = {
-	.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-	.waitSemaphoreCount = 1,
-	.pWaitSemaphores = signalSemaphores,
-	.swapchainCount = 1,
-	.pSwapchains = swapChains,
-	.pImageIndices = &imageIndex,
-	.pResults = NULL // Optional
-	};
-	vkQueuePresentKHR(vk_info->present_queue, &presentInfo);
-
-	vkQueueWaitIdle(vk_info->present_queue);
-
-	return SUCCESS;
-}
-void destroy_vulkan(VkInfo* vk)
+void destroy_vulkan(VkInfo* vk, Scene* scene)
 {
 	if (vk->imageAvailableSemaphore) vkDestroySemaphore(vk->device, vk->imageAvailableSemaphore, NULL);
 	if (vk->renderFinishedSemaphore) vkDestroySemaphore(vk->device, vk->renderFinishedSemaphore, NULL);
 
+	destroy_shaders(vk, scene);
 	destroy_swapchain(vk);
+	vkDestroySampler(vk->device, scene->sampler, NULL);
+
+	vkDestroyDescriptorPool(vk->device, vk->descriptor_pool, NULL);
 
 	if (vk->command_pool) vkDestroyCommandPool(vk->device, vk->command_pool, NULL);
 	free(vk->device_extension_names);
@@ -142,22 +99,6 @@ void destroy_swapchain(VkInfo* vk)
 
 	// everything in VK_info thats associated with the swapchain
 
-	if(vk->uniformBuffers != NULL)
-	{
-		for (size_t i = 0; i < vk->buffer_count; i++) {
-			vkDestroyBuffer(vk->device, vk->uniformBuffers[i], NULL);
-		}
-		free(vk->uniformBuffers);
-		vk->uniformBuffers = NULL;
-	}
-	if (vk->uniformBufferMemory != NULL)
-	{
-		for (size_t i = 0; i < vk->buffer_count; i++) {
-			vkFreeMemory(vk->device, vk->uniformBufferMemory[i], NULL);
-		}
-		free(vk->uniformBufferMemory);
-		vk->uniformBufferMemory = NULL;
-	}
 
 	if (vk->vertexBuffer != NULL)
 	{
@@ -171,19 +112,6 @@ void destroy_swapchain(VkInfo* vk)
 		vk->vertexBufferMemory = NULL;
 	}
 
-	if (vk->frame_descriptor_layout)
-		vkDestroyDescriptorSetLayout(vk->device, vk->frame_descriptor_layout, NULL);
-	vk->frame_descriptor_layout = NULL;
-
-	if (vk->descriptor_pool)
-	{
-		vkDestroyDescriptorPool(vk->device, vk->descriptor_pool, NULL);
-		vk->descriptor_pool = NULL;
-		free(vk->frame_descriptor_sets);
-
-		//vkFreeDescriptorSets(vk->device, vk->descriptorPool, vk->buffer_count, vk->descriptor_sets);
-		//vk->descriptor_sets = NULL;
-	}
 
 	if (vk->pipeline)
 		vkDestroyPipeline(vk->device, vk->pipeline, NULL);

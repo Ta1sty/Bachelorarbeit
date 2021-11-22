@@ -1,7 +1,6 @@
 #pragma once
 #include "Globals.h"
-int init_vulkan(VkInfo* info, GLFWwindow** window);
-int create_or_resize_swapchain(VkInfo* vk, GLFWwindow** window, uint32_t width, uint32_t height);
-void destroy_vulkan(VkInfo* vk);
+void init_vulkan(VkInfo* info, GLFWwindow** window, Scene* scene);
+void create_or_resize_swapchain(VkInfo* vk, GLFWwindow** window, uint32_t width, uint32_t height, Scene* scene_data);
+void destroy_vulkan(VkInfo* vk, Scene* scene);
 void destroy_swapchain(VkInfo* vk_ptr);
-int drawFrame(VkInfo* vk_info);
