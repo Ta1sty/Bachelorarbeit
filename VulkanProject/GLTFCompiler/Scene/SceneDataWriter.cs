@@ -118,7 +118,7 @@ namespace GLTFCompiler.Scene
                 BitConverter.GetBytes(0.2f).CopyTo(materialBuffer.AsSpan(pos += 4)); // ka
                 BitConverter.GetBytes(0.4f).CopyTo(materialBuffer.AsSpan(pos += 4)); // kd
                 BitConverter.GetBytes(0.6f).CopyTo(materialBuffer.AsSpan(pos += 4)); // ks
-                BitConverter.GetBytes(material.PbrMetallicRoughness.BaseColorTexture.Index).CopyTo(materialBuffer.AsSpan(pos += 4)); // textureIndex
+                BitConverter.GetBytes(material.PbrMetallicRoughness?.BaseColorTexture?.Index ?? -1).CopyTo(materialBuffer.AsSpan(pos += 4)); // textureIndex
             }
             str.Write(materialBuffer);
         }

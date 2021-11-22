@@ -1,6 +1,5 @@
 #include "Window.h"
 
-#include <stdio.h>
 #include <GLFW/glfw3.h>
 #include "Util.h"
 #include "Globals.h"

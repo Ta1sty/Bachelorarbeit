@@ -157,15 +157,39 @@ void load_textures(TextureData* data, FILE* file)
 
 	// TODO create dummy materials so buffers have size > 0 if there are no textures
 	fread(&data->num_materials, sizeof(uint32_t), 1, file);
-	data->materials = malloc(sizeof(Material) * data->num_materials);
-	fread(data->materials, sizeof(Material), data->num_materials, file);
+	if(data->num_materials != 0)
+	{
+		data->materials = malloc(sizeof(Material) * data->num_materials);
+		fread(data->materials, sizeof(Material), data->num_materials, file);
+	} else // create dummy material so buffer has size > 0
+	{
+		data->num_materials = 1;
+		data->materials = malloc(sizeof(Material));
+		data->materials[0].k_a = 0.3f;
+		data->materials[0].k_d = 0.4f;
+		data->materials[0].k_s = 0.3f;
+		data->materials[0].texture_index = 0;
+	}
 
 	fread(&data->num_textures, sizeof(uint32_t), 1, file);
 	//data->num_textures = 1;
-	data->textures = malloc(sizeof(Texture) * data->num_textures);
-	for (uint32_t i = 0; i< data->num_textures; i++)
+	if(data->num_textures != 0)
 	{
-		load_texture(&data->textures[i], file);
+		data->textures = malloc(sizeof(Texture) * data->num_textures);
+		for (uint32_t i = 0; i < data->num_textures; i++)
+		{
+			load_texture(&data->textures[i], file);
+		}
+	} else // create dummy texture so buffer has size > 0
+	{
+		data->num_textures = 1;
+		data->textures = malloc(sizeof(Texture));
+		data->textures[0].image_size = sizeof(uint32_t); // width * height * bytePerPixel
+		data->textures[0].image_height = 1;
+		data->textures[0].image_width = 1;
+		data->textures[0].index = 0;
+		data->textures[0].pixel_data = malloc(data->textures[0].image_size);
+		data->textures[0].pixel_data[0] = 0xFFFF00FF;
 	}
 }
 void load_texture(Texture* texture, FILE* file)
@@ -178,20 +202,6 @@ void load_texture(Texture* texture, FILE* file)
 
 	texture->pixel_data = malloc(texture->image_size);
 	fread(texture->pixel_data, sizeof(char), texture->image_size, file);
-	return;
-
-	int w = 2;
-	int h = 2;
-	texture->image_size = w * h * sizeof(uint32_t); // width * height * bytePerPixel
-	texture->image_height = 2;
-	texture->image_width = 2;
-	texture->index = 0;
-	texture->pixel_data = malloc(texture->image_size);
-
-	texture->pixel_data[0] = 0x000000FF;
-	texture->pixel_data[1] = 0x0000FF00;
-	texture->pixel_data[2] = 0x00FF0000;
-	texture->pixel_data[3] = 0x00000000;
 }
 
 void destroy_scene(Scene* scene)

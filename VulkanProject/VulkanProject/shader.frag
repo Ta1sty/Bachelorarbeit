@@ -5,7 +5,7 @@ struct Vertex{
 	vec3 position; // 0 - 16
 	vec3 normal;   // 16 - 16
 	vec2 tex_coord;// 32 - 8
-	uint material_index;   // 40 - 4 - the index of the material to use
+	int material_index;   // 40 - 4 - the index of the material to use
 };
 struct Material{
 	float k_a;
@@ -136,16 +136,24 @@ void shadeFragment(vec3 P, vec3 V, vec3 tuv, int triangle) {
 	N = normalize(N);
 	vec2 tex = w * v0.tex_coord + v * v1.tex_coord + u * v2.tex_coord;
 
-	Material m = materials[v0.material_index];
+	float ka, kd, ks;
+	vec3 color;
+	if(v0.material_index < 0){
+		ka = 0.3f; kd = 0.4f; ks = 0.3f;
+		color = vec3(1,0,1);
+	} else {
+		Material m = materials[v0.material_index];
+		ka = m.k_a;
+		kd = m.k_d;
+		ks = m.k_s;
+		if(m.texture_index < 0)
+			color = vec3(1,0,1);
+		else
+			color = texture(sampler2D(textures[m.texture_index], samp), tex).xyz;
+	}
 
-	float ka = m.k_a;
-	float kd = m.k_d;
-	float ks = m.k_s;
-
-	vec3 color = texture(sampler2D(textures[m.texture_index], samp), tex).xyz;
-
-	float n = 8;
-	float i = 2;
+	float n = 2;
+	float i = 0.5f;
 	vec3 lightIntenstity = vec3(i,i,i);
 	vec3 lightWorldPos = vec3(0,1.4f,0);
 	vec3 R = normalize(reflect(V, N));
@@ -153,7 +161,7 @@ void shadeFragment(vec3 P, vec3 V, vec3 tuv, int triangle) {
 	vec3 tuv2;
 	float t; int index;
 	if(!ray_trace_loop(P, L, length(lightWorldPos-P), tuv2, index)){ // is light source visible?
-		kd = kd * max(dot(L, N), dot(L,-N)); // this should be N but it isnt, 
+		//kd = kd * max(dot(L, N), dot(L,-N)); // useless, kd is either k_d or 0
 		// i think this is due to either the model being weird with normal orientation
 		ks = ks * pow(max(0,dot(R,L)),n);
 	} else {
@@ -174,7 +182,6 @@ void main() {
 
 	float tex_x = x/frame.width;
 	float tex_y = y/frame.height;
-
 
 	float flt_height = frame.height;
 	float flt_width = frame.width;

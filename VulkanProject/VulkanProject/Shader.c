@@ -2,15 +2,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #define _USE_MATH_DEFINES // for C
-#include <math.h>
-#include <time.h>
 
 #include "Descriptors.h"
 #include "Globals.h"
 #include "Util.h"
-#include "VulkanUtil.h"
 #include "Scene.h"
 #include "Textures.h"
 
