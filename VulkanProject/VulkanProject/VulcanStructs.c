@@ -96,19 +96,16 @@ void create_instance(VkInfo* vk_info)
 	if (vk_info->queue_family_index == queue_family_count)
 		error("No Vulkan queue family supports graphics and compute.");
 	// Figure out whether ray queries are supported
-	/* TODO Ray tracing stuff
-	if (request_ray_tracing) {
-		uint32_t extension_count = 0;
-		vkEnumerateDeviceExtensionProperties(device->physical_device, NULL, &extension_count, NULL);
-		VkExtensionProperties* extensions = malloc(sizeof(VkExtensionProperties) * extension_count);
-		if (vkEnumerateDeviceExtensionProperties(device->physical_device, NULL, &extension_count, extensions))
-			extension_count = 0;
-		for (uint32_t i = 0; i != extension_count; ++i)
-			if (strcmp(extensions[i].extensionName, VK_KHR_RAY_QUERY_EXTENSION_NAME) == 0)
-				device->ray_tracing_supported = VK_TRUE;
-		free(extensions);
-	}
-	*/
+	// TODO Ray tracing stuff
+	uint32_t extension_count = 0;
+	vkEnumerateDeviceExtensionProperties(vk_info->physical_device, NULL, &extension_count, NULL);
+	VkExtensionProperties* extensions = malloc(sizeof(VkExtensionProperties) * extension_count);
+	if (vkEnumerateDeviceExtensionProperties(vk_info->physical_device, NULL, &extension_count, extensions))
+		extension_count = 0;
+	for (uint32_t i = 0; i != extension_count; ++i)
+		if (strcmp(extensions[i].extensionName, VK_KHR_RAY_QUERY_EXTENSION_NAME) == 0)
+			vk_info->ray_tracing = VK_TRUE;
+	free(extensions);	
 }
 
 void create_device(VkInfo* vk_info)

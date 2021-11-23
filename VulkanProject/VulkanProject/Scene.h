@@ -23,7 +23,7 @@ typedef struct sceneNode
 	int32_t Index;			// the own index															20
 } SceneNode;
 
-typedef struct vertex
+typedef struct vertex // ALWAYS KEEP THIS PADDED
 {
 	float position[3];			//0 - 48%16 = 0
 	float pad1;					//12
@@ -103,10 +103,17 @@ typedef struct flatNodeResult
 	Vertex* vertices;
 } FlatNodeResult;
 
+typedef struct {
+	uint32_t numChildren;
+	SceneNode* children;
+} NodeCollapseResult;
+
 void init_scene(Scene* scene);
 void load_scene(Scene* scene, char** path);
 void load_textures(TextureData* data, FILE* file);
 void load_texture(Texture* texture, FILE* file);
 void flatten_scene(Scene* scene);
+void collapse_parent_nodes(Scene* scene);
 FlatNodeResult flatten_node(Scene* scene, SceneNode* parent, SceneNode* node);
+NodeCollapseResult collapse_node(Scene* scene, float transform[4][4], SceneNode* node);
 void destroy_scene(Scene* scene);

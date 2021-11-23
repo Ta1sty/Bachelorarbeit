@@ -13,9 +13,9 @@
 void compile_shaders()
 {
 	printf("compiling shaders\n");
-	int vert = system("C:/VulkanSDK/1.2.189.2/Bin/glslc.exe shader.vert -o shader.vert.spv --target-env=vulkan1.2");
+	int vert = system("%VK_SDK_PATH%/Bin/glslc.exe shader.vert -o shader.vert.spv --target-env=vulkan1.2");
 
-	int frag = system("C:/VulkanSDK/1.2.189.2/Bin/glslc.exe shader.frag -o shader.frag.spv --target-env=vulkan1.2");
+	int frag = system("%VK_SDK_PATH%/Bin/glslc.exe shader.frag -o shader.frag.spv --target-env=vulkan1.2");
 
 	if (vert || frag)
 		error("Failed to compile shaders");
@@ -92,9 +92,9 @@ void create_descriptor_containers(VkInfo* info, Scene* scene)
 	BufferInfo sceneInfo = create_buffer_info(sceneDataBinding, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
 		sizeof(SceneData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 	BufferInfo vertexBuffer = create_buffer_info(VertexBufferBinding, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
-		sizeof(Vertex) * scene->scene_data.numVertices, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		sizeof(Vertex) * scene->scene_data.numVertices, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 	BufferInfo indexBuffer = create_buffer_info(IndexBufferBinding, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
-		sizeof(uint32_t) * scene->scene_data.numTriangles * 3, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		sizeof(uint32_t) * scene->scene_data.numTriangles * 3, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 	BufferInfo materialBuffer = create_buffer_info(MaterialBufferBinding, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
 		sizeof(Material) * scene->texture_data.num_materials, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 	globalInfos[0] = sceneInfo;

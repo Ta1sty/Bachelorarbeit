@@ -49,8 +49,6 @@ void load_scene(Scene* scene, char** path)
 	
 	load_textures(&scene->texture_data, file);
 	fclose(file);
-
-	flatten_scene(scene);
 }
 void flatten_scene(Scene* scene)
 {
@@ -69,11 +67,13 @@ void flatten_scene(Scene* scene)
 	{
 		scene->indices[i] = i;
 	}
+
+	// TODO replace scene node with single one
 }
 
 FlatNodeResult flatten_node(Scene* scene, SceneNode* parent, SceneNode* node)
 {
-	FlatNodeResult result = { 0 };
+	FlatNodeResult result = { 0 }; // multi level is not working!, missing passthrough transform
 	float tr[4][4];
 	for (uint32_t r = 0; r != 4; r++) {
 		for (uint32_t s = 0; s != 4; s++){
@@ -216,4 +216,84 @@ void destroy_scene(Scene* scene)
 		free(scene->texture_data.textures[i].pixel_data);
 	}
 	free(scene->texture_data.textures);
+}
+// collapses all scene Nodes that do not reference any geometry, after that only the last node references children, the rest only references geometry
+void collapse_parent_nodes(Scene* scene)
+{
+	SceneNode root = scene->scene_nodes[scene->scene_data.numSceneNodes - 1];
+	if (root.NumChildren < 0) return;
+
+	NodeCollapseResult* results = malloc(sizeof(NodeCollapseResult) * root.NumChildren);
+	uint32_t newNum = 0;
+	for (int i = 0; i < root.NumChildren; i++) {
+		SceneNode child = scene->scene_nodes[scene->node_indices[root.childrenIndex + i]];
+		results[i] = collapse_node(scene, root.transform, &child);
+		newNum += results[i].numChildren;
+	}
+	SceneNode* newNodes = malloc(sizeof(SceneNode) * (newNum + 1));
+	int index = 0;
+	for (int i = 0;i < root.NumChildren;i++) {
+		memcpy(&newNodes[index], results[i].children, sizeof(SceneNode) * results[i].numChildren);
+		index += results[i].numChildren;
+		free(results[i].children);
+	}
+
+	SceneNode newRoot = {
+		.childrenIndex = 0,
+		.Index = newNum + 1,
+		.IndexBufferIndex = -1,
+		.NumTriangles = 0,
+		.NumChildren = newNum
+	};
+	newNodes[newNum] = newRoot;
+	memcpy(newNodes->transform, root.transform, sizeof(float) * 4 * 4);
+	uint32_t* newIndices = malloc(sizeof(uint32_t) * newNum);
+	for (int i = 0; i < newNum; i++) {
+		newIndices[i] = i;
+	}
+	free(scene->scene_nodes);
+	free(scene->node_indices);
+	scene->scene_nodes = newNodes;
+	scene->node_indices = newIndices;
+	scene->scene_data.numSceneNodes = newNum + 1;
+	scene->scene_data.numNodeIndices = newNum;
+}
+
+NodeCollapseResult collapse_node(Scene* scene, float transform[4][4], SceneNode* node) {
+	NodeCollapseResult result = { 0 };
+	float tr[4][4];
+	for (uint32_t r = 0; r != 4; r++) {
+		for (uint32_t s = 0; s != 4; s++) {
+			tr[r][s] = transform[r][0] * node->transform[0][s]
+				+ transform[r][1] * node->transform[1][s]
+				+ transform[r][2] * node->transform[2][s]
+				+ transform[r][3] * node->transform[3][s];
+		}
+	}
+	if (node->IndexBufferIndex > -1) { // this node references geometry
+		result.numChildren = 1;
+		result.children = malloc(sizeof(SceneNode));
+
+		memcpy(result.children[0].transform, tr, sizeof(float) * 4 * 4);
+
+		result.children[0].NumTriangles = node->NumTriangles;
+		result.children[0].IndexBufferIndex = node->IndexBufferIndex;
+		result.children[0].NumChildren = 0;
+		result.children[0].childrenIndex = -1;
+	}
+	for (int i = 0;i < node->NumChildren;i++) { // optimizable, less malloc / free
+		SceneNode* child = &scene->scene_nodes[scene->node_indices[node->childrenIndex + i]];
+		NodeCollapseResult childResult = collapse_node(scene, node, child);
+
+		uint32_t newNum = result.numChildren + childResult.numChildren;
+		SceneNode* newBuff = malloc(sizeof(SceneNode) * newNum);
+
+		memcpy(newBuff, result.children, sizeof(SceneNode) * result.numChildren);
+		memcpy(&newBuff[result.numChildren], childResult.children, sizeof(SceneNode) * childResult.numChildren);
+		free(result.children);
+		free(childResult.children);
+		result.children = newBuff;
+		result.numChildren = newNum;
+	}
+	return result;
 }

@@ -24,20 +24,45 @@ void createBuffer(VkInfo* vk, VkDeviceSize size, VkBufferUsageFlags usage, VkMem
 
 	check(vkCreateBuffer(vk->device, &bufferInfo, NULL, buffer),
 		"Failed to create buffer");
+
+	VkMemoryAllocateFlags allocate_flags = 0;
+	if (usage & VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT)
+		allocate_flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT_KHR;
+
 	VkMemoryRequirements memRequirements;
 	vkGetBufferMemoryRequirements(vk->device, *buffer, &memRequirements);
 
-	VkMemoryAllocateInfo allocInfo = { 0 };
-	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	allocInfo.allocationSize = memRequirements.size;
+	VkMemoryAllocateFlagsInfo allocation_flags = {
+	.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO,
+	.flags = allocate_flags,
+	.deviceMask = 1,
+	};
+
+	VkMemoryAllocateInfo allocation_info = {
+		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+		.pNext = (allocate_flags != 0) ? &allocation_flags : NULL,
+		.allocationSize = memRequirements.size
+	};
+
+
 	uint32_t memtype = findMemoryType(vk, memRequirements.memoryTypeBits, properties);
 	if (memtype == (uint32_t)-1) error("Failed to find correct memory type");
-	allocInfo.memoryTypeIndex = memtype;
+	allocation_info.memoryTypeIndex = memtype;
 
-	check(vkAllocateMemory(vk->device, &allocInfo, NULL, bufferMemory),
+
+	check(vkAllocateMemory(vk->device, &allocation_info, NULL, bufferMemory),
 		"Failed to allocate buffer memory");
 
 	check(vkBindBufferMemory(vk->device, *buffer, *bufferMemory, 0), "");
+}
+
+VkDeviceAddress getBufferDeviceAddress(VkInfo* info, VkBuffer buf)
+{
+	VkBufferDeviceAddressInfo addr_info = {
+		.buffer = buf,
+		.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO
+	};
+	return vkGetBufferDeviceAddress(info->device, &addr_info);
 }
 
 VkCommandBuffer beginSingleTimeCommands(VkInfo* vk)

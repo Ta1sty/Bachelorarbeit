@@ -16,6 +16,7 @@
 #include "Globals.h"
 #include "Util.h"
 #include "Presentation.h"
+#include "Raytrace.h"
 
 int resizeW = -1;
 int resizeH = -1;
@@ -120,7 +121,13 @@ int main()
 	glfwSetFramebufferSizeCallback(app.window, resize_callback);
 	glfwSetCursorPosCallback(app.window, mouse__move_callback);
 	glfwSetMouseButtonCallback(app.window, mouse_button_callback);
-	set_global_buffers(&app.vk_info, &app.scene);
+    if (app.vk_info.ray_tracing == VK_FALSE) {
+        flatten_scene(&app.scene);
+    }
+    set_global_buffers(&app.vk_info, &app.scene);
+    if (app.vk_info.ray_tracing == VK_TRUE) {
+        build_acceleration_structures(&app.vk_info, &app.scene);
+    }
 	while (!glfwWindowShouldClose(app.window)) {
 		glfwPollEvents();
 		if(WINDOW_WIDTH != 0 && WINDOW_HEIGHT != 0)
