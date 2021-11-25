@@ -11,9 +11,9 @@ namespace GLTFCompiler
     {
         static void Main(string[] args)
         {
-            using var src = File.Open(@"C:\Users\marku\Desktop\BA\Models\SimpleHouse.gltf", FileMode.Open);
+            using var src = File.Open(@"C:\Users\marku\Desktop\BA\Models\VikingRoom.gltf", FileMode.Open);
             //using var src = File.Open(@"C:\Users\marku\Desktop\BA\Models\textureCube\2Cubes.gltf", FileMode.Open);
-            var path = @"C:\Users\marku\Desktop\BA\VulkanProject\VulkanProject\VulkanProject\dump.bin";
+            var path = @"C:\Users\marku\Desktop\BA\VulkanProject\VulkanProject\dump.bin";
             using var str = new StreamReader(src);
             var res = str.ReadToEnd();
             var opt = new JsonSerializerOptions

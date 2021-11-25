@@ -6,6 +6,7 @@
 
 #include "Scene.h"
 
+struct ImGuiWindow;
 extern int WINDOW_WIDTH;
 extern int WINDOW_HEIGHT;
 
@@ -77,6 +78,8 @@ typedef struct swapchain
 
 	VkImageView* image_views;
 	VkFramebuffer* frame_buffers;
+	VkFramebuffer* imgui_frame_buffers;
+
 } Swapchain;
 
 typedef struct vkInfo {
@@ -105,6 +108,7 @@ typedef struct vkInfo {
 	VkQueue present_queue;
 	uint32_t buffer_count;
 	VkCommandBuffer* command_buffers;
+	VkCommandBuffer* imgui_command_buffers;
 
 	Swapchain swapchain;
 	// shader objects
@@ -123,14 +127,18 @@ typedef struct vkInfo {
 	VkDescriptorPool descriptor_pool;
 
 	VkRenderPass renderPass;
+	VkRenderPass imguiPass;
 	VkPipelineLayout pipeline_layout;
 	VkPipeline pipeline;
 	VkSemaphore imageAvailableSemaphore;
 	VkSemaphore renderFinishedSemaphore;
 } VkInfo;
 
+
+
 typedef struct app {
 	VkInfo vk_info;
 	GLFWwindow* window;
 	Scene scene;
+	void* imgui_window;
 } App;

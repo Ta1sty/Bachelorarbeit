@@ -132,7 +132,7 @@ void shadeFragment(vec3 P, vec3 V, vec3 tuv, int triangle) {
 
 
 
-	vec3 N = w * v0.normal + u * v1.normal + v * v2.normal;
+	vec3 N = w * v0.normal + v * v1.normal + u * v2.normal;
 	N = normalize(N);
 	vec2 tex = w * v0.tex_coord + v * v1.tex_coord + u * v2.tex_coord;
 
@@ -152,17 +152,16 @@ void shadeFragment(vec3 P, vec3 V, vec3 tuv, int triangle) {
 			color = texture(sampler2D(textures[m.texture_index], samp), tex).xyz;
 	}
 
-	float n = 2;
-	float i = 0.5f;
+	float n = 1;
+	float i = 100;
 	vec3 lightIntenstity = vec3(i,i,i);
-	vec3 lightWorldPos = vec3(0,1.4f,0);
+	vec3 lightWorldPos = vec3(0,10,0);
 	vec3 R = normalize(reflect(V, N));
 	vec3 L = normalize(lightWorldPos-P);
 	vec3 tuv2;
 	float t; int index;
 	if(!ray_trace_loop(P, L, length(lightWorldPos-P), tuv2, index)){ // is light source visible?
-		//kd = kd * max(dot(L, N), dot(L,-N)); // useless, kd is either k_d or 0
-		// i think this is due to either the model being weird with normal orientation
+
 		ks = ks * pow(max(0,dot(R,L)),n);
 	} else {
 		ks = 0;

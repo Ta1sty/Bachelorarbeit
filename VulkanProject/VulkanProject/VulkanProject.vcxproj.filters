@@ -13,49 +13,82 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\Imgui">
+      <UniqueIdentifier>{5f1be817-6951-4134-addf-afc04bf27b4c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Shader">
+      <UniqueIdentifier>{82881e6e-f646-46b0-b466-3f3aaed281ad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Scene">
+      <UniqueIdentifier>{95d67ece-9d3f-4b24-a404-c775d85adbec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core">
+      <UniqueIdentifier>{cfff8ef4-cfdc-4a8a-bc01-0fed8d04070a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Vulkan.c">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="ImguiSetup.cpp">
+      <Filter>Source Files\Imgui</Filter>
     </ClCompile>
-    <ClCompile Include="Window.c">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\Libraries\imgui\imgui.cpp">
+      <Filter>Source Files\Imgui</Filter>
     </ClCompile>
-    <ClCompile Include="Util.c">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\Libraries\imgui\imgui_demo.cpp">
+      <Filter>Source Files\Imgui</Filter>
     </ClCompile>
-    <ClCompile Include="Globals.c">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\Libraries\imgui\imgui_draw.cpp">
+      <Filter>Source Files\Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\imgui\backends\imgui_impl_glfw.cpp">
+      <Filter>Source Files\Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\imgui\backends\imgui_impl_vulkan.cpp">
+      <Filter>Source Files\Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\imgui\imgui_tables.cpp">
+      <Filter>Source Files\Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\imgui\imgui_widgets.cpp">
+      <Filter>Source Files\Imgui</Filter>
     </ClCompile>
     <ClCompile Include="Shader.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="VulcanStructs.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Raster.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="VulkanUtil.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Descriptors.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Scene.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Presentation.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Textures.c">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Shader</Filter>
     </ClCompile>
     <ClCompile Include="Raytrace.c">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Shader</Filter>
+    </ClCompile>
+    <ClCompile Include="Descriptors.c">
+      <Filter>Source Files\Shader</Filter>
+    </ClCompile>
+    <ClCompile Include="Presentation.c">
+      <Filter>Source Files\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene.c">
+      <Filter>Source Files\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Window.c">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Raster.c">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Util.c">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Textures.c">
+      <Filter>Source Files\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="VulkanUtil.c">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="VulcanStructs.c">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan.c">
+      <Filter>Source Files\Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -98,10 +131,19 @@
     <ClInclude Include="Raytrace.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ImguiSetup.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shader.frag" />
-    <None Include="shader.vert" />
-    <None Include="traversalShader.frag" />
+    <None Include="traversalShader.frag">
+      <Filter>Source Files\Shader</Filter>
+    </None>
+    <None Include="shader.frag">
+      <Filter>Source Files\Shader</Filter>
+    </None>
+    <None Include="shader.vert">
+      <Filter>Source Files\Shader</Filter>
+    </None>
   </ItemGroup>
 </Project>

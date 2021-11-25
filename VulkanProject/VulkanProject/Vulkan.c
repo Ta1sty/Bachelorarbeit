@@ -22,7 +22,6 @@ void init_vulkan(VkInfo* info, GLFWwindow** window, Scene* scene)
 #endif
 	create_device(info);
 	create_vertex_buffer(info);
-	create_or_resize_swapchain(info, window, WINDOW_WIDTH, WINDOW_HEIGHT, scene);
 	create_semaphores(info);
 }
 void create_or_resize_swapchain(VkInfo* vk, GLFWwindow** window, uint32_t width, uint32_t height, Scene* scene)

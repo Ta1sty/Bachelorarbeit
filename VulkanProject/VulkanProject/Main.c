@@ -17,6 +17,7 @@
 #include "Util.h"
 #include "Presentation.h"
 #include "Raytrace.h"
+#include "ImguiSetup.h"
 
 int resizeW = -1;
 int resizeH = -1;
@@ -121,16 +122,26 @@ int main()
 	glfwSetFramebufferSizeCallback(app.window, resize_callback);
 	glfwSetCursorPosCallback(app.window, mouse__move_callback);
 	glfwSetMouseButtonCallback(app.window, mouse_button_callback);
-    if (app.vk_info.ray_tracing == VK_FALSE) {
+    if (app.vk_info.ray_tracing) {
+        build_acceleration_structures(&app.vk_info, &app.scene);
+    } else {
         flatten_scene(&app.scene);
     }
+
+    // everything else needs to be build before creating the swapchain
+    create_or_resize_swapchain(&app.vk_info, &app.window, WINDOW_WIDTH, WINDOW_HEIGHT, &app.scene);
+
+    init_imgui(&app, WINDOW_WIDTH, WINDOW_HEIGHT);
+    init_imgui_command_buffers(&app.vk_info);
+    app.scene.scene_data.numTriangles = min(app.scene.scene_data.numTriangles, 500);
+    // scene renderes fluently for up to 1000 triangles when intersecting with linear time complexity
+    // provided the same complexity one can allow for a total of 1000 intersection tests per ray
+    // which means 1000 during BVH traversal, we expect a depth of log(n) for the BVH, so say we have 2^16 triangles
+    // we will have a depth of 16. 
     set_global_buffers(&app.vk_info, &app.scene);
-    if (app.vk_info.ray_tracing == VK_TRUE) {
-        build_acceleration_structures(&app.vk_info, &app.scene);
-    }
 	while (!glfwWindowShouldClose(app.window)) {
 		glfwPollEvents();
-		if(WINDOW_WIDTH != 0 && WINDOW_HEIGHT != 0)
+		if(WINDOW_WIDTH > 0 && WINDOW_HEIGHT > 0)
             {
                 updatePosition(app.window, &app.scene.camera);
                 drawFrame(&app.vk_info, &app.scene);
@@ -138,6 +149,7 @@ int main()
 		if (resizeW >= 0 || resizeH >= 0)
 		{
 			create_or_resize_swapchain(&app.vk_info, &app.window, resizeW, resizeH, &app.scene);
+            resize_callback_imgui(&app.vk_info);
 			WINDOW_WIDTH = resizeW;
 			WINDOW_HEIGHT = resizeH;
 			resizeW = -1;

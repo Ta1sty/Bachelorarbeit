@@ -111,16 +111,16 @@ void create_instance(VkInfo* vk_info)
 void create_device(VkInfo* vk_info)
 {
 	// Select device extensions
-	const uint32_t ext_base_num = 3;
+	const uint32_t ext_base_num = 4;
 	const char* base_device_extension_names[] = {
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 		VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME,
-		VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME
+		VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME,
+		VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME
 	};
-	const uint32_t ext_ray_num = 5;
+	const uint32_t ext_ray_num = 4;
 	const char* ray_tracing_device_extension_names[] = {
 		VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
-		VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
 		VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME,
 		VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
 		VK_KHR_RAY_QUERY_EXTENSION_NAME,
@@ -160,7 +160,7 @@ void create_device(VkInfo* vk_info)
 		.descriptorIndexing = VK_TRUE,
 		.uniformAndStorageBuffer8BitAccess = VK_TRUE,
 		.shaderSampledImageArrayNonUniformIndexing = VK_TRUE,
-		.bufferDeviceAddress = vk_info->ray_tracing,
+		.bufferDeviceAddress = VK_TRUE,
 		.runtimeDescriptorArray = VK_TRUE
 	};
 	VkDeviceCreateInfo device_info = {
@@ -481,7 +481,7 @@ void create_render_pass(VkInfo* info)
 		.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
 		.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
 		.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-		.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+		.finalLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR,
 	};
 	VkAttachmentReference color_attachment_ref = {
 		.attachment = 0,

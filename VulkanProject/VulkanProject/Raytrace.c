@@ -1,4 +1,7 @@
 #include "Raytrace.h"
+
+#include <stdlib.h>
+
 #include "VulkanUtil.h"
 
 #include <vulkan/vulkan_core.h>

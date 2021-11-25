@@ -134,7 +134,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\include;$(SolutionDir)Libraries\glfw-3.3.4.bin.WIN64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\include;$(SolutionDir)Libraries\glfw-3.3.4.bin.WIN64\include;$(SolutionDir)Libraries\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>Default</LanguageStandard_C>
     </ClCompile>
@@ -153,7 +153,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\include;$(SolutionDir)Libraries\glfw-3.3.4.bin.WIN64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\include;$(SolutionDir)Libraries\glfw-3.3.4.bin.WIN64\include;$(SolutionDir)Libraries\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>Default</LanguageStandard_C>
     </ClCompile>
@@ -168,12 +168,19 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='GLTFCompiler|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\include;$(SolutionDir)Libraries\glfw-3.3.4.bin.WIN64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\include;$(SolutionDir)Libraries\glfw-3.3.4.bin.WIN64\include;$(SolutionDir)Libraries\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Libraries\imgui\backends\imgui_impl_glfw.cpp" />
+    <ClCompile Include="..\Libraries\imgui\backends\imgui_impl_vulkan.cpp" />
+    <ClCompile Include="..\Libraries\imgui\imgui.cpp" />
+    <ClCompile Include="..\Libraries\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\Libraries\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\Libraries\imgui\imgui_tables.cpp" />
+    <ClCompile Include="..\Libraries\imgui\imgui_widgets.cpp" />
     <ClCompile Include="Descriptors.c" />
-    <ClCompile Include="Globals.c" />
+    <ClCompile Include="ImguiSetup.cpp" />
     <ClCompile Include="Presentation.c" />
     <ClCompile Include="Raster.c" />
     <ClCompile Include="Raytrace.c" />
@@ -190,6 +197,7 @@
   <ItemGroup>
     <ClInclude Include="Descriptors.h" />
     <ClInclude Include="Globals.h" />
+    <ClInclude Include="ImguiSetup.h" />
     <ClInclude Include="Presentation.h" />
     <ClInclude Include="Raster.h" />
     <ClInclude Include="Raytrace.h" />

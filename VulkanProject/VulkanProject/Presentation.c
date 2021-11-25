@@ -100,13 +100,15 @@ void drawFrame(VkInfo* vk_info, Scene* scene)
 
 	set_frame_buffers(vk_info, scene, imageIndex);
 
+	VkCommandBuffer buffers[] = { vk_info->command_buffers[imageIndex] , vk_info->imgui_command_buffers[imageIndex]};
+
 	VkSubmitInfo submitInfo = {
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
 	.waitSemaphoreCount = 1,
 	.pWaitSemaphores = waitSemaphores,
 	.pWaitDstStageMask = waitStages,
-	.commandBufferCount = 1,
-	.pCommandBuffers = &vk_info->command_buffers[imageIndex],
+	.commandBufferCount = 2,
+	.pCommandBuffers = buffers,
 	.signalSemaphoreCount = 1,
 	.pSignalSemaphores = signalSemaphores,
 	};
