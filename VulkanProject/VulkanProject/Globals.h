@@ -55,6 +55,12 @@ typedef struct descriptorSet
 	uint32_t completed; // indicates that this container is fully operational
 } DescriptorSetContainer;
 
+typedef struct rayTracingDescriptor
+{
+	VkDescriptorSetLayout set_layout;
+	VkDescriptorSet descriptor_set;
+	uint32_t binding;
+} RayTracingDescriptor;
 
 typedef struct shader
 {
@@ -119,7 +125,7 @@ typedef struct vkInfo {
 	DescriptorSetContainer global_buffers; // set 0
 	TextureContainer texture_container; // set 1
 	DescriptorSetContainer per_frame_buffers; // set 2
-
+	RayTracingDescriptor ray_descriptor; // set 3
 
 	VkBuffer vertexBuffer;
 	VkDeviceMemory vertexBufferMemory;
@@ -133,8 +139,6 @@ typedef struct vkInfo {
 	VkSemaphore imageAvailableSemaphore;
 	VkSemaphore renderFinishedSemaphore;
 } VkInfo;
-
-
 
 typedef struct app {
 	VkInfo vk_info;

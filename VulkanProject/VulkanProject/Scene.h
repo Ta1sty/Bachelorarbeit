@@ -85,6 +85,19 @@ typedef struct texture_data
 	Texture* textures;
 } TextureData;
 
+typedef struct tlas {
+	SceneNode node;
+	VkAccelerationStructureKHR structure;
+	VkBuffer buffer;
+	VkDeviceMemory memory;
+} TLAS;
+typedef struct blas {
+	SceneNode node;
+	VkAccelerationStructureKHR structure;
+	VkBuffer buffer;
+	VkDeviceMemory memory;
+} BLAS;
+
 typedef struct scene
 {
 	VkSampler sampler;
@@ -95,6 +108,7 @@ typedef struct scene
 	uint32_t* indices;
 	SceneNode* scene_nodes;
 	uint32_t* node_indices;
+	TLAS tlas;
 } Scene;
 
 typedef struct flatNodeResult

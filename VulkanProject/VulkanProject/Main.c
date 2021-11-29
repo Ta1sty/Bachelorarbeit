@@ -122,9 +122,13 @@ int main()
 	glfwSetFramebufferSizeCallback(app.window, resize_callback);
 	glfwSetCursorPosCallback(app.window, mouse__move_callback);
 	glfwSetMouseButtonCallback(app.window, mouse_button_callback);
+
+    VkBool32 useMutliLevel = VK_FALSE;
     if (app.vk_info.ray_tracing) {
-        build_acceleration_structures(&app.vk_info, &app.scene);
-    } else {
+        flatten_scene(&app.scene);
+        // prepare_scene(&app.scene, useMutliLevel);
+    }
+    else {
         flatten_scene(&app.scene);
     }
 
@@ -133,7 +137,7 @@ int main()
 
     init_imgui(&app, WINDOW_WIDTH, WINDOW_HEIGHT);
     init_imgui_command_buffers(&app.vk_info);
-    app.scene.scene_data.numTriangles = min(app.scene.scene_data.numTriangles, 500);
+    //app.scene.scene_data.numTriangles = min(app.scene.scene_data.numTriangles, 500);
     // scene renderes fluently for up to 1000 triangles when intersecting with linear time complexity
     // provided the same complexity one can allow for a total of 1000 intersection tests per ray
     // which means 1000 during BVH traversal, we expect a depth of log(n) for the BVH, so say we have 2^16 triangles

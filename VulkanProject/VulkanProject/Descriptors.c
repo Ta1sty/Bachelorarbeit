@@ -95,11 +95,15 @@ void create_descriptor_pool(VkInfo* vk)
 	texture_image.type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 	texture_image.descriptorCount = 10;
 
-	VkDescriptorPoolSize poolSizes[] = { uniCount, uniDynCount , sampler_image, sampler, texture_image };
+	VkDescriptorPoolSize tlas = { 0 };
+	tlas.type = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
+	tlas.descriptorCount = 10;
+
+	VkDescriptorPoolSize poolSizes[] = { uniCount, uniDynCount , sampler_image, sampler, texture_image, tlas };
 
 	VkDescriptorPoolCreateInfo poolInfo = { 0 };
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	poolInfo.poolSizeCount = 5;
+	poolInfo.poolSizeCount = 6;
 	poolInfo.pPoolSizes = poolSizes;
 	poolInfo.maxSets = 30;
 

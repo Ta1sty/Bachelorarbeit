@@ -9,6 +9,7 @@
 #include "Util.h"
 #include "Scene.h"
 #include "Textures.h"
+#include "Raytrace.h"
 
 void compile_shaders()
 {
@@ -84,19 +85,34 @@ void create_descriptor_containers(VkInfo* info, Scene* scene)
 	uint32_t SamplerBinding = 4;
 	uint32_t TextureBufferBinding = 5;
 	uint32_t FrameUboBinding = 6;
-
+	uint32_t TLASBinding = 7;
 
 	const uint32_t global_buffer_count = 4;
 	// set 0 - global buffers
 	BufferInfo* globalInfos = malloc(sizeof(BufferInfo) * global_buffer_count);
-	BufferInfo sceneInfo = create_buffer_info(sceneDataBinding, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
-		sizeof(SceneData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-	BufferInfo vertexBuffer = create_buffer_info(VertexBufferBinding, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
-		sizeof(Vertex) * scene->scene_data.numVertices, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-	BufferInfo indexBuffer = create_buffer_info(IndexBufferBinding, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
-		sizeof(uint32_t) * scene->scene_data.numTriangles * 3, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-	BufferInfo materialBuffer = create_buffer_info(MaterialBufferBinding, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
-		sizeof(Material) * scene->texture_data.num_materials, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	BufferInfo sceneInfo = create_buffer_info(sceneDataBinding, 
+		VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
+		sizeof(SceneData), 
+		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	BufferInfo vertexBuffer = create_buffer_info(VertexBufferBinding, 
+		VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
+		sizeof(Vertex) * scene->scene_data.numVertices, 
+		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	BufferInfo indexBuffer = create_buffer_info(IndexBufferBinding, 
+		VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
+		sizeof(uint32_t) * scene->scene_data.numTriangles * 3, 
+		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	BufferInfo materialBuffer = create_buffer_info(MaterialBufferBinding, 
+		VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
+		sizeof(Material) * scene->texture_data.num_materials, 
+		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, 
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+
+
 	globalInfos[0] = sceneInfo;
 	globalInfos[1] = vertexBuffer;
 	globalInfos[2] = indexBuffer;
@@ -113,6 +129,8 @@ void create_descriptor_containers(VkInfo* info, Scene* scene)
 		sizeof(FrameData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 	frameInfos[0] = frameInfo;
 	info->per_frame_buffers = create_descriptor_set(info, 2, frameInfos, 1, info->swapchain.image_count);
+
+	create_ray_descriptors(info, scene, TLASBinding);
 }
 
 void init_descriptor_containers(VkInfo* info, Scene* scene)
@@ -126,6 +144,11 @@ void init_descriptor_containers(VkInfo* info, Scene* scene)
 	create_descriptor_sets(info, &info->global_buffers);
 	init_texture_descriptor(info, scene);
 	create_descriptor_sets(info, &info->per_frame_buffers);
+
+	if (info->ray_tracing) {
+		build_acceleration_structures(info, scene, VK_FALSE);
+	}
+	init_ray_descriptors(info, scene);
 }
 
 void destroy_shaders(VkInfo* vk, Scene* scene)

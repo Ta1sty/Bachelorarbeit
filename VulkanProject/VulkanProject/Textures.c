@@ -222,51 +222,6 @@ void create_texture_buffers(VkInfo* vk, Scene* scene)
 
 void init_texture_descriptor(VkInfo* vk, Scene* scene)
 {
-	/*
-	VkDescriptorImageInfo* infos = malloc(sizeof(VkDescriptorImageInfo) * scene->texture_data.num_textures);
-	for (uint32_t i = 0; i < scene->texture_data.num_textures; i++)
-	{
-		infos[i].sampler = NULL;
-		infos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		infos[i].imageView = scene->texture_data.textures[i].texture_image_view;
-	}
-
-	VkDescriptorSetAllocateInfo allocInfo = {0};
-	allocInfo.descriptorPool = vk->descriptor_pool;
-	allocInfo.descriptorSetCount = 1;
-	allocInfo.pNext = NULL;
-	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	allocInfo.pSetLayouts = &vk->texture_container.layout;
-
-	vkAllocateDescriptorSets(vk->device, &allocInfo, &vk->texture_container.descriptor_set);
-
-	VkWriteDescriptorSet setWrites[2];
-
-	VkDescriptorImageInfo samplerInfo = {0};
-	samplerInfo.sampler = scene->sampler;
-
-	memset(&setWrites[0], 0, sizeof(VkWriteDescriptorSet));
-	setWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	setWrites[0].dstBinding = vk->texture_container.sampler_binding;
-	setWrites[0].dstArrayElement = 0;
-	setWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-	setWrites[0].descriptorCount = 1;
-	setWrites[0].dstSet = vk->texture_container.descriptor_set;
-	setWrites[0].pBufferInfo = 0;
-	setWrites[0].pImageInfo = &samplerInfo;
-	
-	memset(&setWrites[1], 0, sizeof(VkWriteDescriptorSet));
-	setWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	setWrites[1].dstBinding = vk->texture_container.texture_binding;
-	setWrites[1].dstArrayElement = 0;
-	setWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-	setWrites[1].descriptorCount = scene->texture_data.num_textures;
-	setWrites[1].pBufferInfo = 0;
-	setWrites[1].dstSet = vk->texture_container.descriptor_set;
-	setWrites[1].pImageInfo = infos;
-	
-	vkUpdateDescriptorSets(vk->device, 1, setWrites, 0, NULL);*/
-
 	VkDescriptorSetAllocateInfo allocInfo = {0};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool = vk->descriptor_pool;
@@ -290,6 +245,8 @@ void init_texture_descriptor(VkInfo* vk, Scene* scene)
 	samplerWrite.pImageInfo = &samplerInfo;
 	
 	vkUpdateDescriptorSets(vk->device, 1, &samplerWrite, 0, NULL);
+
+	//TODO replace with for
 
 	VkDescriptorImageInfo imageInfo1 = {0};
 	imageInfo1.sampler = NULL;

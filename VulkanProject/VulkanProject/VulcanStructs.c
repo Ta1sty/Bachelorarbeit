@@ -271,8 +271,8 @@ void create_image_views(VkInfo* info)
 		"Failed to get swapchain images");
 	info->buffer_count = swapchain->image_count;
 	swapchain->images = malloc(sizeof(VkImage) * swapchain->image_count);
-	check(vkGetSwapchainImagesKHR(info->device, swapchain->vk_swapchain, &swapchain->image_count,
-	                            swapchain->images),"Failed to get swapchain images");
+	check(vkGetSwapchainImagesKHR(info->device, swapchain->vk_swapchain, &swapchain->image_count, swapchain->images),
+		"Failed to get swapchain images");
 	swapchain->image_views = malloc(sizeof(VkImageView) * swapchain->image_count);
 	for (uint32_t i = 0; i < swapchain->image_count; i++)
 	{
@@ -434,15 +434,18 @@ void create_pipeline(VkInfo* info)
 	dynamicState.dynamicStateCount = 2;
 	dynamicState.pDynamicStates = dynamicStates;
 	*/
+
+
 	VkDescriptorSetLayout layouts[] = {
 		info->global_buffers.set_layout,
 		info->texture_container.layout ,
-		info->per_frame_buffers.set_layout
+		info->per_frame_buffers.set_layout,
+		info->ray_descriptor.set_layout
 	};
 
 	VkPipelineLayoutCreateInfo pipeline_layout_info = {0};
 	pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipeline_layout_info.setLayoutCount = info->numSets;
+	pipeline_layout_info.setLayoutCount = info->ray_tracing ? info->numSets + 1 : info->numSets;
 	pipeline_layout_info.pSetLayouts = layouts;
 
 	check(vkCreatePipelineLayout(info->device, &pipeline_layout_info, NULL,&info->pipeline_layout), 
@@ -587,6 +590,8 @@ void create_command_buffers(VkInfo* info)
 			1, 1, &info->texture_container.descriptor_set, 0, NULL);
 		vkCmdBindDescriptorSets(info->command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, info->pipeline_layout,
 			2, 1, &info->per_frame_buffers.descriptor_sets[i], 0, NULL);
+		vkCmdBindDescriptorSets(info->command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, info->pipeline_layout,
+			3, 1, &info->ray_descriptor.descriptor_set, 0, NULL);
 		vkCmdDraw(info->command_buffers[i], 3, 1, 0, 0);
 		vkCmdEndRenderPass(info->command_buffers[i]);
 
