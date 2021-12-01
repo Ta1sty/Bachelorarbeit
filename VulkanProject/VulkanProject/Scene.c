@@ -12,8 +12,8 @@
 void init_scene(Scene* scene)
 {
 	scene->camera.pos[0] = 0;
-	scene->camera.pos[1] = 1;
-	scene->camera.pos[2] = 3;
+	scene->camera.pos[1] = 10;
+	scene->camera.pos[2] = 0;
 	scene->camera.rotation_x = 0;
 	scene->camera.rotation_y = 0;
 
@@ -22,6 +22,8 @@ void init_scene(Scene* scene)
 
 void load_scene(Scene* scene, char** path)
 {
+	int vert = system("buildScene.bat");
+
 	FILE* file;
 	fopen_s(&file, "dump.bin", "rb");
 
@@ -54,10 +56,17 @@ void flatten_scene(Scene* scene)
 {
 	SceneNode* node = &scene->scene_nodes[scene->scene_data.numSceneNodes - 1];
 
-	FlatNodeResult result = flatten_node(scene, node, node);
+	float id[4][4] = {
+		{1,0,0,0},
+		{0,1,0,0},
+		{0,0,1,0},
+		{0,0,0,1}
+	};
+
+	FlatNodeResult result = flatten_node(scene, id, node);
 	int a = 0;
 	scene->scene_data.numTriangles = result.num_vertices / 3;
-	scene->scene_data.numVertices = result.num_vertices;
+	scene->scene_data.numVertices = result.num_vertices; // Maybe vertex dedublication
 
 	free(scene->vertices);
 	free(scene->indices);
@@ -68,23 +77,36 @@ void flatten_scene(Scene* scene)
 		scene->indices[i] = i;
 	}
 
-	// TODO replace scene node with single one
+	free(scene->scene_nodes);
+	free(scene->node_indices);
+	scene->scene_nodes = malloc(sizeof(SceneNode));
+	SceneNode everything = {
+		.childrenIndex = -1,
+		.Index = 0,
+		.IndexBufferIndex = 0,
+		.NumTriangles = scene->scene_data.numTriangles,
+		.NumChildren = 0
+	};
+	scene->scene_nodes[0] = everything;
+	memcpy(scene->scene_nodes[0].transform, id, sizeof(float) * 4 * 4);
+	scene->node_indices = malloc(sizeof(uint32_t));
+	scene->scene_data.numNodeIndices = 1;
+	scene->scene_data.numSceneNodes = 1;
 }
 
-FlatNodeResult flatten_node(Scene* scene, SceneNode* parent, SceneNode* node)
+FlatNodeResult flatten_node(Scene* scene, float parentTransform[4][4], SceneNode* node)
 {
-	FlatNodeResult result = { 0 }; // multi level is not working!, missing passthrough transform
+	FlatNodeResult result = { 0 }; // multi level should be working now!, missing passthrough transform
 	float tr[4][4];
 	for (uint32_t r = 0; r != 4; r++) {
 		for (uint32_t s = 0; s != 4; s++){
-			tr[r][s] = parent->transform[r][0] * node->transform[0][s]
-				+ parent->transform[r][1] * node->transform[1][s]
-				+ parent->transform[r][2] * node->transform[2][s]
-				+ parent->transform[r][3] * node->transform[3][s];
+			tr[r][s] = parentTransform[r][0] * node->transform[0][s]
+				+ parentTransform[r][1] * node->transform[1][s]
+				+ parentTransform[r][2] * node->transform[2][s]
+				+ parentTransform[r][3] * node->transform[3][s];
 		}
 	}
 
-	// TODO multiply transforms
 	if (node->NumTriangles > 0)
 	{
 		float normal[3][3];
@@ -130,7 +152,7 @@ FlatNodeResult flatten_node(Scene* scene, SceneNode* parent, SceneNode* node)
 			uint32_t child_idx = scene->node_indices[node->childrenIndex + i];
 			SceneNode* child = &scene->scene_nodes[child_idx];
 
-			FlatNodeResult childResult = flatten_node(scene, node, child);
+			FlatNodeResult childResult = flatten_node(scene, tr, child);
 
 			Vertex* newVertArray = malloc(sizeof(Vertex) * (childResult.num_vertices + result.num_vertices));
 			for (uint32_t j = 0;j<result.num_vertices;j++)
@@ -155,7 +177,6 @@ void load_textures(TextureData* data, FILE* file)
 {
 	memset(data, 0, sizeof(TextureData));
 
-	// TODO create dummy materials so buffers have size > 0 if there are no textures
 	fread(&data->num_materials, sizeof(uint32_t), 1, file);
 	if(data->num_materials != 0)
 	{
@@ -172,7 +193,6 @@ void load_textures(TextureData* data, FILE* file)
 	}
 
 	fread(&data->num_textures, sizeof(uint32_t), 1, file);
-	//data->num_textures = 1;
 	if(data->num_textures != 0)
 	{
 		data->textures = malloc(sizeof(Texture) * data->num_textures);

@@ -145,5 +145,8 @@
     <None Include="shader.vert">
       <Filter>Source Files\Shader</Filter>
     </None>
+    <None Include="buildScene.bat">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

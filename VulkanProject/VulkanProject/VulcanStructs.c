@@ -86,7 +86,6 @@ void create_instance(VkInfo* vk_info)
 	                                         vk_info->queue_family_properties);
 	// Pick a queue that supports graphics and compute
 	const uint32_t required_queue_flags = VK_QUEUE_GRAPHICS_BIT & VK_QUEUE_COMPUTE_BIT;
-	//TODO i dont need compute?, test it out
 	for (vk_info->queue_family_index = 0;
 	     vk_info->queue_family_index < queue_family_count
 	     && (vk_info->queue_family_properties[vk_info->queue_family_index].queueFlags & required_queue_flags);
@@ -96,7 +95,6 @@ void create_instance(VkInfo* vk_info)
 	if (vk_info->queue_family_index == queue_family_count)
 		error("No Vulkan queue family supports graphics and compute.");
 	// Figure out whether ray queries are supported
-	// TODO Ray tracing stuff
 	uint32_t extension_count = 0;
 	vkEnumerateDeviceExtensionProperties(vk_info->physical_device, NULL, &extension_count, NULL);
 	VkExtensionProperties* extensions = malloc(sizeof(VkExtensionProperties) * extension_count);
@@ -239,7 +237,6 @@ void create_swapchain(VkInfo* vk_info, GLFWwindow** window, uint32_t width, uint
 	}
 	// TODO select present mode
 	VkPresentModeKHR present_mode = VK_PRESENT_MODE_FIFO_KHR;
-	// TODO fancy extent selection
 	VkExtent2D extent = {
 		.height = height,
 		.width = width
@@ -422,18 +419,6 @@ void create_pipeline(VkInfo* info)
 		.blendConstants[2] = 0.0f, // Optional
 		.blendConstants[3] = 0.0f, // Optional
 	};
-
-	//TODO dynamic state
-	/*VkDynamicState dynamicStates[] = {
-	VK_DYNAMIC_STATE_VIEWPORT,
-	VK_DYNAMIC_STATE_LINE_WIDTH
-	};
-
-	VkPipelineDynamicStateCreateInfo dynamicState = {0};
-	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-	dynamicState.dynamicStateCount = 2;
-	dynamicState.pDynamicStates = dynamicStates;
-	*/
 
 
 	VkDescriptorSetLayout layouts[] = {

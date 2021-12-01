@@ -128,6 +128,6 @@ void load_textures(TextureData* data, FILE* file);
 void load_texture(Texture* texture, FILE* file);
 void flatten_scene(Scene* scene);
 void collapse_parent_nodes(Scene* scene);
-FlatNodeResult flatten_node(Scene* scene, SceneNode* parent, SceneNode* node);
+FlatNodeResult flatten_node(Scene* scene, float parentTransform[4][4], SceneNode* node);
 NodeCollapseResult collapse_node(Scene* scene, float transform[4][4], SceneNode* node);
 void destroy_scene(Scene* scene);

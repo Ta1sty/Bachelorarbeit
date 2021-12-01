@@ -154,8 +154,6 @@ void create_texture_image(VkInfo* vk, Texture* texture)
 	memcpy(data, texture->pixel_data, texture->image_size);
 	vkUnmapMemory(vk->device, stagingBufferMemory);
 
-	// TODO free(pixel_data)
-
 	create_image(vk, texture, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
@@ -246,19 +244,16 @@ void init_texture_descriptor(VkInfo* vk, Scene* scene)
 	
 	vkUpdateDescriptorSets(vk->device, 1, &samplerWrite, 0, NULL);
 
-	//TODO replace with for
+	VkDescriptorImageInfo* infos = malloc(sizeof(VkDescriptorImageInfo) * scene->texture_data.num_textures);
 
-	VkDescriptorImageInfo imageInfo1 = {0};
-	imageInfo1.sampler = NULL;
-	imageInfo1.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	imageInfo1.imageView = scene->texture_data.textures[0].texture_image_view;
+	for (uint32_t i = 0; i < scene->texture_data.num_textures; i++) {
+		VkDescriptorImageInfo imageInfo = { 0 };
+		imageInfo.sampler = NULL;
+		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo.imageView = scene->texture_data.textures[i].texture_image_view;
 
-	VkDescriptorImageInfo imageInfo2 = { 0 };
-	imageInfo2.sampler = NULL;
-	imageInfo2.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	imageInfo2.imageView = scene->texture_data.textures[1].texture_image_view;
-
-	VkDescriptorImageInfo infos[] = { imageInfo1, imageInfo2 };
+		infos[i] = imageInfo;
+	}
 
 	VkWriteDescriptorSet textureWrite = {0};
 	textureWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

@@ -127,7 +127,7 @@ if(true){
 	tuv = vec3(0);
 
 	   float min_t = 1.0e-3f;
-       float max_t = 400;
+       float max_t = t_max;
         rayQueryEXT ray_query;
 		rayQueryInitializeEXT(ray_query, tlas, 0, 0xFF, rayOrigin, min_t, rayDirection, max_t);
         while(rayQueryProceedEXT(ray_query)){
@@ -214,7 +214,6 @@ void shadeFragment(vec3 P, vec3 V, vec3 tuv, int triangle) {
 	vec3 tuv2;
 	float t; int index;
 	if(!ray_trace_loop(P, L, length(lightWorldPos-P), tuv2, index)){ // is light source visible?
-
 		ks = ks * pow(max(0,dot(R,L)),n);
 	} else {
 		ks = 0;

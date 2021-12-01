@@ -211,6 +211,7 @@
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="buildScene.bat" />
     <None Include="shader.frag" />
     <None Include="shader.vert" />
     <None Include="traversalShader.frag" />
