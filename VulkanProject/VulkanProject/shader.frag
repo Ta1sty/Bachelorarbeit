@@ -1,6 +1,8 @@
 #version 460
 #extension GL_EXT_nonuniform_qualifier : enable
+#ifdef RAY_TRACE
 #extension GL_EXT_ray_query : require
+#endif
 
 struct Vertex{
 	vec3 position; // 0 - 16
@@ -35,7 +37,9 @@ layout(binding = 6, set = 2) uniform FrameData {
 	float fov;
 } frame;
 
+#ifdef RAY_TRACE
 layout(binding = 7, set = 3) uniform accelerationStructureEXT tlas;
+#endif
 
 layout(location = 0) in vec3 fragColor;
 
@@ -99,57 +103,28 @@ bool vertexIntersect(vec3 rayOrigin, vec3 rayDir, vec3 postion){
 	return true;
 }
 bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, out vec3 tuv, out int triangle_index) {
-/*	rayQueryEXT rayQuery;
-	rayQueryInitializeEXT(rayQuery,              // Ray query
-                        tlas,                  // Top-level acceleration structure
-                        gl_RayFlagsOpaqueEXT,  // Ray flags, here saying "treat all geometry as opaque"
-                        0xFF,                  // 8-bit instance mask, here saying "trace against all instances"
-                        rayOrigin,             // Ray origin
-                        0.0,                   // Minimum t-value
-                        rayDirection,          // Ray direction
-                        10000.0);              // Maximum t-value
-	while(rayQueryProceedEXT(rayQuery))
-	{
-
-	}
-
-	 const float t = rayQueryGetIntersectionTEXT(rayQuery, true);
-
-	 triangle_index = 0;
-	 tuv.x = t;
-	 tuv.y = 0.5f;
-	 tuv.z = 0.5f;
-	 return t <= 5000.0;
-	triangle_index = 0;
-		tuv = vec3(1,0,0);
-		return true;*/
-if(true){
+#ifdef RAY_TRACE
 	tuv = vec3(0);
-
-	   float min_t = 1.0e-3f;
-       float max_t = t_max;
-        rayQueryEXT ray_query;
-		rayQueryInitializeEXT(ray_query, tlas, 0, 0xFF, rayOrigin, min_t, rayDirection, max_t);
-        while(rayQueryProceedEXT(ray_query)){
-			triangle_index = 0;
-			tuv = vec3(1,0,0);
-			return true;
-            if(rayQueryGetIntersectionTypeEXT(ray_query, false) == gl_RayQueryCandidateIntersectionTriangleEXT) { // triangle intersection
+	float min_t = 1.0e-3f;
+	float max_t = t_max;
+	rayQueryEXT ray_query;
+	rayQueryInitializeEXT(ray_query, tlas, 0, 0xFF, rayOrigin, min_t, rayDirection, max_t);
+	while(rayQueryProceedEXT(ray_query)){
+        if(rayQueryGetIntersectionTypeEXT(ray_query, false) == gl_RayQueryCandidateIntersectionTriangleEXT) { // triangle intersection
                 rayQueryConfirmIntersectionEXT(ray_query); // might want to check for opaque
-			}
-        }
-		if(rayQueryGetIntersectionTypeEXT(ray_query, true) == gl_RayQueryCommittedIntersectionTriangleEXT ) {
-			triangle_index = rayQueryGetIntersectionPrimitiveIndexEXT(ray_query, true);
-			tuv.x = rayQueryGetIntersectionTEXT(ray_query, true);
-			vec2 uv = rayQueryGetIntersectionBarycentricsEXT(ray_query, true);
-			tuv.y = uv.y;
-			tuv.z = uv.x;
-			return true;
 		}
-		return false;
-}
-else {
-vec3 tuv_next;
+	}
+	if(rayQueryGetIntersectionTypeEXT(ray_query, true) == gl_RayQueryCommittedIntersectionTriangleEXT ) {
+		triangle_index = rayQueryGetIntersectionPrimitiveIndexEXT(ray_query, true);
+		tuv.x = rayQueryGetIntersectionTEXT(ray_query, true);
+		vec2 uv = rayQueryGetIntersectionBarycentricsEXT(ray_query, true);
+		tuv.y = uv.y;
+		tuv.z = uv.x;
+		return true;
+	}
+	return false;
+#else
+	vec3 tuv_next;
 	tuv.x = t_max;
 	triangle_index = -1;
 	for(int i = 0;i<numTriangles;i++){
@@ -171,7 +146,7 @@ vec3 tuv_next;
 		return false;
 	}
 	return true;
-}	
+#endif
 }
 
 void shadeFragment(vec3 P, vec3 V, vec3 tuv, int triangle) {

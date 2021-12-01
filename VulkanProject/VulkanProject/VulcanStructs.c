@@ -296,7 +296,7 @@ void create_image_views(VkInfo* info)
 void create_pipeline(VkInfo* info)
 {
 	Swapchain* swapchain = &info->swapchain;
-	compile_shaders();
+	compile_shaders(info->ray_tracing);
 	get_vertex_shader(info, &info->vertex_shader);
 	get_fragment_shader(info, &info->fragment_shader);
 
@@ -430,7 +430,7 @@ void create_pipeline(VkInfo* info)
 
 	VkPipelineLayoutCreateInfo pipeline_layout_info = {0};
 	pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipeline_layout_info.setLayoutCount = info->ray_tracing ? info->numSets + 1 : info->numSets;
+	pipeline_layout_info.setLayoutCount = info->numSets;
 	pipeline_layout_info.pSetLayouts = layouts;
 
 	check(vkCreatePipelineLayout(info->device, &pipeline_layout_info, NULL,&info->pipeline_layout), 
@@ -575,8 +575,10 @@ void create_command_buffers(VkInfo* info)
 			1, 1, &info->texture_container.descriptor_set, 0, NULL);
 		vkCmdBindDescriptorSets(info->command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, info->pipeline_layout,
 			2, 1, &info->per_frame_buffers.descriptor_sets[i], 0, NULL);
-		vkCmdBindDescriptorSets(info->command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, info->pipeline_layout,
-			3, 1, &info->ray_descriptor.descriptor_set, 0, NULL);
+		if (info->ray_tracing) {
+			vkCmdBindDescriptorSets(info->command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, info->pipeline_layout,
+				3, 1, &info->ray_descriptor.descriptor_set, 0, NULL);
+		}
 		vkCmdDraw(info->command_buffers[i], 3, 1, 0, 0);
 		vkCmdEndRenderPass(info->command_buffers[i]);
 

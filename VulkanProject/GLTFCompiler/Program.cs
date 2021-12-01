@@ -7,6 +7,8 @@ using GLTFCompiler.GltfFileTypes;
 using GLTFCompiler.Scene;
 using System.Windows.Forms;
 using Microsoft.VisualBasic;
+using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace GLTFCompiler
 {
@@ -22,8 +24,11 @@ namespace GLTFCompiler
             var t = new Thread(() =>
             {
                 using var fileDialog = new OpenFileDialog();
-                fileDialog.Filter = "SqlScripts (.sql) | *.sql";
-                fileDialog.Title = "Select the sql script to execute";
+                fileDialog.Filter = "GLTF (.gltf) | *.gltf";
+                fileDialog.Title = "Select the file to open";
+                Regex reg = new Regex(@"\\GLTFCompiler.*");
+                var bPath = reg.Replace(Assembly.GetExecutingAssembly().Location, "");
+                fileDialog.InitialDirectory = Directory.GetParent(bPath).FullName;
 
                 var res = fileDialog.ShowDialog();
                 if (res != DialogResult.OK || string.IsNullOrWhiteSpace(fileDialog.FileName))

@@ -11,13 +11,18 @@
 #include "Textures.h"
 #include "Raytrace.h"
 
-void compile_shaders()
+void compile_shaders(VkBool32 ray_trace)
 {
 	printf("compiling shaders\n");
 	int vert = system("%VK_SDK_PATH%/Bin/glslc.exe shader.vert -o shader.vert.spv --target-env=vulkan1.2");
-
-	int frag = system("%VK_SDK_PATH%/Bin/glslc.exe shader.frag -o shader.frag.spv --target-env=vulkan1.2");
-
+	int frag;
+	if (ray_trace) {
+		frag = system("%VK_SDK_PATH%/Bin/glslc.exe shader.frag -o shader.frag.spv --target-env=vulkan1.2 -DRAY_TRACE");
+	}
+	else {
+		frag = system("%VK_SDK_PATH%/Bin/glslc.exe shader.frag -o shader.frag.spv --target-env=vulkan1.2");
+	}
+	
 	if (vert || frag)
 		error("Failed to compile shaders");
 }
@@ -76,7 +81,7 @@ void create_descriptor_containers(VkInfo* info, Scene* scene)
 	if (info->global_buffers.completed == 1 && info->global_buffers.completed)
 		return;
 
-	info->numSets = 3;
+	info->numSets = info->ray_tracing ? 4 : 3;
 
 	uint32_t sceneDataBinding = 0;
 	uint32_t VertexBufferBinding = 1;
@@ -130,7 +135,9 @@ void create_descriptor_containers(VkInfo* info, Scene* scene)
 	frameInfos[0] = frameInfo;
 	info->per_frame_buffers = create_descriptor_set(info, 2, frameInfos, 1, info->swapchain.image_count);
 
-	create_ray_descriptors(info, scene, TLASBinding);
+	if (info->ray_tracing) {
+		create_ray_descriptors(info, scene, TLASBinding);
+	}
 }
 
 void init_descriptor_containers(VkInfo* info, Scene* scene)
@@ -147,8 +154,8 @@ void init_descriptor_containers(VkInfo* info, Scene* scene)
 
 	if (info->ray_tracing) {
 		build_acceleration_structures(info, scene, VK_FALSE);
+		init_ray_descriptors(info, scene);
 	}
-	init_ray_descriptors(info, scene);
 }
 
 void destroy_shaders(VkInfo* vk, Scene* scene)
