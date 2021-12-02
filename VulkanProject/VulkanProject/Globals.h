@@ -110,6 +110,7 @@ typedef struct vkInfo {
 	VkBool32 rasterize;
 	// command pool
 	VkCommandPool command_pool;
+	VkCommandPool imgui_command_pool;
 	VkQueue graphics_queue;
 	VkQueue present_queue;
 	uint32_t buffer_count;
@@ -136,8 +137,11 @@ typedef struct vkInfo {
 	VkRenderPass imguiPass;
 	VkPipelineLayout pipeline_layout;
 	VkPipeline pipeline;
-	VkSemaphore imageAvailableSemaphore;
-	VkSemaphore renderFinishedSemaphore;
+	VkSemaphore* imageAvailableSemaphore;
+	VkSemaphore* renderFinishedSemaphore;
+	VkFence* inFlightFences;
+	VkFence* imagesInFlight;
+	size_t currentFrame;
 } VkInfo;
 
 typedef struct app {
@@ -146,3 +150,5 @@ typedef struct app {
 	Scene scene;
 	void* imgui_window;
 } App;
+
+#define MAX_FRAMES_IN_FLIGHT 2

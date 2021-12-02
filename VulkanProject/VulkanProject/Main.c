@@ -58,7 +58,7 @@ void mouse__move_callback (GLFWwindow* window, double x, double y)
 }
 void mouse_button_callback(GLFWwindow* window, int button, int pressed, int idk)
 {
-    if(button == 0)
+    if(button == 1)
     {
         if(pressed == 1)
         {
@@ -136,7 +136,9 @@ int main()
     create_or_resize_swapchain(&app.vk_info, &app.window, WINDOW_WIDTH, WINDOW_HEIGHT, &app.scene);
 
     init_imgui(&app, WINDOW_WIDTH, WINDOW_HEIGHT);
-    init_imgui_command_buffers(&app.vk_info);
+    init_imgui_command_buffers(&app.vk_info, &app.scene);
+    resize_callback_imgui(&app.vk_info, &app.scene);
+
     //app.scene.scene_data.numTriangles = min(app.scene.scene_data.numTriangles, 500);
     // scene renderes fluently for up to 1000 triangles when intersecting with linear time complexity
     // provided the same complexity one can allow for a total of 1000 intersection tests per ray
@@ -153,7 +155,7 @@ int main()
 		if (resizeW >= 0 || resizeH >= 0)
 		{
 			create_or_resize_swapchain(&app.vk_info, &app.window, resizeW, resizeH, &app.scene);
-            resize_callback_imgui(&app.vk_info);
+            resize_callback_imgui(&app.vk_info, &app.scene);
 			WINDOW_WIDTH = resizeW;
 			WINDOW_HEIGHT = resizeH;
 			resizeW = -1;

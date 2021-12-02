@@ -592,9 +592,22 @@ void create_semaphores(VkInfo* info)
 		semaphore_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
 		.pNext = NULL
 	};
+	VkFenceCreateInfo fenceInfo = {
+		.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+		.flags = VK_FENCE_CREATE_SIGNALED_BIT
+	};
 
-	check(vkCreateSemaphore(info->device, &semaphore_info, NULL, &info->imageAvailableSemaphore),
-		"Failed to create semaphore");
-	check(vkCreateSemaphore(info->device, &semaphore_info, NULL, &info->renderFinishedSemaphore),
-		"Failed to create semaphores");
+	info->renderFinishedSemaphore = malloc(sizeof(VkSemaphore) * MAX_FRAMES_IN_FLIGHT);
+	info->imageAvailableSemaphore = malloc(sizeof(VkSemaphore) * MAX_FRAMES_IN_FLIGHT);
+	info->inFlightFences = malloc(sizeof(VkFence) * MAX_FRAMES_IN_FLIGHT);
+	info->imagesInFlight = malloc(sizeof(VkFence) * info->swapchain.image_count);
+	memset(info->imagesInFlight, 0, sizeof(VkFence) * info->swapchain.image_count);
+
+	for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+		check(vkCreateSemaphore(info->device, &semaphore_info, NULL, &info->imageAvailableSemaphore[i]),
+			"Failed to create semaphore");
+		check(vkCreateSemaphore(info->device, &semaphore_info, NULL, &info->renderFinishedSemaphore[i]),
+			"Failed to create semaphores");
+		check(vkCreateFence(info->device, &fenceInfo, NULL, &info->inFlightFences[i]), "Failed to create Fence");
+	}
 }

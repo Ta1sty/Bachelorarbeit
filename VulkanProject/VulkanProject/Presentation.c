@@ -6,6 +6,8 @@
 #include "Util.h"
 #include "Presentation.h"
 
+#include "ImguiSetup.h"
+
 
 void set_global_buffers(VkInfo* vk, Scene* scene)
 {
@@ -78,7 +80,7 @@ void set_frame_buffers(VkInfo* vk, Scene* scene, uint32_t image_index) {
 	memcpy(&frame.view_to_world, &mat, sizeof(float) * 4 * 4);
 	frame.width = WINDOW_WIDTH;
 	frame.height = WINDOW_HEIGHT;
-	frame.fov = (float)M_PI / 180.f * 45.f;
+	frame.fov = (float)M_PI / 180.f * scene->camera.fov;
 
 	void* data;
 	check(vkMapMemory(vk->device, vk->per_frame_buffers.buffer_containers[image_index].buffers[0].vk_buffer_memory, 
@@ -87,20 +89,28 @@ void set_frame_buffers(VkInfo* vk, Scene* scene, uint32_t image_index) {
 	vkUnmapMemory(vk->device, vk->per_frame_buffers.buffer_containers[image_index].buffers[0].vk_buffer_memory);
 }
 
-void drawFrame(VkInfo* vk_info, Scene* scene)
+void drawFrame(VkInfo* info, Scene* scene)
 {
-	Swapchain* swapchain = &vk_info->swapchain;
+	size_t currentFrame = info->currentFrame;
+	vkWaitForFences(info->device, 1, &info->inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+
 	uint32_t imageIndex;
-	vkAcquireNextImageKHR(vk_info->device, swapchain->vk_swapchain,
-		UINT64_MAX, vk_info->imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
-	const VkSemaphore waitSemaphores[] = { vk_info->imageAvailableSemaphore };
-	const VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+	vkAcquireNextImageKHR(info->device, info->swapchain.vk_swapchain, UINT64_MAX, info->imageAvailableSemaphore[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
-	VkSemaphore signalSemaphores[] = { vk_info->renderFinishedSemaphore };
+	update_imgui_commandBuffer(info, scene,imageIndex);
 
-	set_frame_buffers(vk_info, scene, imageIndex);
+	if (info->imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
+		vkWaitForFences(info->device, 1, &info->imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
+	}
+	info->imagesInFlight[imageIndex] = info->inFlightFences[currentFrame];
+	VkSemaphore waitSemaphores[] = { info->imageAvailableSemaphore[currentFrame] };
+	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+	VkSemaphore signalSemaphores[] = { info->renderFinishedSemaphore[currentFrame] };
 
-	VkCommandBuffer buffers[] = { vk_info->command_buffers[imageIndex] , vk_info->imgui_command_buffers[imageIndex]};
+
+	set_frame_buffers(info, scene, imageIndex);
+
+	VkCommandBuffer buffers[] = { info->command_buffers[imageIndex] , info->imgui_command_buffers[imageIndex] };
 
 	VkSubmitInfo submitInfo = {
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
@@ -112,20 +122,23 @@ void drawFrame(VkInfo* vk_info, Scene* scene)
 	.signalSemaphoreCount = 1,
 	.pSignalSemaphores = signalSemaphores,
 	};
+	vkResetFences(info->device, 1, &info->inFlightFences[currentFrame]);
 
-	check(vkQueueSubmit(vk_info->graphics_queue, 1, &submitInfo, VK_NULL_HANDLE),"failed to submit draw command buffer!");
-	VkSwapchainKHR swapChains[] = { swapchain->vk_swapchain };
+	check(vkQueueSubmit(info->graphics_queue, 1, &submitInfo, info->inFlightFences[currentFrame]), "failed to submit draw");
 
-	VkPresentInfoKHR presentInfo = {
-	.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-	.waitSemaphoreCount = 1,
-	.pWaitSemaphores = signalSemaphores,
-	.swapchainCount = 1,
-	.pSwapchains = swapChains,
-	.pImageIndices = &imageIndex,
-	.pResults = NULL // Optional
-	};
-	vkQueuePresentKHR(vk_info->present_queue, &presentInfo);
+	VkPresentInfoKHR presentInfo = {0};
+	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 
-	vkQueueWaitIdle(vk_info->present_queue);
+	presentInfo.waitSemaphoreCount = 1;
+	presentInfo.pWaitSemaphores = signalSemaphores;
+
+	VkSwapchainKHR swapChains[] = { info->swapchain.vk_swapchain };
+	presentInfo.swapchainCount = 1;
+	presentInfo.pSwapchains = swapChains;
+
+	presentInfo.pImageIndices = &imageIndex;
+
+	vkQueuePresentKHR(info->present_queue, &presentInfo);
+
+	info->currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }

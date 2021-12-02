@@ -48,6 +48,7 @@ typedef struct camera
 	float pos[3];
 	float rotation_x;
 	float rotation_y;
+	float fov;
 } Camera;
 
 typedef struct frameData {

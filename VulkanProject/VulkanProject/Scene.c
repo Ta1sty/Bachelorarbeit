@@ -12,11 +12,11 @@
 void init_scene(Scene* scene)
 {
 	scene->camera.pos[0] = 0;
-	scene->camera.pos[1] = 10;
-	scene->camera.pos[2] = 0;
+	scene->camera.pos[1] = 0;
+	scene->camera.pos[2] = 2;
 	scene->camera.rotation_x = 0;
 	scene->camera.rotation_y = 0;
-
+	scene->camera.fov = 45;
 	load_scene(scene, "asd");
 }
 

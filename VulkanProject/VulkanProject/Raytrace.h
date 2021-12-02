@@ -1,5 +1,5 @@
-#include "Globals.h"
 #pragma once
+#include "Globals.h"
 
 void build_acceleration_structures(VkInfo* info, Scene* scene, VkBool32 useMultiLevel);
 void prepare_scene(Scene* scene, VkBool32 useMultiLevel);

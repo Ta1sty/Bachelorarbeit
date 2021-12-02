@@ -60,14 +60,7 @@ void init_imgui(App* app, int width, int height)
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-
-	// Setup Dear ImGui style
-	ImGui::StyleColorsDark();
-	//ImGui::StyleColorsClassic();
-
+	ImGuiIO& io = ImGui::GetIO();
 	// Setup Platform/Renderer bindings
 	ImGui_ImplGlfw_InitForVulkan(app->window, true);
 	ImGui_ImplVulkan_InitInfo init_info = {};
@@ -86,13 +79,20 @@ void init_imgui(App* app, int width, int height)
 	create_imgui_RenderPass(&app->vk_info);
 
 	ImGui_ImplVulkan_Init(&init_info, app->vk_info.imguiPass);
+	ImGui::StyleColorsDark();
 
 	VkCommandBuffer buf = beginSingleTimeCommands(&app->vk_info);
 	ImGui_ImplVulkan_CreateFontsTexture(buf);
 	endSingleTimeCommands(&app->vk_info, buf);
 }
-void init_imgui_command_buffers(VkInfo* vk)
+void init_imgui_command_buffers(VkInfo* vk, Scene* scene)
 {
+	VkCommandPoolCreateInfo pool_info = {};
+	pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+	pool_info.queueFamilyIndex = vk->queue_family_index;
+
+	vkCreateCommandPool(vk->device, &pool_info, NULL, &vk->imgui_command_pool);
 
 	vk->swapchain.imgui_frame_buffers = static_cast<VkFramebuffer*>(malloc(sizeof(VkFramebuffer) * vk->buffer_count));
 
@@ -113,46 +113,59 @@ void init_imgui_command_buffers(VkInfo* vk)
 	VkCommandBufferAllocateInfo commandBufferAllocateInfo = {};
 	commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 	commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	commandBufferAllocateInfo.commandPool = vk->command_pool;
+	commandBufferAllocateInfo.commandPool = vk->imgui_command_pool;
 	commandBufferAllocateInfo.commandBufferCount = vk->buffer_count;
 	vkAllocateCommandBuffers(vk->device, &commandBufferAllocateInfo, vk->imgui_command_buffers);
 
-	bool showWindow = true;
+	for(uint32_t i = 0;i < vk->buffer_count;i++)
+	{
+		update_imgui_commandBuffer(vk, scene, i);
+	}
+}
 
+void update_imgui_commandBuffer(VkInfo* vk, Scene* scene, uint32_t index)
+{
+	check_result(vkResetCommandBuffer(vk->imgui_command_buffers[index], 0));
+
+	draw_imgui_frame(vk, scene);
+
+	VkClearValue clearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
+
+	VkCommandBufferBeginInfo begin_info = {};
+	begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	begin_info.flags = 0;
+	check_result(vkBeginCommandBuffer(vk->imgui_command_buffers[index], &begin_info));
+
+
+	VkRenderPassBeginInfo info = {};
+	info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	info.renderPass = vk->imguiPass;
+	info.framebuffer = vk->swapchain.imgui_frame_buffers[index];
+	info.renderArea.extent = vk->swapchain.extent;
+	info.clearValueCount = 1;
+	info.pClearValues = &clearColor;
+	vkCmdBeginRenderPass(vk->imgui_command_buffers[index], &info, VK_SUBPASS_CONTENTS_INLINE);
+
+	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), vk->imgui_command_buffers[index]);
+
+	vkCmdEndRenderPass(vk->imgui_command_buffers[index]);
+
+	check_result(vkEndCommandBuffer(vk->imgui_command_buffers[index]));
+}
+
+void draw_imgui_frame(VkInfo* info, Scene* scene)
+{
 	ImGui_ImplVulkan_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
-	ImGui::ShowDemoWindow(&showWindow);
+	ImGui::Begin("Settings");
+	ImGui::SliderFloat("FOV", &scene->camera.fov, 1, 3000);
+	ImGui::End();
 	ImGui::Render();
-
-	for(uint32_t i = 0;i < vk->buffer_count;i++)
-	{
-		VkClearValue clearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
-
-		VkCommandBufferBeginInfo begin_info = {};
-		begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		begin_info.flags = 0;
-		check_result(vkBeginCommandBuffer(vk->imgui_command_buffers[i], &begin_info));
-
-
-		VkRenderPassBeginInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		info.renderPass = vk->imguiPass;
-		info.framebuffer = vk->swapchain.imgui_frame_buffers[i];
-		info.renderArea.extent = vk->swapchain.extent;
-		info.clearValueCount = 1;
-		info.pClearValues = &clearColor;
-		vkCmdBeginRenderPass(vk->imgui_command_buffers[i], &info, VK_SUBPASS_CONTENTS_INLINE);
-
-		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), vk->imgui_command_buffers[i]);
-
-		vkCmdEndRenderPass(vk->imgui_command_buffers[i]);
-
-		check_result(vkEndCommandBuffer(vk->imgui_command_buffers[i]));
-	}
 }
-void resize_callback_imgui(VkInfo* vk)
+
+void resize_callback_imgui(VkInfo* vk, Scene* scene)
 {
 	ImGui_ImplVulkan_SetMinImageCount(2);
-	init_imgui_command_buffers(vk);
+	init_imgui_command_buffers(vk, scene);
 }
