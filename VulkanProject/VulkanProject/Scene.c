@@ -22,7 +22,7 @@ void init_scene(Scene* scene)
 
 void load_scene(Scene* scene, char** path)
 {
-	int vert = system("buildScene.bat");
+	// int vert = system("buildScene.bat");
 
 	FILE* file;
 	fopen_s(&file, "dump.bin", "rb");
@@ -62,6 +62,12 @@ void flatten_scene(Scene* scene)
 		{0,0,1,0},
 		{0,0,0,1}
 	};
+	SceneNode* n = &scene->scene_nodes[0];
+	for (uint32_t i = 0; i != n->NumTriangles * 3 * 3; i += 3)
+	{
+		Vertex v = scene->vertices[scene->indices[i / 3 + n->IndexBufferIndex]];
+		int a = 0;
+	}
 
 	FlatNodeResult result = flatten_node(scene, id, node);
 	int a = 0;

@@ -50,7 +50,7 @@ typedef struct descriptorSet
 	VkDescriptorSet* descriptor_sets; // || = sets_count
 	uint32_t buffer_count; // number of buffers per set
 	BufferInfo* buffer_infos; // buffer_count
-	BufferContainer* buffer_containers; // || = sets_count
+	BufferContainer* buffer_containers; // || = sets_count = amount of buffer (for example one global or n for each framebuffer)
 	uint32_t set_number;
 	uint32_t completed; // indicates that this container is fully operational
 } DescriptorSetContainer;

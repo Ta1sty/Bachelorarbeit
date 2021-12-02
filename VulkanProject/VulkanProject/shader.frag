@@ -35,6 +35,8 @@ layout(binding = 6, set = 2) uniform FrameData {
 	uint width;
 	uint height;
 	float fov;
+	uint displayUV;
+	uint displayTex;
 } frame;
 
 #ifdef RAY_TRACE
@@ -159,10 +161,19 @@ void shadeFragment(vec3 P, vec3 V, vec3 tuv, int triangle) {
 	float u = tuv.y;
 	float v = tuv.z;
 
+	if(frame.displayUV != 0){
+		outColor = vec4(u,v,0,1);
+		return;
+	}
 
 	vec3 N = w * v0.normal + v * v1.normal + u * v2.normal;
 	N = normalize(N);
 	vec2 tex = w * v0.tex_coord + v * v1.tex_coord + u * v2.tex_coord;
+
+	if(frame.displayTex != 0){
+		outColor = vec4(tex.xy,0,1);
+		return;
+	}
 
 	float ka, kd, ks;
 	vec3 color;

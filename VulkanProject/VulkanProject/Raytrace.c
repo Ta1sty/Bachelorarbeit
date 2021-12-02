@@ -75,20 +75,22 @@ TLAS build_acceleration_structure_for_node(VkInfo* info, Scene* scene, SceneNode
 {
 	// credits to christopher
 	VK_LOAD(vkGetAccelerationStructureBuildSizesKHR)
-	VK_LOAD(vkCreateAccelerationStructureKHR)
-	VK_LOAD(vkGetAccelerationStructureDeviceAddressKHR)
-	VK_LOAD(vkCmdBuildAccelerationStructuresKHR)
+		VK_LOAD(vkCreateAccelerationStructureKHR)
+		VK_LOAD(vkGetAccelerationStructureDeviceAddressKHR)
+		VK_LOAD(vkCmdBuildAccelerationStructuresKHR)
+		BLAS* blases = malloc(sizeof(BLAS) * node->NumChildren);
+
 	// 2 things to do
 	// if node references geometry calls build BLAS for just the geometry
 	// if node references children call buildBLAS for every child node
-	/*BLAS* blases = malloc(sizeof(BLAS) * node->NumChildren);
-	for (int i = 0; i < node->NumChildren; i++) {
+	/*for (int i = 0; i < node->NumChildren; i++) {
 		SceneNode* child = &scene->scene_nodes[scene->node_indices[node->childrenIndex + i]];
-		BLAS child_blas = build_blas(info, scene, child);
+		blases[i] = build_blas(info, scene, child);
 	}*/
 
+
 	// for now build one BLAS for entire scene
-	BLAS* blases = malloc(sizeof(BLAS) * 1);
+	/*blases = malloc(sizeof(BLAS) * 1);
 	SceneNode everything = {
 		.Index = 0,
 		.childrenIndex = -1,
@@ -101,8 +103,8 @@ TLAS build_acceleration_structure_for_node(VkInfo* info, Scene* scene, SceneNode
 		},
 		.IndexBufferIndex = 0,
 		.NumTriangles = scene->scene_data.numTriangles
-	};
-	blases[0] = build_blas(info, scene, &everything);
+	};*/
+	blases[0] = build_blas(info, scene, &scene->scene_nodes[0]);
 
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingMemory;
@@ -116,7 +118,7 @@ TLAS build_acceleration_structure_for_node(VkInfo* info, Scene* scene, SceneNode
 	                  (void**)&staging_data), "");
 
 	// Figure out how big the buffers for the bottom-level need to be
-	uint32_t primitive_count = everything.NumTriangles;
+	uint32_t primitive_count = 1;
 
 	// Figure out how big the buffers for the top-level need to be
 	VkAccelerationStructureBuildSizesInfoKHR top_sizes = {
@@ -226,7 +228,7 @@ TLAS build_acceleration_structure_for_node(VkInfo* info, Scene* scene, SceneNode
 	TLAS tlas = {
 		.buffer = tlasBuffer,
 		.memory = tlasMemory,
-		.node = everything,
+		.node = *node,
 		.structure = structure
 	};
 	return tlas;
@@ -246,40 +248,75 @@ BLAS build_blas(VkInfo* info, Scene* scene, SceneNode* node)
 	VK_LOAD(vkCreateAccelerationStructureKHR)
 	VK_LOAD(vkGetAccelerationStructureDeviceAddressKHR)
 	VK_LOAD(vkCmdBuildAccelerationStructuresKHR)
-	// Create a buffer for the dequantized triangle mesh
-	VkBuffer vertexStage;
-	VkDeviceMemory vertexStageMemeory;
-	void* vertex_data;
-	createBuffer(info, scene->scene_data.numVertices * sizeof(float) * 3,
-	             VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
-	             VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-	             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &vertexStage, &vertexStageMemeory);
-	check(vkMapMemory(info->device, vertexStageMemeory, 0, scene->scene_data.numVertices * sizeof(float) * 3, 0,
-	                  &vertex_data), "error Mapping memeory");
-
-	float* vertices = vertex_data;
-	for (uint32_t i = 0; i != scene->scene_data.numVertices; ++i)
-	{
-		vertices[i * 3] = scene->vertices[i].position[0];
-		vertices[i * 3 + 1] = scene->vertices[i].position[1];
-		vertices[i * 3 + 2] = scene->vertices[i].position[2];
-	}
 
 	VkBuffer indexStage;
 	VkDeviceMemory indexStageMemeory;
 	void* index_data;
-	createBuffer(info, sizeof(uint32_t) * scene->scene_data.numTriangles * 3,
+	createBuffer(info, sizeof(uint32_t) * node->NumTriangles * 3,
 	             VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
 	             VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
 	             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &indexStage, &indexStageMemeory);
-	check(vkMapMemory(info->device, indexStageMemeory, 0, sizeof(uint32_t) * scene->scene_data.numTriangles, 0,
+	check(vkMapMemory(info->device, indexStageMemeory, 0, sizeof(uint32_t) * node->NumTriangles * 3, 0,
 	                  &index_data), "error Mapping memeory");
 
+	uint32_t maxIndex = 0; // the maximum index used in the indexBuffer for this mesh
+	uint32_t minIndex = UINT32_MAX; // the minimum index used in the indexBuffer for this mesh.
 	uint32_t* indices = index_data;
-	for (uint32_t i = 0; i != scene->scene_data.numTriangles * 3; ++i)
+	for (uint32_t i = 0; i != node->NumTriangles * 3; ++i)
 	{
-		indices[i] = scene->indices[i];
+		minIndex = min(minIndex, scene->indices[i + node->IndexBufferIndex]);
+		maxIndex = max(maxIndex, scene->indices[i + node->IndexBufferIndex]);
 	}
+
+	for (uint32_t i = 0; i != node->NumTriangles; ++i)
+	{
+		indices[i * 3 + 0] = scene->indices[i * 3 + 0 + node->IndexBufferIndex] - minIndex; // there should always be one where this is 0
+		indices[i * 3 + 1] = scene->indices[i * 3 + 1 + node->IndexBufferIndex] - minIndex; // there should always be one where this is 0
+		indices[i * 3 + 2] = scene->indices[i * 3 + 2 + node->IndexBufferIndex] - minIndex; // there should always be one where this is 0
+	}
+	// create vertex stage buffer
+	/*uint32_t numVertices = maxIndex - minIndex + 1;
+	VkBuffer vertexStage;
+	VkDeviceMemory vertexStageMemeory;
+	void* vertex_data;
+	createBuffer(info, numVertices * sizeof(float) * 3,
+		VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
+		VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &vertexStage, &vertexStageMemeory);
+	check(vkMapMemory(info->device, vertexStageMemeory, 0, numVertices * sizeof(float) * 3, 0,
+		&vertex_data), "error Mapping memeory");
+
+	float* vertices = vertex_data;
+	for (uint32_t i = 0; i != numVertices; ++i)
+	{
+		vertices[i * 3 + 0] = scene->vertices[i + minIndex].position[0];
+		vertices[i * 3 + 1] = scene->vertices[i + minIndex].position[1];
+		vertices[i * 3 + 2] = scene->vertices[i + minIndex].position[2];
+	}*/
+
+	// naive vertex array
+	
+	VkBuffer vertexStage;
+	VkDeviceMemory vertexStageMemeory;
+	void* vertex_data;
+	createBuffer(info, node->NumTriangles * sizeof(float) * 3,
+		VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
+		VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &vertexStage, &vertexStageMemeory);
+	check(vkMapMemory(info->device, vertexStageMemeory, 0, node->NumTriangles * sizeof(float) * 3, 0,
+		&vertex_data), "error Mapping memeory");
+
+	float* vertices = vertex_data;
+	for (uint32_t i = 0; i != node->NumTriangles * 3 * 3; i +=3)
+	{
+		Vertex v = scene->vertices[scene->indices[i/3 + node->IndexBufferIndex]];
+		vertices[i + 0] = v.position[0];
+		vertices[i + 1] = v.position[1];
+		vertices[i + 2] = v.position[2];
+	}
+
+
+
 
 	// Figure out how big the buffers for the bottom-level need to be
 	uint32_t primitive_count = node->NumTriangles;
@@ -306,7 +343,7 @@ BLAS build_blas(VkInfo* info, Scene* scene, SceneNode* node)
 				.vertexStride = 3 * sizeof(float),
 				.indexType = VK_INDEX_TYPE_NONE_KHR,
 				.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT,
-				// .indexData = {.deviceAddress = vkGetBufferDeviceAddress(info->device, &index_address)}
+				//.indexData = {.deviceAddress = vkGetBufferDeviceAddress(info->device, &index_address)}
 			},
 		},
 		.flags = VK_GEOMETRY_OPAQUE_BIT_KHR,
@@ -377,6 +414,13 @@ BLAS build_blas(VkInfo* info, Scene* scene, SceneNode* node)
 	                     1, &after_build_barrier, 0, NULL, 0, NULL);
 
 	endSingleTimeCommands(info, cmd);
+
+	vkDestroyBuffer(info->device, vertexStage, NULL);
+	vkDestroyBuffer(info->device, indexStage, NULL);
+	vkDestroyBuffer(info->device, scratchBuffer, NULL);
+	vkFreeMemory(info->device, vertexStageMemeory, NULL);
+	vkFreeMemory(info->device, indexStageMemeory, NULL);
+	vkFreeMemory(info->device, scratchBufferMemeory, NULL);
 
 	BLAS b = {
 		.node = *node,

@@ -81,6 +81,8 @@ void set_frame_buffers(VkInfo* vk, Scene* scene, uint32_t image_index) {
 	frame.width = WINDOW_WIDTH;
 	frame.height = WINDOW_HEIGHT;
 	frame.fov = (float)M_PI / 180.f * scene->camera.fov;
+	frame.displayUV = scene->camera.displayUV;
+	frame.displayTex = scene->camera.displayTex;
 
 	void* data;
 	check(vkMapMemory(vk->device, vk->per_frame_buffers.buffer_containers[image_index].buffers[0].vk_buffer_memory, 

@@ -49,6 +49,8 @@ typedef struct camera
 	float rotation_x;
 	float rotation_y;
 	float fov;
+	uint32_t displayUV;
+	uint32_t displayTex;
 } Camera;
 
 typedef struct frameData {
@@ -56,6 +58,8 @@ typedef struct frameData {
 	uint32_t width;
 	uint32_t height;
 	float fov;
+	uint32_t displayUV;
+	uint32_t displayTex;
 } FrameData;
 
 typedef struct material
