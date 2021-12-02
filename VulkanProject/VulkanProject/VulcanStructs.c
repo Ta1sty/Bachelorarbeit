@@ -8,7 +8,7 @@
 #include "Util.h"
 #include "VulkanStructs.h"
 
-void create_instance(VkInfo* vk_info)
+void create_instance(VkInfo* vk_info) // see https://github.com/MomentsInGraphics/vulkan_renderer
 {
 	VkApplicationInfo app_info = {
 		.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
@@ -106,7 +106,7 @@ void create_instance(VkInfo* vk_info)
 	free(extensions);	
 }
 
-void create_device(VkInfo* vk_info)
+void create_device(VkInfo* vk_info) // see https://github.com/MomentsInGraphics/vulkan_renderer
 {
 	// Select device extensions
 	const uint32_t ext_base_num = 4;
@@ -202,7 +202,7 @@ void create_validation_layer(VkInfo* vk_info)
 	//TODO validation if I feel like it
 }
 
-void create_swapchain(VkInfo* vk_info, GLFWwindow** window, uint32_t width, uint32_t height)
+void create_swapchain(VkInfo* vk_info, GLFWwindow** window, uint32_t width, uint32_t height) // see https://vulkan-tutorial.com/
 {
 	Swapchain* swapchain = &vk_info->swapchain;
 	memset(swapchain, 0, sizeof(Swapchain));
@@ -260,7 +260,7 @@ void create_swapchain(VkInfo* vk_info, GLFWwindow** window, uint32_t width, uint
 	check(vkCreateSwapchainKHR(vk_info->device, &create_info, NULL, &swapchain->vk_swapchain), "Failed to create swapchain");
 }
 
-void create_image_views(VkInfo* info)
+void create_image_views(VkInfo* info) // see https://vulkan-tutorial.com/
 {
 	Swapchain* swapchain = &info->swapchain;
 	swapchain->image_count = 0;
@@ -293,7 +293,7 @@ void create_image_views(VkInfo* info)
 	}
 }
 
-void create_pipeline(VkInfo* info)
+void create_pipeline(VkInfo* info) // see https://vulkan-tutorial.com/
 {
 	Swapchain* swapchain = &info->swapchain;
 	compile_shaders(info->ray_tracing);
@@ -459,7 +459,7 @@ void create_pipeline(VkInfo* info)
 	free(attributeDescriptions);
 }
 
-void create_render_pass(VkInfo* info)
+void create_render_pass(VkInfo* info) // see https://vulkan-tutorial.com/
 {
 	VkAttachmentDescription color_attachment = {
 		.format = info->swapchain.format,
@@ -501,7 +501,7 @@ void create_render_pass(VkInfo* info)
 	check(vkCreateRenderPass(info->device, &render_pass_info, NULL, &info->renderPass), "failed to create render pass");
 }
 
-void create_frame_buffers(VkInfo* info)
+void create_frame_buffers(VkInfo* info) // see https://vulkan-tutorial.com/
 {
 	Swapchain* swapchain = &info->swapchain;
 	swapchain->frame_buffers = malloc(sizeof(VkFramebuffer) * swapchain->image_count);
@@ -525,7 +525,7 @@ void create_frame_buffers(VkInfo* info)
 	}
 }
 
-void create_command_buffers(VkInfo* info)
+void create_command_buffers(VkInfo* info) // see https://vulkan-tutorial.com/ for general structure, was adjusted accordingly
 {
 	Swapchain* swapchain = &info->swapchain;
 	VkCommandBufferAllocateInfo allocInfo = {
@@ -586,7 +586,7 @@ void create_command_buffers(VkInfo* info)
 	}
 }
 
-void create_semaphores(VkInfo* info)
+void create_semaphores(VkInfo* info) // see https://vulkan-tutorial.com/
 {
 	VkSemaphoreCreateInfo semaphore_info = {
 		semaphore_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,

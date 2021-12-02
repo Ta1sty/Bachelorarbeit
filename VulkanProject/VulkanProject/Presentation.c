@@ -89,7 +89,7 @@ void set_frame_buffers(VkInfo* vk, Scene* scene, uint32_t image_index) {
 	vkUnmapMemory(vk->device, vk->per_frame_buffers.buffer_containers[image_index].buffers[0].vk_buffer_memory);
 }
 
-void drawFrame(VkInfo* info, Scene* scene)
+void drawFrame(VkInfo* info, Scene* scene) // see https://vulkan-tutorial.com/
 {
 	size_t currentFrame = info->currentFrame;
 	vkWaitForFences(info->device, 1, &info->inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);

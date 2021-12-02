@@ -13,7 +13,9 @@ void check_result(VkResult res)
 	if (res == VK_SUCCESS) return;
 	throw "ImGui threw an error";
 }
-
+// see https://frguthmann.github.io/posts/vulkan_imgui/
+// I've found the source to be sometimes kind of confusing as the post isn't a walkthrough or tutorial
+// but kind of a review of an already implemented imgui integration into a vulkan project
 void create_imgui_RenderPass(VkInfo* vk)
 {
 	VkAttachmentDescription attachment = {};
@@ -55,7 +57,7 @@ void create_imgui_RenderPass(VkInfo* vk)
 	check_result(vkCreateRenderPass(vk->device, &info, nullptr, &vk->imguiPass));
 }
 
-void init_imgui(App* app, int width, int height)
+void init_imgui(App* app, int width, int height) // see https://frguthmann.github.io/posts/vulkan_imgui/
 {
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
@@ -87,6 +89,7 @@ void init_imgui(App* app, int width, int height)
 }
 void init_imgui_command_buffers(VkInfo* vk, Scene* scene)
 {
+	// see https://frguthmann.github.io/posts/vulkan_imgui/
 	VkCommandPoolCreateInfo pool_info = {};
 	pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
@@ -123,7 +126,7 @@ void init_imgui_command_buffers(VkInfo* vk, Scene* scene)
 	}
 }
 
-void update_imgui_commandBuffer(VkInfo* vk, Scene* scene, uint32_t index)
+void update_imgui_commandBuffer(VkInfo* vk, Scene* scene, uint32_t index) // see https://frguthmann.github.io/posts/vulkan_imgui/
 {
 	check_result(vkResetCommandBuffer(vk->imgui_command_buffers[index], 0));
 

@@ -15,6 +15,7 @@ uint32_t findMemoryType(VkInfo* vk, uint32_t type_filter, VkMemoryPropertyFlags 
 	}
 	return -1;
 }
+// see https://vulkan-tutorial.com/ &  https://github.com/MomentsInGraphics/vulkan_renderer, was combined to fit my needs
 void createBuffer(VkInfo* vk, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer* buffer, VkDeviceMemory* bufferMemory) {
 	VkBufferCreateInfo bufferInfo = { 0 };
 	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -65,7 +66,7 @@ VkDeviceAddress getBufferDeviceAddress(VkInfo* info, VkBuffer buf)
 	return vkGetBufferDeviceAddress(info->device, &addr_info);
 }
 
-VkCommandBuffer beginSingleTimeCommands(VkInfo* vk)
+VkCommandBuffer beginSingleTimeCommands(VkInfo* vk) // see https://vulkan-tutorial.com/
 {
 	VkCommandBufferAllocateInfo allocInfo = {0};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -85,7 +86,7 @@ VkCommandBuffer beginSingleTimeCommands(VkInfo* vk)
 	return commandBuffer;
 }
 
-void endSingleTimeCommands(VkInfo* vk, VkCommandBuffer commandBuffer){
+void endSingleTimeCommands(VkInfo* vk, VkCommandBuffer commandBuffer){ // see https://vulkan-tutorial.com/
 	vkEndCommandBuffer(commandBuffer);
 
 	VkSubmitInfo submitInfo = {0};
@@ -99,7 +100,7 @@ void endSingleTimeCommands(VkInfo* vk, VkCommandBuffer commandBuffer){
 	vkFreeCommandBuffers(vk->device, vk->command_pool, 1, &commandBuffer);
 }
 
-void copyBuffer(VkInfo* vk, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
+void copyBuffer(VkInfo* vk, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) { // see https://vulkan-tutorial.com/
 	VkCommandBuffer commandBuffer = beginSingleTimeCommands(vk);
 
 	VkBufferCopy copyRegion = {0};

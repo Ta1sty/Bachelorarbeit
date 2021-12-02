@@ -7,6 +7,9 @@
 #include "Util.h"
 #include "VulkanUtil.h"
 
+// The basics come from https://vulkan-tutorial.com/
+// however i encapsuled the whole process of creating a buffer from the set layout on to be contained in a single struct tree
+
 BufferInfo create_buffer_info(uint32_t binding, VkDescriptorType type, VkShaderStageFlags stage, size_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memFlags)
 {
 	const BufferInfo layout_binding = {

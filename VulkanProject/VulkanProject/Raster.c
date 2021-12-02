@@ -7,7 +7,7 @@
 #include "Util.h"
 #include "VulkanUtil.h"
 uint32_t vertex_count = 3;
-
+// for all of the below see https://vulkan-tutorial.com/
 void initVertexArray()
 {
 	RasterVertex v1 = {

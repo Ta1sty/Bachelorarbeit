@@ -3,9 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "Util.h"
 #include "VulkanUtil.h"
 
-void create_texture_descriptors(VkInfo* vk, Scene* scene, uint32_t samplerBinding, uint32_t textureBinding)
+void create_texture_descriptors(VkInfo* vk, Scene* scene, uint32_t samplerBinding, uint32_t textureBinding) // see https://vulkan-tutorial.com/
 {
 	VkDescriptorSetLayoutBinding sampler_binding = {
 	.binding = samplerBinding,
@@ -35,7 +36,7 @@ void create_texture_descriptors(VkInfo* vk, Scene* scene, uint32_t samplerBindin
 	vk->texture_container.texture_binding = textureBinding;
 }
 
-void create_image(VkInfo* vk, Texture* texture, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties)
+void create_image(VkInfo* vk, Texture* texture, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties) // see https://vulkan-tutorial.com/
 {
 	VkImageCreateInfo imageInfo = { 0 };
 	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -69,7 +70,7 @@ void create_image(VkInfo* vk, Texture* texture, VkFormat format, VkImageTiling t
 
 }
 
-void transitionImageLayout(VkInfo* vk, VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout) {
+void transitionImageLayout(VkInfo* vk, VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout) { // see https://vulkan-tutorial.com/
 	VkCommandBuffer commandBuffer = beginSingleTimeCommands(vk);
 
 	VkImageMemoryBarrier barrier = {0};
@@ -119,7 +120,7 @@ void transitionImageLayout(VkInfo* vk, VkImage image, VkFormat format, VkImageLa
 	endSingleTimeCommands(vk, commandBuffer);
 }
 
-void copyBufferToImage(VkInfo* vk, VkBuffer buffer, VkImage image, uint32_t width, uint32_t height) {
+void copyBufferToImage(VkInfo* vk, VkBuffer buffer, VkImage image, uint32_t width, uint32_t height) { // see https://vulkan-tutorial.com/
 	VkCommandBuffer commandBuffer = beginSingleTimeCommands(vk);
 
 	VkBufferImageCopy region = {0};
@@ -142,7 +143,7 @@ void copyBufferToImage(VkInfo* vk, VkBuffer buffer, VkImage image, uint32_t widt
 	endSingleTimeCommands(vk, commandBuffer);
 }
 
-void create_texture_image(VkInfo* vk, Texture* texture)
+void create_texture_image(VkInfo* vk, Texture* texture) // see https://vulkan-tutorial.com/
 {
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
@@ -167,7 +168,7 @@ void create_texture_image(VkInfo* vk, Texture* texture)
 	vkFreeMemory(vk->device, stagingBufferMemory, NULL);
 }
 
-void create_texture_image_view(VkInfo* vk, Texture* texture)
+void create_texture_image_view(VkInfo* vk, Texture* texture) // see https://vulkan-tutorial.com/
 {
 	VkImageViewCreateInfo viewInfo = {0};
 	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -183,7 +184,7 @@ void create_texture_image_view(VkInfo* vk, Texture* texture)
 	check(vkCreateImageView(vk->device, &viewInfo, NULL, &texture->texture_image_view), "failed to create texture image view");
 }
 
-void create_texture_sampler(VkInfo* vk, Scene* scene)
+void create_texture_sampler(VkInfo* vk, Scene* scene) // see https://vulkan-tutorial.com/
 {
 	VkPhysicalDeviceProperties properties = { 0 };
 	vkGetPhysicalDeviceProperties(vk->physical_device, &properties);
@@ -218,7 +219,11 @@ void create_texture_buffers(VkInfo* vk, Scene* scene)
 	}
 }
 
-void init_texture_descriptor(VkInfo* vk, Scene* scene)
+// see https://vulkan-tutorial.com/
+// notice that the tutorial uses only one texture, I use an array of textures (not to be confused with a textureArray)
+// for an explanation see http://kylehalladay.com/blog/tutorial/vulkan/2018/01/28/Textue-Arrays-Vulkan.html
+// the method was adjusted for an array of dynamic size on allocation
+void init_texture_descriptor(VkInfo* vk, Scene* scene) 
 {
 	VkDescriptorSetAllocateInfo allocInfo = {0};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
