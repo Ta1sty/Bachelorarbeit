@@ -159,7 +159,7 @@ void draw_imgui_frame(VkInfo* info, Scene* scene)
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 	ImGui::Begin("Settings");
-	ImGui::SliderFloat("FOV", &scene->camera.fov, 1, 3000);
+	ImGui::SliderFloat("FOV", &scene->camera.fov, 1, 89);
 	ImGui::End();
 	ImGui::Render();
 }

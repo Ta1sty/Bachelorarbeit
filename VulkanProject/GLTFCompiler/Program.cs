@@ -44,7 +44,7 @@ namespace GLTFCompiler
             t.Start();
             t.Join();
             //using var src = File.Open(@"C:\Users\marku\Desktop\BA\Models\textureCube\2Cubes.gltf", FileMode.Open);
-            var dst = @"C:\Users\marku\Desktop\BA\VulkanProject\VulkanProject\dump.bin";
+            var dst = @"C:\Users\mshall\source\repos\Bachelorarbeit\VulkanProject\VulkanProject\dump.bin";
             using var str = new StreamReader(path);
             var res = str.ReadToEnd();
             var opt = new JsonSerializerOptions
