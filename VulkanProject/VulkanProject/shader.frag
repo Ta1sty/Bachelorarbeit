@@ -105,7 +105,7 @@ bool vertexIntersect(vec3 rayOrigin, vec3 rayDir, vec3 postion){
 	return true;
 }
 bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, out vec3 tuv, out int triangle_index) {
-#ifdef RAY_TRACE
+#ifdef RAY_TRAC
 	tuv = vec3(0);
 	float min_t = 1.0e-3f;
 	float max_t = t_max;
@@ -124,8 +124,10 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, out vec3 tuv
 		tuv.z = uv.x;
 		return true;
 	}
-	return false;
+	return false
+
 #else
+
 	vec3 tuv_next;
 	tuv.x = t_max;
 	triangle_index = -1;
@@ -153,8 +155,8 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, out vec3 tuv
 
 void shadeFragment(vec3 P, vec3 V, vec3 tuv, int triangle) {
 	Vertex v0 = vertices[indices[triangle * 3]];
-	Vertex v1 = vertices[indices[triangle * 3] + 1];
-	Vertex v2 = vertices[indices[triangle * 3] + 2];
+	Vertex v1 = vertices[indices[triangle * 3 + 1]];
+	Vertex v2 = vertices[indices[triangle * 3 + 2]];
 
 
 	float w = 1 - tuv.y - tuv.z;
@@ -237,8 +239,6 @@ void main() {
 	float t_max = 300;
 	vec3 tuv;
 	if(ray_trace_loop(rayOrigin, rayDirection, t_max, tuv, triangle_index)){
-		//outColor = vec4(0,1,0,1);
-		//return;
 		vec3 P = rayOrigin + tuv.x * rayDirection;
 		shadeFragment(P, rayDirection, tuv, triangle_index);
 	}

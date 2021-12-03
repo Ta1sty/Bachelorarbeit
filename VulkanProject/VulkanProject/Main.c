@@ -125,7 +125,7 @@ int main()
 
     VkBool32 useMutliLevel = VK_FALSE;
     if (app.vk_info.ray_tracing) {
-        //flatten_scene(&app.scene);
+        // flatten_scene(&app.scene);
         // prepare_scene(&app.scene, useMutliLevel);
     }
     else {
