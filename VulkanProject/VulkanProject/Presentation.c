@@ -76,7 +76,6 @@ void set_frame_buffers(VkInfo* vk, Scene* scene, uint32_t image_index) {
 	};
 
 
-
 	memcpy(&frame.view_to_world, &mat, sizeof(float) * 4 * 4);
 	frame.width = WINDOW_WIDTH;
 	frame.height = WINDOW_HEIGHT;
@@ -143,4 +142,8 @@ void drawFrame(VkInfo* info, Scene* scene) // see https://vulkan-tutorial.com/
 	vkQueuePresentKHR(info->present_queue, &presentInfo);
 
 	info->currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+	double now = glfwGetTime();
+	double diff = now - info->lastFrame;
+	info->lastFrame = now;
+	info->frameRate = 1 / diff;
 }

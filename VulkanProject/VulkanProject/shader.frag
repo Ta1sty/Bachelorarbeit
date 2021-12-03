@@ -1,4 +1,5 @@
 #version 460
+#define RAY_TRACE
 #extension GL_EXT_nonuniform_qualifier : enable
 #ifdef RAY_TRACE
 #extension GL_EXT_ray_query : require
@@ -105,7 +106,7 @@ bool vertexIntersect(vec3 rayOrigin, vec3 rayDir, vec3 postion){
 	return true;
 }
 bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, out vec3 tuv, out int triangle_index) {
-#ifdef RAY_TRAC
+#ifdef RAY_TRACE
 	tuv = vec3(0);
 	float min_t = 1.0e-3f;
 	float max_t = t_max;
@@ -124,10 +125,9 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, out vec3 tuv
 		tuv.z = uv.x;
 		return true;
 	}
-	return false
-
-#else
-
+	return false;
+#endif
+#ifndef RAY_TRACE
 	vec3 tuv_next;
 	tuv.x = t_max;
 	triangle_index = -1;

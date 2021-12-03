@@ -162,6 +162,7 @@ void draw_imgui_frame(VkInfo* info, Scene* scene)
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 	ImGui::Begin("Settings");
+	ImGui::Text("Framerate: %f", info->frameRate);
 	ImGui::SliderFloat("FOV", &scene->camera.fov, 1, 89);
 	ImGui::Checkbox("UV", (bool*) &scene->camera.displayUV);
 	ImGui::Checkbox("TEX", (bool*)&scene->camera.displayTex);

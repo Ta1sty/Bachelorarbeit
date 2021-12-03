@@ -142,6 +142,8 @@ typedef struct vkInfo {
 	VkFence* inFlightFences;
 	VkFence* imagesInFlight;
 	size_t currentFrame;
+	double lastFrame;
+	double frameRate;
 } VkInfo;
 
 typedef struct app {
