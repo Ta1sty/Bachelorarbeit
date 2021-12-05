@@ -155,7 +155,7 @@ void init_descriptor_containers(VkInfo* info, Scene* scene)
 	create_descriptor_sets(info, &info->per_frame_buffers);
 
 	if (info->ray_tracing) {
-		build_acceleration_structures(info, scene, VK_FALSE);
+		build_all_acceleration_structures(info, scene);
 		init_ray_descriptors(info, scene);
 	}
 }

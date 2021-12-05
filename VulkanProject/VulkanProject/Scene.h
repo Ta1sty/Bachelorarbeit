@@ -3,6 +3,12 @@
 #include <stdio.h>
 #include <vulkan/vulkan_core.h>
 
+// gets the index of the i-th child of this node
+#define GET_CHILD_IDX(scene, node, i) uint32_t childIdx = ##scene->node_indices[##node->data.childrenIndex + ##i]
+// gets a pointer to the i-th child of this node
+#define GET_CHILD(scene, node, i) SceneNode* child = &##scene->scene_nodes[##scene->node_indices[##node->data.childrenIndex + ##i]]
+// gets the root node of the scene
+#define GET_ROOT(scene) SceneNode* root = &##scene->scene_nodes[##scene->scene_data.numSceneNodes - 1]
 // this is subject to change
 typedef struct viewData {
 	float pos[3];
@@ -12,7 +18,20 @@ typedef struct viewData {
 } ViewData;
 // this stays constant (for now)
 
-typedef struct sceneNode
+typedef struct tlas {
+	VkAccelerationStructureKHR structure;
+	VkBuffer buffer;
+	VkDeviceMemory memory;
+} TLAS;
+typedef struct blas {
+	VkAccelerationStructureKHR structure;
+	VkBuffer buffer;
+	VkDeviceMemory memory;
+	float min[3]; // min Vector for the AABB
+	float max[3]; // max Vector for the AABB
+} BLAS;
+
+typedef struct sceneNodeData
 {
 	float transform[4][4]; // transform first cause of alignment
 	int32_t IndexBufferIndex; // if this nodes directly references geometry this is >-1					4
@@ -21,6 +40,17 @@ typedef struct sceneNode
 	int32_t NumChildren;	// the number of children this node references								12
 	int32_t childrenIndex; // points to an index array that in turn refers back to the sceneNode index	16
 	int32_t Index;			// the own index															20
+} SceneNodeData;
+
+typedef struct sceneNode
+{
+	SceneNodeData data;
+	int32_t Level;			// the depth of this node in the scene graph, this is always 1 lower than the lowest parent
+	uint32_t numEven;	// > 0 if this node references children with an even level
+	uint32_t numOdd;    // > 0 if this node references children with an odd  level
+	uint32_t tlas_number;
+	TLAS tlas; // the TLAS for this SceneNode, it is set if this node has an even level
+	BLAS blas; // the BLAS for this SceneNode, it is set if this node has an odd level or if this node has an even level but it contains geometry
 } SceneNode;
 
 typedef struct vertex // ALWAYS KEEP THIS PADDED
@@ -90,19 +120,6 @@ typedef struct texture_data
 	Texture* textures;
 } TextureData;
 
-typedef struct tlas {
-	SceneNode node;
-	VkAccelerationStructureKHR structure;
-	VkBuffer buffer;
-	VkDeviceMemory memory;
-} TLAS;
-typedef struct blas {
-	SceneNode node;
-	VkAccelerationStructureKHR structure;
-	VkBuffer buffer;
-	VkDeviceMemory memory;
-} BLAS;
-
 typedef struct scene
 {
 	VkSampler sampler;
@@ -113,7 +130,8 @@ typedef struct scene
 	uint32_t* indices;
 	SceneNode* scene_nodes;
 	uint32_t* node_indices;
-	TLAS tlas;
+	uint32_t numTLAS;
+	VkAccelerationStructureKHR* TLASs;
 } Scene;
 
 typedef struct flatNodeResult

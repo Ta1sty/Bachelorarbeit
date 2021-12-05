@@ -44,7 +44,10 @@ namespace GLTFCompiler
             t.Start();
             t.Join();
             //using var src = File.Open(@"C:\Users\marku\Desktop\BA\Models\textureCube\2Cubes.gltf", FileMode.Open);
-            var dst = @"C:\Users\mshall\source\repos\Bachelorarbeit\VulkanProject\VulkanProject\dump.bin";
+            var location = Assembly.GetExecutingAssembly().Location;
+            var regex = new Regex(@"VulkanProject\\.*");
+            var dst = regex.Replace(location, @"VulkanProject\VulkanProject\dump.bin");
+            var p = Path.GetFullPath(dst);
             using var str = new StreamReader(path);
             var res = str.ReadToEnd();
             var opt = new JsonSerializerOptions

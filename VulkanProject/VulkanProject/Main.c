@@ -123,10 +123,12 @@ int main()
 	glfwSetCursorPosCallback(app.window, mouse__move_callback);
 	glfwSetMouseButtonCallback(app.window, mouse_button_callback);
 
-    VkBool32 useMutliLevel = VK_FALSE;
+    prepare_scene(&app.scene, VK_TRUE);
+
+    VkBool32 useMutliLevel = VK_TRUE;
     if (app.vk_info.ray_tracing) {
         // flatten_scene(&app.scene);
-        // prepare_scene(&app.scene, useMutliLevel);
+        prepare_scene(&app.scene, useMutliLevel);
     }
     else {
         flatten_scene(&app.scene);

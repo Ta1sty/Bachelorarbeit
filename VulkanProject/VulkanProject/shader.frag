@@ -1,5 +1,4 @@
 #version 460
-#define RAY_TRACE
 #extension GL_EXT_nonuniform_qualifier : enable
 #ifdef RAY_TRACE
 #extension GL_EXT_ray_query : require
