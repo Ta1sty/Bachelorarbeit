@@ -10,6 +10,7 @@
 #include "Scene.h"
 #include "Textures.h"
 #include "Raytrace.h"
+#include "Bindings.h"
 
 void compile_shaders(VkBool32 ray_trace)
 {
@@ -82,64 +83,86 @@ void create_descriptor_containers(VkInfo* info, Scene* scene)
 		return;
 
 	info->numSets = info->ray_tracing ? 4 : 3;
-
-	uint32_t sceneDataBinding = 0;
-	uint32_t VertexBufferBinding = 1;
-	uint32_t IndexBufferBinding = 2;
-	uint32_t MaterialBufferBinding = 3;
-	uint32_t SamplerBinding = 4;
-	uint32_t TextureBufferBinding = 5;
-	uint32_t FrameUboBinding = 6;
-	uint32_t TLASBinding = 7;
-
-	const uint32_t global_buffer_count = 4;
+	
 	// set 0 - global buffers
-	BufferInfo* globalInfos = malloc(sizeof(BufferInfo) * global_buffer_count);
-	BufferInfo sceneInfo = create_buffer_info(sceneDataBinding, 
+	BufferInfo* globalInfos = malloc(sizeof(BufferInfo) * GLOBAL_BUFFER_COUNT);
+	BufferInfo sceneInfo = create_buffer_info(SCENE_DATA_BINDING, 
 		VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
 		sizeof(SceneData), 
 		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-	BufferInfo vertexBuffer = create_buffer_info(VertexBufferBinding, 
+	BufferInfo vertexBuffer = create_buffer_info(VERTEX_BUFFER_BINDING, 
 		VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
 		sizeof(Vertex) * scene->scene_data.numVertices, 
 		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | 
 		VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-	BufferInfo indexBuffer = create_buffer_info(IndexBufferBinding, 
+	BufferInfo indexBuffer = create_buffer_info(INDEX_BUFFER_BINDING, 
 		VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
 		sizeof(uint32_t) * scene->scene_data.numTriangles * 3, 
 		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | 
 		VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-	BufferInfo materialBuffer = create_buffer_info(MaterialBufferBinding, 
+	BufferInfo materialBuffer = create_buffer_info(MATERIAL_BUFFER_BINDING, 
 		VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
 		sizeof(Material) * scene->texture_data.num_materials, 
 		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, 
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
+	BufferInfo lightBuffer = create_buffer_info(LIGHT_BUFFER_BINDING,
+		VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
+		sizeof(Light) * scene->scene_data.numLights,
+		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
+	BufferInfo nodeTransforms = create_buffer_info(NODE_TRANSFORM_BINDING,
+		VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
+		sizeof(float) * 4 * 4 * scene->scene_data.numSceneNodes,
+		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+		VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+	BufferInfo nodeBuffer = create_buffer_info(NODE_BUFFER_BINDING,
+		VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
+		sizeof(ShaderSceneNode) * scene->scene_data.numSceneNodes,
+		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+		VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+
+	BufferInfo nodeIndices = create_buffer_info(NODE_CHILDREN_BINDING,
+		VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
+		sizeof(uint32_t) * scene->scene_data.numNodeIndices,
+		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+		VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 	globalInfos[0] = sceneInfo;
 	globalInfos[1] = vertexBuffer;
 	globalInfos[2] = indexBuffer;
 	globalInfos[3] = materialBuffer;
-	info->global_buffers = create_descriptor_set(info, 0, globalInfos, global_buffer_count, 1);
+	globalInfos[4] = lightBuffer;
+	globalInfos[5] = nodeTransforms;
+	globalInfos[6] = nodeBuffer;
+	globalInfos[7] = nodeIndices;
+	
+	info->global_buffers = create_descriptor_set(info, 0, globalInfos, GLOBAL_BUFFER_COUNT, 1);
 
 	// set 1 - samplers and textures
-	create_texture_descriptors(info, scene, SamplerBinding, TextureBufferBinding);
+	create_texture_descriptors(info, scene, SAMPLER_BINDING, TEXTURE_BINDING);
 
 	// set 2 - frame buffers
 
 	BufferInfo* frameInfos = malloc(sizeof(BufferInfo) * 1);
-	BufferInfo frameInfo = create_buffer_info(FrameUboBinding, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
+	BufferInfo frameInfo = create_buffer_info(FRAME_DATA_BINDING, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
 		sizeof(FrameData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 	frameInfos[0] = frameInfo;
 	info->per_frame_buffers = create_descriptor_set(info, 2, frameInfos, 1, info->swapchain.image_count);
 
+	// set 3 - ray TLAS
 	if (info->ray_tracing) {
 		build_all_acceleration_structures(info, scene);
-		create_ray_descriptors(info, scene, TLASBinding);
+		create_ray_descriptors(info, scene, TLAS_BINDING);
 	}
 }
 

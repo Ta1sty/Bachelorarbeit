@@ -195,6 +195,7 @@
     <ClCompile Include="Window.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Bindings.h" />
     <ClInclude Include="Descriptors.h" />
     <ClInclude Include="Globals.h" />
     <ClInclude Include="ImguiSetup.h" />

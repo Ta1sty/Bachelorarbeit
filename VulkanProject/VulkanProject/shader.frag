@@ -1,9 +1,8 @@
 #version 460
 #extension GL_EXT_nonuniform_qualifier : enable
-#define RAY_TRACE
 #ifdef RAY_TRACE
 #extension GL_EXT_ray_query : require
-#endif
+#endif		
 
 struct Vertex{
 	vec3 position; // 0 - 16
@@ -28,27 +27,46 @@ struct SceneNode{
 	uint numOdd;
 	uint tlasNumber;
 };
+const uint LIGHT_ON = 1;
+const uint LIGHT_TYPE_POINT = 2;
+const uint LIGHT_TYPE_DIRECTIONAL = 4;
+const uint LIGHT_DISTANCE_IGNROE = 8;
+const uint LIGHT_DISTANCE_LINEAR = 16;
+const uint LIGHT_DISTANCE_QUADRATIC = 32;
+const uint LIGHT_IGNORE_MAX_DISTANCE = 64;
+const uint LIGHT_USE_MIN_DST = 128;
+struct Light{
+	vec3 position;
+	uint type;
+	vec3 intensity;
+	float maxDst;
+	vec3 direction;
+	float minDst;
+};
 
 layout(binding = 0, set = 0) uniform SceneData{
 	uint numVertices;
 	uint numTriangles;
 	uint numSceneNodes;
 	uint numNodeIndices;
+	uint numLights;
+	uint rootSceneNode;
 };
 
 layout(binding = 1, set = 0) buffer VertexBuffer { Vertex[] vertices; };
 layout(binding = 2, set = 0) buffer IndexBuffer { int[] indices; };
 layout(binding = 3, set = 0) buffer MaterialBuffer { Material[] materials; };
+layout(binding = 4, set = 0) buffer LightBuffer {Light[] lights;};
 // Scene nodes
-layout(binding = 4, set = 0) buffer NodeTransforms { mat4[] transforms; }; // correleates 1-1 with NodeBuffer, is alone cause of alignment
-layout(binding = 5, set = 0) buffer NodeBuffer { SceneNode[] nodes;}; // the array of sceneNodes
-layout(binding = 6, set = 0) buffer NodeIndices { uint[] node_indices;}; // the index array for node children
+layout(binding = 5, set = 0) buffer NodeTransforms { mat4[] transforms; }; // correleates 1-1 with NodeBuffer, is alone cause of alignment
+layout(binding = 6, set = 0) buffer NodeBuffer { SceneNode[] nodes;}; // the array of sceneNodes
+layout(binding = 6, set = 0) buffer ChildBuffer { uint[] childIndices;}; // the index array for node children
 
-layout(binding = 7, set = 1) uniform sampler samp;
-layout(binding = 8, set = 1) uniform texture2D textures[];
+layout(binding = 8, set = 1) uniform sampler samp;
+layout(binding = 9, set = 1) uniform texture2D textures[];
 
 
-layout(binding = 9, set = 2) uniform FrameData {
+layout(binding = 10, set = 2) uniform FrameData {
 	mat4 view_to_world;
 	uint width;
 	uint height;
@@ -58,7 +76,7 @@ layout(binding = 9, set = 2) uniform FrameData {
 } frame;
 
 #ifdef RAY_TRACE
-layout(binding = 10, set = 3) uniform accelerationStructureEXT[] tlas;
+layout(binding = 11, set = 3) uniform accelerationStructureEXT[] tlas;
 #endif
 
 layout(location = 0) in vec3 fragColor;
@@ -189,54 +207,91 @@ void shadeFragment(vec3 P, vec3 V, vec3 tuv, int triangle) {
 	float w = 1 - tuv.y - tuv.z;
 	float u = tuv.y;
 	float v = tuv.z;
-
-	if(frame.displayUV != 0){
+	
+	if(frame.displayUV != 0){ // debug
 		outColor = vec4(u,v,0,1);
 		return;
 	}
-
+	// compute interpolated Normal and Tex
 	vec3 N = w * v0.normal + v * v1.normal + u * v2.normal;
 	N = normalize(N);
 	vec2 tex = w * v0.tex_coord + v * v1.tex_coord + u * v2.tex_coord;
 
-	if(frame.displayTex != 0){
+	if(frame.displayTex != 0){	// debug
 		outColor = vec4(tex.xy,0,1);
 		return;
 	}
 
+	// get material and texture properties, if there are not set use default values
 	float ka, kd, ks;
 	vec3 color;
 	if(v0.material_index < 0){
 		ka = 0.3f; kd = 0.4f; ks = 0.3f;
-		color = vec3(1,0,1);
+		color = vec3(0.2,0.4,0.8);
 	} else {
 		Material m = materials[v0.material_index];
 		ka = m.k_a;
 		kd = m.k_d;
 		ks = m.k_s;
 		if(m.texture_index < 0)
-			color = vec3(1,0,1);
+			color = vec3(0.2,0.4,0.8);
 		else
 			color = texture(sampler2D(textures[m.texture_index], samp), tex).xyz;
 	}
+	float n = 1; // todo phong exponent
+	// calculate lighting for each light source
 
-	float n = 1;
-	float i = 100;
-	vec3 lightIntenstity = vec3(i,i,i);
-	vec3 lightWorldPos = vec3(0,10,0);
-	vec3 R = normalize(reflect(V, N));
-	vec3 L = normalize(lightWorldPos-P);
-	vec3 tuv2;
-	float t; int index;
-	if(!ray_trace_loop(P, L, length(lightWorldPos-P), tuv2, index)){ // is light source visible?
-		ks = ks * pow(max(0,dot(R,L)),n);
-	} else {
-		ks = 0;
-		kd = 0;
+	vec3 sum = vec3(0);
+	for(int i = 0;i<numLights;i++){
+		Light light = lights[i];
+
+		if((light.type & LIGHT_ON) == 0){ // is the light on?
+			continue;
+		}
+		vec3 tuvShadow;
+		int index;
+
+		vec3 L = light.position - P;
+		float l_dst = length(L);
+		if(l_dst > light.maxDst && (light.type & LIGHT_IGNORE_MAX_DISTANCE) == 0){ // is the light near enough to even matter
+			continue;
+		}
+		float specular;
+		float diffuse = kd;
+		vec3 R = normalize(reflect(V, N));
+		if((light.type & LIGHT_TYPE_POINT) != 0){ // point light, check if it is visible and then compute KS via L vector
+			vec3 LN = normalize(L);
+			if(ray_trace_loop(P, LN, l_dst, tuvShadow, index)){ // is light source visible, shoot ray to lPos?
+				continue;
+			}
+			specular = ks * pow(max(0,dot(R,LN)),n);
+		} else if((light.type & LIGHT_TYPE_DIRECTIONAL) != 0) { // directional light, check if it is visible 
+			if((light.type & LIGHT_USE_MIN_DST) != 0){ // shoot ray over minDst, if nothing is hit lighting is enabled
+				if(ray_trace_loop(P, normalize(-light.direction), light.minDst, tuvShadow, index)){ // shoot shadow ray into the light source
+					continue;
+				}
+				specular = ks * pow(max(0,dot(R,-light.direction)),n);
+			} else { // directional light with fixed position, this is probably not correct
+				if(ray_trace_loop(P, normalize(-light.direction), l_dst, tuvShadow, index)){
+					continue;
+				}
+				specular = ks * pow(max(0,dot(R,-light.direction)),n);
+			}
+		}
+		float l_mult = 0;
+		if((light.type & LIGHT_DISTANCE_IGNROE	) != 0) {
+			l_mult = 1;
+		}
+		if((light.type & LIGHT_DISTANCE_LINEAR) != 0) {
+			l_mult = 1/l_dst;
+		}
+		if((light.type & LIGHT_DISTANCE_QUADRATIC) != 0) {
+			l_mult = 1/(l_dst * l_dst);
+		}
+		sum += (specular+diffuse) * light.intensity * l_mult * color;
 	}
-	vec3 light = lightIntenstity/(dot(P - lightWorldPos,P - lightWorldPos));
-	light = (kd+ks)*light;
-	outColor = vec4(color * light + color * ka, 1);
+	sum += ka * color;
+	outColor = vec4(sum.xyz, 1);
 }
 
 
@@ -266,7 +321,7 @@ void main() {
 	float t_max = 300;
 	vec3 tuv;
 	if(ray_trace_loop(rayOrigin, rayDirection, t_max, tuv, triangle_index)){
-		if(triangle_index > 0){
+		if(triangle_index >= 0){
 			vec3 P = rayOrigin + tuv.x * rayDirection;
 			shadeFragment(P, rayDirection, tuv, triangle_index);
 		} else {
@@ -274,7 +329,7 @@ void main() {
 		}
 	}
 	else {
-		
+		/*
 		for(int i = 0;i<1;i++){
 			if(vertexIntersect(rayOrigin, rayDirection, vec3(1,0,0))){
 				outColor = vec4(1,0,0,1);
@@ -292,7 +347,7 @@ void main() {
 				outColor = vec4(1,1,1,1);
 				return;
 			}		
-		}
+		}*/
 		outColor = vec4(3, 215, 252, 255) /255;
 	}
 	return;

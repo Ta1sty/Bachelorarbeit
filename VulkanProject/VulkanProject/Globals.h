@@ -122,7 +122,7 @@ typedef struct vkInfo {
 	Shader vertex_shader;
 	Shader fragment_shader;
 
-	uint32_t numSets; // 3
+	uint32_t numSets; // 3-4
 	DescriptorSetContainer global_buffers; // set 0
 	TextureContainer texture_container; // set 1
 	DescriptorSetContainer per_frame_buffers; // set 2

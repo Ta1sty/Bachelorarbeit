@@ -30,17 +30,19 @@ void load_scene(Scene* scene, char** path)
 	if (!file)
 		error("failed to open scene file");
 
-
+	// VertexBuffer
 	fread(&scene->scene_data.numVertices, sizeof(uint32_t), 1, file);
 	scene->vertices = malloc(sizeof(Vertex) * scene->scene_data.numVertices);
 	fread(scene->vertices, sizeof(Vertex), scene->scene_data.numVertices, file); // TODO security check
 
+	// IndexBuffer
 	uint32_t numIndices;
 	fread(&numIndices, sizeof(uint32_t), 1, file);
 	scene->scene_data.numTriangles = numIndices / 3;
 	scene->indices = malloc(sizeof(uint32_t) * numIndices);
 	fread(scene->indices, sizeof(uint32_t), numIndices, file);
 
+	// SceneNodes
 	fread(&scene->scene_data.numSceneNodes, sizeof(uint32_t), 1, file);
 	SceneNodeData* buffer = malloc(sizeof(SceneNodeData) * scene->scene_data.numSceneNodes);
 	fread(buffer, sizeof(SceneNodeData), scene->scene_data.numSceneNodes, file);
@@ -53,16 +55,38 @@ void load_scene(Scene* scene, char** path)
 		scene->scene_nodes[i].data = buffer[i];
 	}
 
+	// SceneNode children
 	fread(&scene->scene_data.numNodeIndices, sizeof(uint32_t), 1, file);
 	scene->node_indices = malloc(sizeof(uint32_t) * scene->scene_data.numNodeIndices);
 	fread(scene->node_indices, sizeof(uint32_t), scene->scene_data.numNodeIndices, file);
+
+	// set Scene Root
+	scene->scene_data.rootSceneNode = scene->scene_data.numSceneNodes - 1;
+
+	// init a light source
+	scene->scene_data.numLights = 2;
+	scene->lights = malloc(sizeof(Light) * scene->scene_data.numLights);
+	Light light1 = {
+		.position = {0,1,0},
+		.type = LIGHT_ON | LIGHT_TYPE_POINT_LIGHT | LIGHT_DISTANCE_QUADRATIC,
+		.intensity = {2,2,2},
+		.maxDst = 30
+	};
+	Light light2 = {
+		.position = {0,3,2},
+		.type = LIGHT_ON | LIGHT_TYPE_POINT_LIGHT | LIGHT_DISTANCE_QUADRATIC,
+		.intensity = {6,6,6},
+		.maxDst = 30
+	};
+	scene->lights[0] = light1;
+	scene->lights[1] = light2;
 	
 	load_textures(&scene->texture_data, file);
 	fclose(file);
 }
 void flatten_scene(Scene* scene)
 {
-	SceneNode* node = &scene->scene_nodes[scene->scene_data.numSceneNodes - 1];
+	GET_ROOT(scene);
 
 	float id[4][4] = {
 		{1,0,0,0},
@@ -71,7 +95,7 @@ void flatten_scene(Scene* scene)
 		{0,0,0,1}
 	};
 
-	FlatNodeResult result = flatten_node(scene, id, node);
+	FlatNodeResult result = flatten_node(scene, id, root);
 	int a = 0;
 	scene->scene_data.numTriangles = result.num_vertices / 3;
 	scene->scene_data.numVertices = result.num_vertices; // Maybe vertex dedublication
@@ -157,8 +181,8 @@ FlatNodeResult flatten_node(Scene* scene, float parentTransform[4][4], SceneNode
 	{
 		for (int32_t i = 0;i<node->data.NumChildren;i++)
 		{
-			uint32_t child_idx = scene->node_indices[node->data.childrenIndex + i];
-			SceneNode* child = &scene->scene_nodes[child_idx];
+			GET_CHILD(scene, node, i);
+			GET_CHILD_IDX(scene, node, i);
 
 			FlatNodeResult childResult = flatten_node(scene, tr, child);
 
