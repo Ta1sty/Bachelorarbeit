@@ -691,7 +691,7 @@ void create_ray_descriptors(VkInfo* info, Scene* scene, uint32_t binding)
 	VkDescriptorSetLayoutBinding layout_binding = {
 		.binding = binding,
 		.descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR,
-		.descriptorCount = 1,
+		.descriptorCount = scene->numTLAS,
 		.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
 	};
 	VkDescriptorSetLayoutCreateInfo layout_create_info = { 0 };
@@ -714,7 +714,7 @@ void init_ray_descriptors(VkInfo* info, Scene* scene)
 	check(vkAllocateDescriptorSets(info->device, &allocInfo, &info->ray_descriptor.descriptor_set), "");
 
 	VkWriteDescriptorSetAccelerationStructureKHR descriptorAS = {
-		.accelerationStructureCount = 1, //scene->numTLAS,
+		.accelerationStructureCount = scene->numTLAS,
 		.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR,
 		.pAccelerationStructures = scene->TLASs,
 		.pNext = NULL
@@ -722,7 +722,7 @@ void init_ray_descriptors(VkInfo* info, Scene* scene)
 	VkWriteDescriptorSet write = {
 		.pNext = &descriptorAS,
 		.dstBinding = info->ray_descriptor.binding,
-		.descriptorCount = 1,
+		.descriptorCount = scene->numTLAS,
 		.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
 		.dstSet = info->ray_descriptor.descriptor_set,
 		.descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR

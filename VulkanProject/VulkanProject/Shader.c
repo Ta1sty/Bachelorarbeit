@@ -138,6 +138,7 @@ void create_descriptor_containers(VkInfo* info, Scene* scene)
 	info->per_frame_buffers = create_descriptor_set(info, 2, frameInfos, 1, info->swapchain.image_count);
 
 	if (info->ray_tracing) {
+		build_all_acceleration_structures(info, scene);
 		create_ray_descriptors(info, scene, TLASBinding);
 	}
 }
@@ -155,7 +156,6 @@ void init_descriptor_containers(VkInfo* info, Scene* scene)
 	create_descriptor_sets(info, &info->per_frame_buffers);
 
 	if (info->ray_tracing) {
-		build_all_acceleration_structures(info, scene);
 		init_ray_descriptors(info, scene);
 	}
 }

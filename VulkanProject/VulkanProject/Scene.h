@@ -53,6 +53,18 @@ typedef struct sceneNode
 	BLAS blas; // the BLAS for this SceneNode, it is set if this node has an odd level or if this node has an even level but it contains geometry
 } SceneNode;
 
+typedef struct shaderSceneNode {
+	int32_t IndexBuferIndex;
+	int32_t NumTriangles;
+	int32_t NumChildren;
+	int32_t childrenIndex;
+	int32_t Index;
+	int32_t level;
+	uint32_t numEven;
+	uint32_t numOdd;
+	uint32_t tlasNumber;
+} ShaderSceneNode;
+
 typedef struct vertex // ALWAYS KEEP THIS PADDED
 {
 	float position[3];			//0 - 48%16 = 0
@@ -71,6 +83,7 @@ typedef struct sceneData
 	uint32_t numTriangles;
 	uint32_t numSceneNodes;
 	uint32_t numNodeIndices;
+	uint32_t rootSceneNode;
 } SceneData;
 
 typedef struct camera

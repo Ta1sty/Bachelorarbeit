@@ -1,5 +1,6 @@
 #version 460
 #extension GL_EXT_nonuniform_qualifier : enable
+#define RAY_TRACE
 #ifdef RAY_TRACE
 #extension GL_EXT_ray_query : require
 #endif
@@ -16,6 +17,17 @@ struct Material{
 	float k_s;
 	int texture_index;
 };
+struct SceneNode{
+	int IndexBuferIndex;
+	int NumTriangles;
+	int NumChildren;
+	int childrenIndex;
+	int Index;
+	int level;
+	uint numEven;
+	uint numOdd;
+	uint tlasNumber;
+};
 
 layout(binding = 0, set = 0) uniform SceneData{
 	uint numVertices;
@@ -27,10 +39,16 @@ layout(binding = 0, set = 0) uniform SceneData{
 layout(binding = 1, set = 0) buffer VertexBuffer { Vertex[] vertices; };
 layout(binding = 2, set = 0) buffer IndexBuffer { int[] indices; };
 layout(binding = 3, set = 0) buffer MaterialBuffer { Material[] materials; };
-layout(binding = 4, set = 1) uniform sampler samp;
-layout(binding = 5, set = 1) uniform texture2D textures[];
+// Scene nodes
+layout(binding = 4, set = 0) buffer NodeTransforms { mat4[] transforms; }; // correleates 1-1 with NodeBuffer, is alone cause of alignment
+layout(binding = 5, set = 0) buffer NodeBuffer { SceneNode[] nodes;}; // the array of sceneNodes
+layout(binding = 6, set = 0) buffer NodeIndices { uint[] node_indices;}; // the index array for node children
 
-layout(binding = 6, set = 2) uniform FrameData {
+layout(binding = 7, set = 1) uniform sampler samp;
+layout(binding = 8, set = 1) uniform texture2D textures[];
+
+
+layout(binding = 9, set = 2) uniform FrameData {
 	mat4 view_to_world;
 	uint width;
 	uint height;
@@ -40,7 +58,7 @@ layout(binding = 6, set = 2) uniform FrameData {
 } frame;
 
 #ifdef RAY_TRACE
-layout(binding = 7, set = 3) uniform accelerationStructureEXT tlas;
+layout(binding = 10, set = 3) uniform accelerationStructureEXT[] tlas;
 #endif
 
 layout(location = 0) in vec3 fragColor;
@@ -110,10 +128,20 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, out vec3 tuv
 	float min_t = 1.0e-3f;
 	float max_t = t_max;
 	rayQueryEXT ray_query;
-	rayQueryInitializeEXT(ray_query, tlas, 0, 0xFF, rayOrigin, min_t, rayDirection, max_t);
+	rayQueryInitializeEXT(ray_query, tlas[4], 0, 0xFF, rayOrigin, min_t, rayDirection, max_t);
 	while(rayQueryProceedEXT(ray_query)){
-        if(rayQueryGetIntersectionTypeEXT(ray_query, false) == gl_RayQueryCandidateIntersectionTriangleEXT) { // triangle intersection
-                rayQueryConfirmIntersectionEXT(ray_query); // might want to check for opaque
+		uint type = rayQueryGetIntersectionTypeEXT(ray_query, false);
+		switch(type){
+			case gl_RayQueryCandidateIntersectionTriangleEXT:
+				// might want to check for opaque
+				rayQueryConfirmIntersectionEXT(ray_query);
+				break;
+			case gl_RayQueryCandidateIntersectionAABBEXT:
+				// TODO rayQuery stuff
+				rayQueryConfirmIntersectionEXT(ray_query);
+				outColor = vec4(1,0,0,1);
+				triangle_index = -1;
+				break;
 		}
 	}
 	if(rayQueryGetIntersectionTypeEXT(ray_query, true) == gl_RayQueryCommittedIntersectionTriangleEXT ) {
@@ -238,8 +266,12 @@ void main() {
 	float t_max = 300;
 	vec3 tuv;
 	if(ray_trace_loop(rayOrigin, rayDirection, t_max, tuv, triangle_index)){
-		vec3 P = rayOrigin + tuv.x * rayDirection;
-		shadeFragment(P, rayDirection, tuv, triangle_index);
+		if(triangle_index > 0){
+			vec3 P = rayOrigin + tuv.x * rayDirection;
+			shadeFragment(P, rayDirection, tuv, triangle_index);
+		} else {
+			outColor = vec4(1,0,0,1);
+		}
 	}
 	else {
 		
