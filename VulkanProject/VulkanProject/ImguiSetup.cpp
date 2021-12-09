@@ -163,9 +163,11 @@ void draw_imgui_frame(VkInfo* info, Scene* scene)
 	ImGui::NewFrame();
 	ImGui::Begin("Settings");
 	ImGui::Text("Framerate: %f", info->frameRate);
-	ImGui::SliderFloat("FOV", &scene->camera.fov, 1, 89);
-	ImGui::Checkbox("UV", (bool*) &scene->camera.displayUV);
-	ImGui::Checkbox("TEX", (bool*)&scene->camera.displayTex);
+	ImGui::SliderFloat("FOV", &scene->camera.settings.fov, 1, 89);
+	ImGui::Checkbox("UV", (bool*) &scene->camera.settings.displayUV);
+	ImGui::Checkbox("TEX", (bool*)&scene->camera.settings.displayTex);
+	ImGui::Checkbox("TRINAGLEs", (bool*)&scene->camera.settings.displayTriangles);
+	ImGui::Checkbox("LIGHTS", (bool*)&scene->camera.settings.displayLights);
 	ImGui::End();
 	ImGui::Render();
 }

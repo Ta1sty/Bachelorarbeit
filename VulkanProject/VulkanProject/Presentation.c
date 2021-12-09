@@ -124,9 +124,8 @@ void set_frame_buffers(VkInfo* vk, Scene* scene, uint32_t image_index) {
 	memcpy(&frame.view_to_world, &mat, sizeof(float) * 4 * 4);
 	frame.width = WINDOW_WIDTH;
 	frame.height = WINDOW_HEIGHT;
-	frame.fov = (float)M_PI / 180.f * scene->camera.fov;
-	frame.displayUV = scene->camera.displayUV;
-	frame.displayTex = scene->camera.displayTex;
+	frame.settings = scene->camera.settings;
+	//frame.settings.fov = (float)M_PI / 180.f * scene->camera.settings.fov;
 
 	void* data;
 	check(vkMapMemory(vk->device, GET_FRAMEDATA_BUFFER(vk, image_index).vk_buffer_memory,

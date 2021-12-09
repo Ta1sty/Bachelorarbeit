@@ -92,6 +92,7 @@ void build_node_acceleration_structure(VkInfo* info, Scene* scene, SceneNode* no
 	{
 		GET_CHILD(scene, node, i);
 		build_node_acceleration_structure(info, scene, child);
+		int a = 1;
 	}
 	// and then we combine them
 	if (node->Level % 2 == 0) // Even level = TLAS
@@ -134,6 +135,14 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 
 	check(vkMapMemory(info->device, stagingMemory, 0, sizeof(VkAccelerationStructureInstanceKHR) * instance_count, 0,
 					  &staging_data), "");
+
+	TLAS tlas = { 0 };
+	tlas.max[0] = -FLT_MAX;
+	tlas.max[1] = -FLT_MAX;
+	tlas.max[2] = -FLT_MAX;
+	tlas.min[0] = FLT_MAX;
+	tlas.min[1] = FLT_MAX;
+	tlas.min[2] = FLT_MAX;
 
 	SceneNode* children = malloc(sizeof(SceneNode) * instance_count);
 	if (node->numEven > 0) // handle the even children, such that the instanceIndex is 0 when there are even children
@@ -219,11 +228,28 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 			VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR,
 			.accelerationStructureReference = pvkGetAccelerationStructureDeviceAddressKHR(
 				info->device, &address_request),
-			//.instanceCustomIndex = child.data.Index >= 0 ? child.data.Index : 0xFFFFFFFF
+			.instanceCustomIndex = child.data.Index >= 0 ? child.data.Index : 0xFFFFFFFF
 			// this is the reference to use in case this is an odd level node
 		};
 
 		memcpy(&instance.transform.matrix, &child.data.transform, sizeof(float) * 4 * 3);
+
+		float maxNew[3] = { 0 };
+		float minNew[3] = { 0 };
+		if (child.Level % 2 == 0) {
+			transformAABB(instance.transform.matrix, child.tlas.min, child.tlas.max, minNew, maxNew);
+		}
+		else {
+			transformAABB(instance.transform.matrix, child.blas.min, child.blas.max, minNew, maxNew);
+		}
+
+		tlas.min[0] = min(tlas.min[0], minNew[0]);
+		tlas.min[1] = min(tlas.min[1], minNew[1]);
+		tlas.min[2] = min(tlas.min[2], minNew[2]);
+		tlas.max[0] = max(tlas.max[0], maxNew[0]);
+		tlas.max[1] = max(tlas.max[1], maxNew[1]);
+		tlas.max[2] = max(tlas.max[2], maxNew[2]);
+
 		memcpy(&staging_data[i], &instance, sizeof(VkAccelerationStructureInstanceKHR));
 	}
 
@@ -312,11 +338,9 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 
 	endSingleTimeCommands(info, cmd);
 
-	TLAS tlas = {
-		.buffer = tlasBuffer,
-		.memory = tlasMemory,
-		.structure = structure
-	};
+	tlas.buffer = tlasBuffer;
+	tlas.memory = tlasMemory;
+	tlas.structure = structure;
 	node->tlas = tlas;
 	scene->TLASs[scene->numTLAS] = tlas.structure;
 	node->tlas_number = scene->numTLAS;
@@ -407,11 +431,14 @@ void build_blas(VkInfo* info, Scene* scene, SceneNode* node)
 							{0, 0, 1, 0},
 							{0, 0, 0, 1}
 			};
-			if (node->Level % 2 == 0)
+			if (child->Level % 2 == 0)
 			{
 				memcpy(&transform, &child->data.transform, sizeof(float) * 4 * 4);
+				transformAABB(transform, child->tlas.min, child->tlas.max, minNew, maxNew);
 			}
-			//transformAABB(transform, child->blas.min, child->blas.max, minNew, maxNew);
+			else {
+				transformAABB(transform, child->blas.min, child->blas.max, minNew, maxNew);
+			}
 			VkAabbPositionsKHR position = {
 				.maxX = maxNew[0],
 				.maxY = maxNew[1],
@@ -420,6 +447,13 @@ void build_blas(VkInfo* info, Scene* scene, SceneNode* node)
 				.minY = minNew[1],
 				.minZ = minNew[2]
 			};
+			blas.min[0] = min(blas.min[0], minNew[0]);
+			blas.min[1] = min(blas.min[1], minNew[1]);
+			blas.min[2] = min(blas.min[2], minNew[2]);
+			blas.max[0] = max(blas.max[0], maxNew[0]);
+			blas.max[1] = max(blas.max[1], maxNew[1]);
+			blas.max[2] = max(blas.max[2], maxNew[2]);
+
 			memcpy(&aabbData[i], &position, sizeof(VkAabbPositionsKHR));
 		}
 

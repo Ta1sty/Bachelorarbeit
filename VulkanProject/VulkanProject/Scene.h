@@ -5,10 +5,13 @@
 
 // gets the index of the i-th child of this node
 #define GET_CHILD_IDX(scene, node, i) uint32_t childIdx = ##scene->node_indices[##node->data.childrenIndex + ##i]
+
 // gets a pointer to the i-th child of this node
 #define GET_CHILD(scene, node, i) SceneNode* child = &##scene->scene_nodes[##scene->node_indices[##node->data.childrenIndex + ##i]]
+
 // gets the root node of the scene
 #define GET_ROOT(scene) SceneNode* root = &##scene->scene_nodes[##scene->scene_data.numSceneNodes - 1]
+
 // this is subject to change
 typedef struct viewData {
 	float pos[3];
@@ -22,6 +25,8 @@ typedef struct tlas {
 	VkAccelerationStructureKHR structure;
 	VkBuffer buffer;
 	VkDeviceMemory memory;
+	float min[3]; // min Vector for the AABB
+	float max[3]; // max Vector for the AABB
 } TLAS;
 typedef struct blas {
 	VkAccelerationStructureKHR structure;
@@ -107,23 +112,27 @@ typedef struct sceneData
 	uint32_t rootSceneNode;
 } SceneData;
 
+typedef struct renderSettings {
+	float fov;
+	uint32_t displayUV;
+	uint32_t displayTex;
+	uint32_t displayTriangles;
+	uint32_t displayLights;
+} RenderSettings;
+
 typedef struct camera
 {
 	float pos[3];
 	float rotation_x;
 	float rotation_y;
-	float fov;
-	uint32_t displayUV;
-	uint32_t displayTex;
+	RenderSettings settings;
 } Camera;
 
 typedef struct frameData {
 	float view_to_world[4][4];
 	uint32_t width;
 	uint32_t height;
-	float fov;
-	uint32_t displayUV;
-	uint32_t displayTex;
+	RenderSettings settings;
 } FrameData;
 
 typedef struct material

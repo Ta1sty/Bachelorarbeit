@@ -123,11 +123,15 @@ int main()
 	glfwSetCursorPosCallback(app.window, mouse__move_callback);
 	glfwSetMouseButtonCallback(app.window, mouse_button_callback);
 
-    prepare_scene(&app.scene, VK_TRUE);
-
     VkBool32 useMutliLevel = VK_TRUE;
+
+    /*GET_ROOT((&app.scene));
+    root->data.NumChildren = 1;
+    GET_CHILD_IDX((&app.scene), root, 5);
+    app.scene.node_indices[root->data.childrenIndex] = childIdx;*/
+
     if (app.vk_info.ray_tracing) {
-        // flatten_scene(&app.scene);
+        //flatten_scene(&app.scene);
         prepare_scene(&app.scene, useMutliLevel);
     }
     else {

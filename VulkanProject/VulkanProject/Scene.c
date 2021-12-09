@@ -16,7 +16,7 @@ void init_scene(Scene* scene)
 	scene->camera.pos[2] = 4;
 	scene->camera.rotation_x = 0;
 	scene->camera.rotation_y = 0;
-	scene->camera.fov = 45;
+	scene->camera.settings.fov = 45;
 	load_scene(scene, "asd");
 }
 
@@ -124,6 +124,7 @@ void flatten_scene(Scene* scene)
 	scene->node_indices = malloc(sizeof(uint32_t));
 	scene->scene_data.numNodeIndices = 1;
 	scene->scene_data.numSceneNodes = 1;
+	scene->scene_data.rootSceneNode = 0;
 }
 
 FlatNodeResult flatten_node(Scene* scene, float parentTransform[4][4], SceneNode* node)

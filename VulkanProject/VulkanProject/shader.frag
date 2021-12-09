@@ -3,7 +3,7 @@
 #ifdef RAY_TRACE
 #extension GL_EXT_ray_query : require
 #endif		
-
+#define PI 3.1415926538
 struct Vertex{
 	vec3 position; // 0 - 16
 	vec3 normal;   // 16 - 16
@@ -60,20 +60,22 @@ layout(binding = 4, set = 0) buffer LightBuffer {Light[] lights;};
 // Scene nodes
 layout(binding = 5, set = 0) buffer NodeTransforms { mat4[] transforms; }; // correleates 1-1 with NodeBuffer, is alone cause of alignment
 layout(binding = 6, set = 0) buffer NodeBuffer { SceneNode[] nodes;}; // the array of sceneNodes
-layout(binding = 6, set = 0) buffer ChildBuffer { uint[] childIndices;}; // the index array for node children
+layout(binding = 7, set = 0) buffer ChildBuffer { uint[] childIndices;}; // the index array for node children
 
 layout(binding = 8, set = 1) uniform sampler samp;
 layout(binding = 9, set = 1) uniform texture2D textures[];
-
 
 layout(binding = 10, set = 2) uniform FrameData {
 	mat4 view_to_world;
 	uint width;
 	uint height;
+	// Render settings struct
 	float fov;
 	uint displayUV;
 	uint displayTex;
-} frame;
+	uint displayTriangles;
+	uint displayLights;
+};
 
 #ifdef RAY_TRACE
 layout(binding = 11, set = 3) uniform accelerationStructureEXT[] tlas;
@@ -140,13 +142,14 @@ bool vertexIntersect(vec3 rayOrigin, vec3 rayDir, vec3 postion){
 	t = t1;
 	return true;
 }
-bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, out vec3 tuv, out int triangle_index) {
+bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, out vec3 tuv, out int triangle_index) {
 #ifdef RAY_TRACE
-	tuv = vec3(0);
 	float min_t = 1.0e-3f;
 	float max_t = t_max;
+	SceneNode node = nodes[root];
+	tuv = vec3(0);
 	rayQueryEXT ray_query;
-	rayQueryInitializeEXT(ray_query, tlas[4], 0, 0xFF, rayOrigin, min_t, rayDirection, max_t);
+	rayQueryInitializeEXT(ray_query, tlas[node.tlasNumber], 0, 0xFF, rayOrigin, min_t, rayDirection, max_t);
 	while(rayQueryProceedEXT(ray_query)){
 		uint type = rayQueryGetIntersectionTypeEXT(ray_query, false);
 		switch(type){
@@ -155,20 +158,52 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, out vec3 tuv
 				rayQueryConfirmIntersectionEXT(ray_query);
 				break;
 			case gl_RayQueryCandidateIntersectionAABBEXT:
+				uint iIdx = rayQueryGetIntersectionInstanceIdEXT(ray_query, false);
+				//if (iIdx != 0) break;
 				// TODO rayQuery stuff
-				rayQueryConfirmIntersectionEXT(ray_query);
-				outColor = vec4(1,0,0,1);
-				triangle_index = -1;
+				float t = rayQueryGetIntersectionTEXT(ray_query, false);
+				rayQueryGenerateIntersectionEXT(ray_query, t);
 				break;
 		}
 	}
-	if(rayQueryGetIntersectionTypeEXT(ray_query, true) == gl_RayQueryCommittedIntersectionTriangleEXT ) {
+	uint commitedType = rayQueryGetIntersectionTypeEXT(ray_query, true);
+	if(commitedType == gl_RayQueryCommittedIntersectionTriangleEXT ) {
 		triangle_index = rayQueryGetIntersectionPrimitiveIndexEXT(ray_query, true);
 		tuv.x = rayQueryGetIntersectionTEXT(ray_query, true);
 		vec2 uv = rayQueryGetIntersectionBarycentricsEXT(ray_query, true);
 		tuv.y = uv.y;
 		tuv.z = uv.x;
 		return true;
+	}
+	if(commitedType == gl_RayQueryCommittedIntersectionGeneratedEXT) {
+		triangle_index = -1;
+		uint iIdx = rayQueryGetIntersectionInstanceIdEXT(ray_query, true);
+		uint cIdx = rayQueryGetIntersectionInstanceCustomIndexEXT(ray_query, true);
+		uint pIdx = rayQueryGetIntersectionPrimitiveIndexEXT(ray_query,true);
+		SceneNode next;
+		if(node.numEven>0 && iIdx == 0){ // only do the even case for instance 0 and if there are even nodes, otherwise any aabb is ODD
+			// handle even child
+			next = nodes[childIndices[node.childrenIndex+pIdx]];
+			outColor = vec4(next.tlasNumber & 1, next.tlasNumber & 2, next.tlasNumber & 4, 1);
+		} else {
+			// handle odd child
+			SceneNode directChild = nodes[cIdx]; // use the custom index to take a shortcut
+			next = nodes[childIndices[directChild.childrenIndex + pIdx]];
+		}
+		vec3 newRayOrigin = rayQueryGetIntersectionObjectRayOriginEXT(ray_query, true);
+		vec3 newRayDirection = rayQueryGetIntersectionObjectRayDirectionEXT(ray_query, true);
+
+		rayQueryEXT next_query;
+		rayQueryInitializeEXT(next_query, tlas[next.tlasNumber], 0, 0xFF, newRayOrigin, min_t, newRayDirection, max_t);
+		while(rayQueryProceedEXT(next_query)){
+			if(rayQueryGetIntersectionTypeEXT(next_query, false) == gl_RayQueryCandidateIntersectionTriangleEXT){
+				rayQueryConfirmIntersectionEXT(next_query);
+			}
+		}
+		if(rayQueryGetIntersectionTypeEXT(next_query, true) == gl_RayQueryCommittedIntersectionTriangleEXT ) {
+			triangle_index = -1;
+			return true;
+		}
 	}
 	return false;
 #endif
@@ -208,7 +243,7 @@ void shadeFragment(vec3 P, vec3 V, vec3 tuv, int triangle) {
 	float u = tuv.y;
 	float v = tuv.z;
 	
-	if(frame.displayUV != 0){ // debug
+	if(displayUV != 0){ // debug
 		outColor = vec4(u,v,0,1);
 		return;
 	}
@@ -217,7 +252,7 @@ void shadeFragment(vec3 P, vec3 V, vec3 tuv, int triangle) {
 	N = normalize(N);
 	vec2 tex = w * v0.tex_coord + v * v1.tex_coord + u * v2.tex_coord;
 
-	if(frame.displayTex != 0){	// debug
+	if(displayTex != 0){	// debug
 		outColor = vec4(tex.xy,0,1);
 		return;
 	}
@@ -261,18 +296,18 @@ void shadeFragment(vec3 P, vec3 V, vec3 tuv, int triangle) {
 		vec3 R = normalize(reflect(V, N));
 		if((light.type & LIGHT_TYPE_POINT) != 0){ // point light, check if it is visible and then compute KS via L vector
 			vec3 LN = normalize(L);
-			if(ray_trace_loop(P, LN, l_dst, tuvShadow, index)){ // is light source visible, shoot ray to lPos?
+			if(ray_trace_loop(P, LN, l_dst,rootSceneNode, tuvShadow, index)){ // is light source visible, shoot ray to lPos?
 				continue;
 			}
 			specular = ks * pow(max(0,dot(R,LN)),n);
 		} else if((light.type & LIGHT_TYPE_DIRECTIONAL) != 0) { // directional light, check if it is visible 
 			if((light.type & LIGHT_USE_MIN_DST) != 0){ // shoot ray over minDst, if nothing is hit lighting is enabled
-				if(ray_trace_loop(P, normalize(-light.direction), light.minDst, tuvShadow, index)){ // shoot shadow ray into the light source
+				if(ray_trace_loop(P, normalize(-light.direction), light.minDst,rootSceneNode, tuvShadow, index)){ // shoot shadow ray into the light source
 					continue;
 				}
 				specular = ks * pow(max(0,dot(R,-light.direction)),n);
 			} else { // directional light with fixed position, this is probably not correct
-				if(ray_trace_loop(P, normalize(-light.direction), l_dst, tuvShadow, index)){
+				if(ray_trace_loop(P, normalize(-light.direction), l_dst,rootSceneNode, tuvShadow, index)){
 					continue;
 				}
 				specular = ks * pow(max(0,dot(R,-light.direction)),n);
@@ -301,17 +336,13 @@ void main() {
 	float x = xy.x;
 	float y = xy.y;
 
-	float tex_x = x/frame.width;
-	float tex_y = y/frame.height;
-
-	float flt_height = frame.height;
-	float flt_width = frame.width;
+	float flt_height = height;
+	float flt_width = width;
 	vec4 origin_view_space = vec4(0,0,0,1);
-	vec4 origin_world_space = frame.view_to_world * origin_view_space;
-
-	float z = flt_height/tan(frame.fov);
+	vec4 origin_world_space = view_to_world * origin_view_space;
+	float z = flt_height/tan(PI / 180 * fov);
 	vec4 direction_view_space = vec4(normalize(vec3((x - flt_width/2.f),  flt_height/2.f - y, -z)) , 0);
-	vec4 direction_world_space = frame.view_to_world * direction_view_space;
+	vec4 direction_world_space = view_to_world * direction_view_space;
 
 	vec3 rayOrigin = origin_world_space.xyz;
 	vec3 rayDirection = direction_world_space.xyz;
@@ -320,7 +351,7 @@ void main() {
 
 	float t_max = 300;
 	vec3 tuv;
-	if(ray_trace_loop(rayOrigin, rayDirection, t_max, tuv, triangle_index)){
+	if(ray_trace_loop(rayOrigin, rayDirection, t_max,rootSceneNode, tuv, triangle_index)){
 		if(triangle_index >= 0){
 			vec3 P = rayOrigin + tuv.x * rayDirection;
 			shadeFragment(P, rayDirection, tuv, triangle_index);
