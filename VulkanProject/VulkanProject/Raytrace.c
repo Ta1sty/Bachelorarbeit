@@ -357,6 +357,7 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 	tlas.memory = tlasMemory;
 	tlas.structure = structure;
 	node->tlas = tlas;
+	expandTLASAABB(node);
 	scene->TLASs[scene->numTLAS] = tlas.structure;
 	node->tlas_number = scene->numTLAS;
 	scene->numTLAS++;
@@ -690,6 +691,29 @@ void build_blas(VkInfo* info, Scene* scene, SceneNode* node)
 	}
 
 	node->blas = blas;
+	expandBLASAABB(node);
+}
+
+void expandTLASAABB(SceneNode* node)
+{
+	float inc = 0.02f;
+	node->tlas.min[0] -= inc;
+	node->tlas.min[1] -= inc;
+	node->tlas.min[2] -= inc;
+	node->tlas.max[0] += inc;
+	node->tlas.max[1] += inc;
+	node->tlas.max[2] += inc;
+}
+
+void expandBLASAABB(SceneNode* node)
+{
+	float inc = 0.02f;
+	node->blas.min[0] -= inc;
+	node->blas.min[1] -= inc;
+	node->blas.min[2] -= inc;
+	node->blas.max[0] += inc;
+	node->blas.max[1] += inc;
+	node->blas.max[2] += inc;
 }
 
 void transformAABB(float transform[4][4], float min[3], float max[3], float* minNew, float* maxNew)

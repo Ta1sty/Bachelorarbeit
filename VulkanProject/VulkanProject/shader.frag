@@ -1,6 +1,6 @@
 #version 460
 #extension GL_EXT_nonuniform_qualifier : enable
-//#define RAY_TRACE
+#define RAY_TRACE
 #ifdef RAY_TRACE
 #extension GL_EXT_ray_query : require
 #endif		
@@ -76,11 +76,18 @@ layout(binding = 9, set = 2) uniform FrameData {
 	uint width;
 	uint height;
 	// Render settings struct
-	float fov;
-	uint displayUV;
-	uint displayTex;
-	uint displayTriangles;
-	uint displayLights;
+	float fov; // Field of view [0,90)
+	uint debug; // if this is disabled the image is rendered normally
+	int colorSensitivity;
+	uint displayUV; // displays the triangle UV coordinates
+	uint displayTex; // displays the triangle Texture Coordinates
+	uint displayTriangles; // displays the Borders of triangles
+	uint displayLights; // displays the light sources as Spheres
+	uint displayIntersectionT; // displays the intersection T with HSV encoding
+	uint displayAABBs; // displays the AABBs
+	uint displayTraversalDepth; // displays the maximum Depth the traversal took
+	uint displayTraversalCount; // displays the amount of times the loop ran and executed a query (skipped due to hight T is not counted)
+	uint displayQueryCount; // displays the total number of rayqueries that were used for this
 };
 
 #ifdef RAY_TRACE
@@ -88,8 +95,16 @@ layout(binding = 10, set = 3) uniform accelerationStructureEXT[] tlas;
 #endif
 
 layout(location = 0) in vec3 fragColor;
-
+vec4 debugColor; // if last is 0 it was never set, in that case use outColor
 layout(location = 0) out vec4 outColor;
+
+//https://gist.github.com/983/e170a24ae8eba2cd174f
+vec3 hsv2rgb(vec3 c)
+{
+    vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+    vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+    return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+}
 
 const float t_min = 1.0e-4f;
 const float EPSILON = 0.0000001;
@@ -121,8 +136,7 @@ bool rayTriangleIntersect(vec3 rayOrigin, vec3 rayDirection, out vec3 tuv, vec3 
     else // This means that there is a line intersection but not a ray intersection.
         return false;
 } 
-bool vertexIntersect(vec3 rayOrigin, vec3 rayDir, vec3 postion){
-	float t;
+bool vertexIntersect(vec3 rayOrigin, vec3 rayDir, vec3 postion, out float t){
 	float epsilon = 0.1f;
 	vec3 v = rayOrigin - postion;
 	float a = rayDir.x * rayDir.x + rayDir.y * rayDir.y + rayDir.z * rayDir.z;
@@ -150,11 +164,13 @@ bool vertexIntersect(vec3 rayOrigin, vec3 rayDir, vec3 postion){
 }
 // ONLY modify these when in the instanceShader or the rayTrace Loop
 struct TraversalPayload{
-	vec3 transformed_origin;
-	vec3 transformed_direction;
-	uint node_idx;
+	vec3 transformed_origin; // ray origin in object space
+	float t; // the t for which this aabb was intersected
+	vec3 transformed_direction; // the ray origin in object space
+	uint node_idx; // the SceneNode to which this traversalNode belongs
 };
-
+// use a stack because:
+// keep the list as short as possible, I.E. use a depth first search
 const int BUFFER_SIZE = 14;
 int stackSize = 0;
 TraversalPayload traversalBuffer[BUFFER_SIZE];
@@ -162,6 +178,9 @@ TraversalPayload traversalBuffer[BUFFER_SIZE];
 // for a given rayQuery this method returns a ray and a tlasNumber
 #ifdef RAY_TRACE
 void instanceShader(rayQueryEXT ray_query, TraversalPayload load, SceneNode node) {
+	float t = rayQueryGetIntersectionTEXT(ray_query, false);
+	//if(t>best_t) return; // we already found a triangle outside this aabb before this was even hit we dont need to add this instance
+	// this can never happen since best_t is our t_max for this query
 	uint iIdx = rayQueryGetIntersectionInstanceIdEXT(ray_query, false);
 	uint cIdx = rayQueryGetIntersectionInstanceCustomIndexEXT(ray_query, false);
 	uint pIdx = rayQueryGetIntersectionPrimitiveIndexEXT(ray_query, false);
@@ -178,14 +197,15 @@ void instanceShader(rayQueryEXT ray_query, TraversalPayload load, SceneNode node
 	// we can now do LOD or whatever we feel like doing
 
 
-	vec3 origin = rayQueryGetIntersectionObjectRayOriginEXT(ray_query, false);;
+	vec3 origin = rayQueryGetIntersectionObjectRayOriginEXT(ray_query, false);
 	vec3 direction = rayQueryGetIntersectionObjectRayDirectionEXT(ray_query, false);
 
 	// here the shader adds the next payloads
 	TraversalPayload nextLoad;
-	nextLoad.transformed_origin = origin;
-	nextLoad.transformed_direction = direction;
+	nextLoad.transformed_origin = (next.world_to_object * vec4(origin,1)).xyz;
+	nextLoad.transformed_direction = (next.world_to_object * vec4(direction,0)).xyz;
 	nextLoad.node_idx = next.Index;
+	nextLoad.t = t;
 	traversalBuffer[stackSize] = nextLoad;
 	stackSize++;
 }
@@ -193,10 +213,14 @@ void instanceShader(rayQueryEXT ray_query, TraversalPayload load, SceneNode node
 #endif
 
 
-
-
+int maxDepth = 0;
+uint numTraversals = 0;
+uint queryCount = 0;
 bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, out vec3 tuv, out int triangle_index) {
 #ifdef RAY_TRACE
+
+	numTraversals = 0;
+
 	tuv = vec3(0);
 
 	float min_t = 1.0e-3f;
@@ -210,14 +234,16 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 	traversalBuffer[0] = start;
 
 	triangle_index = -1;
-	
 	stackSize = 1;
-	while(stackSize>0){
-		//SceneNode node = nodes[root];
-		TraversalPayload load = traversalBuffer[stackSize-1];
-		SceneNode node = nodes[load.node_idx]; // remove last element
-		// if(load.node_idx != root) return true;
 
+	while(stackSize>0){
+		TraversalPayload load = traversalBuffer[stackSize-1];
+		stackSize--; // remove last element
+
+		if(load.t > best_t) continue;// there was already a closer hit, we can skip this one
+
+		SceneNode node = nodes[load.node_idx]; // retrieve scene Node
+		maxDepth = max(node.level, maxDepth); // not 100% correct but it gives a vague idea
 		uint tlasNumber = node.tlasNumber;
         vec3 query_origin = load.transformed_origin;
         vec3 query_direction = load.transformed_direction;
@@ -226,7 +252,8 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 		rayQueryInitializeEXT(ray_query, tlas[tlasNumber], 0, 0xFF, 
 			query_origin, min_t, 
 			query_direction, best_t);
-        stackSize--; // remove last element, add BUFFERSize cause negative mod is weird
+		queryCount++;
+		numTraversals++;
 		while(rayQueryProceedEXT(ray_query)){
 			uint type = rayQueryGetIntersectionTypeEXT(ray_query, false);
 			switch(type){
@@ -238,17 +265,26 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 					// we do not want to generate intersections, since AABB hit does not guarantee a hit in the traversal
 					// instead call instanceShader and add the new parameters to the traversalList
 					instanceShader(ray_query, load, node);
-					//rayQueryGenerateIntersectionEXT(ray_query, 1);
 					break;
 				default: break;
 			}
 		}
+
 		uint commitedType = rayQueryGetIntersectionTypeEXT(ray_query, true);
 		if(commitedType == gl_RayQueryCommittedIntersectionTriangleEXT ) {
+			if(debug != 0 && displayTriangles != 0){
+				vec2 uv = rayQueryGetIntersectionBarycentricsEXT(ray_query, true);
+				if(uv.x+uv.y>0.99f || uv.x < 0.01f || uv.y < 0.01f) {
+					triangle_index = 0;
+					return true;
+				} else {
+					continue;
+				}
+			}
 			float t = rayQueryGetIntersectionTEXT(ray_query, true);
 			if(t<best_t){
 				best_t = t;
-				triangle_index = node.IndexBuferIndex + rayQueryGetIntersectionPrimitiveIndexEXT(ray_query, true);
+				triangle_index = node.IndexBuferIndex/3 + rayQueryGetIntersectionPrimitiveIndexEXT(ray_query, true);
 				tuv.x = t;
 				vec2 uv = rayQueryGetIntersectionBarycentricsEXT(ray_query, true);
 				tuv.y = uv.y;
@@ -326,14 +362,12 @@ void shadeFragment(vec3 P, vec3 V, vec3 tuv, int triangle) {
 	Vertex v1 = vertices[indices[triangle * 3 + 1]];
 	Vertex v2 = vertices[indices[triangle * 3 + 2]];
 
-
 	float w = 1 - tuv.y - tuv.z;
 	float u = tuv.y;
 	float v = tuv.z;
 	
 	if(displayUV != 0){ // debug
-		outColor = vec4(u,v,0,1);
-		return;
+		debugColor = vec4(u,v,0,1);
 	}
 	// compute interpolated Normal and Tex
 	vec3 N = w * v0.normal + v * v1.normal + u * v2.normal;
@@ -341,8 +375,7 @@ void shadeFragment(vec3 P, vec3 V, vec3 tuv, int triangle) {
 	vec2 tex = w * v0.tex_coord + v * v1.tex_coord + u * v2.tex_coord;
 
 	if(displayTex != 0){	// debug
-		outColor = vec4(tex.xy,0,1);
-		return;
+		debugColor = vec4(tex.xy,0,1);
 	}
 
 	// get material and texture properties, if there are not set use default values
@@ -419,6 +452,7 @@ void shadeFragment(vec3 P, vec3 V, vec3 tuv, int triangle) {
 
 
 void main() {
+	debugColor = vec4(0,0,0,0);
 	// from https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-generating-camera-rays/generating-camera-rays
 	ivec2 xy = ivec2(gl_FragCoord.xy);
 	float x = xy.x;
@@ -437,37 +471,62 @@ void main() {
 
 	int triangle_index = -1;
 
-	float t_max = 300;
+	float t_max = 300; // the maximum render distance TODO into options
 	vec3 tuv;
 	outColor = vec4(3, 215, 252, 255) /255;
 	if(ray_trace_loop(rayOrigin, rayDirection, t_max,rootSceneNode, tuv, triangle_index)){
 		if(triangle_index >= 0){
-			//outColor = vec4(0,0,1,1);
+			if(displayTriangles != 0) {
+				debugColor = vec4(0,0,0,1);
+			}
+			if(displayIntersectionT != 0) {
+				float t = tuv.x;
+				debugColor = vec4(hsv2rgb(vec3(min(t/50,0.66f),1,1)),1);
+			} 
+			if (displayTraversalDepth != 0){
+				debugColor = vec4(hsv2rgb(vec3(0.66f - min(maxDepth * 1.f /colorSensitivity,0.66f),1,1)),1);
+			}
+			if (displayTraversalCount != 0){
+				debugColor = vec4(hsv2rgb(vec3(0.66f - min(numTraversals * 1.f/colorSensitivity,0.66f),1,1)),1);
+			}
 			vec3 P = rayOrigin + tuv.x * rayDirection;
 			shadeFragment(P, rayDirection, tuv, triangle_index);
+		}
+	} else {
+		tuv.x = t_max;
+		// maybe environment map
+	}
+
+
+	if(displayLights != 0) {
+		int closestLight = -1;
+		float light_t = tuv.x;
+		for(int i = 0;i<numLights;i++){
+			Light light = lights[i];
+			if((light.type & LIGHT_TYPE_POINT) != 0){
+				float t;
+				if(vertexIntersect(rayOrigin, rayDirection, light.position, t)){
+					if(t<light_t){
+						light_t = t;
+						closestLight = i;
+					}
+				}
+			}
+		}
+		if(closestLight>=0){
+			Light light = lights[closestLight];
+			if((light.type & LIGHT_ON) != 0){
+				debugColor = vec4(1,1,1,1);
+			} else {
+				debugColor = vec4(0,0,0,1);
+			}
 		} else {
-			outColor = vec4(1,0,0,1);
+			debugColor = outColor;
 		}
 	}
-	else {
-		/*
-		for(int i = 0;i<1;i++){
-			if(vertexIntersect(rayOrigin, rayDirection, vec3(1,0,0))){
-				outColor = vec4(1,0,0,1);
-				return;
-			}
-			if(vertexIntersect(rayOrigin, rayDirection, vec3(0,1,0))){
-				outColor = vec4(0,1,0,1);
-				return;
-			}
-			if(vertexIntersect(rayOrigin, rayDirection, vec3(0,0,-1))){
-				outColor = vec4(0,0,1,1);
-				return;
-			}
-			if(vertexIntersect(rayOrigin, rayDirection, vec3(0,0,0))){
-				outColor = vec4(1,1,1,1);
-				return;
-			}		
-		}*/
+	if(displayQueryCount != 0 && queryCount > 1){
+		debugColor = vec4(hsv2rgb(vec3(0.66f - min(queryCount * 1.f /colorSensitivity,0.66f),1,1)),1);
 	}
+
+	if(debug != 0 && debugColor[3] == 1) outColor = debugColor;
 }
