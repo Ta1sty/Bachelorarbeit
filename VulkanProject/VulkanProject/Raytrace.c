@@ -184,6 +184,12 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 					{0, 1, 0, 0},
 					{0, 0, 1, 0},
 					{0, 0, 0, 1}
+				},
+				.world_to_object = {
+					{1, 0, 0, 0},
+					{0, 1, 0, 0},
+					{0, 0, 1, 0},
+					{0, 0, 0, 1}
 				}
 			},
 			.Level = node->Level + 1,

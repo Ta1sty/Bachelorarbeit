@@ -125,12 +125,12 @@ int main()
 
     VkBool32 useMutliLevel = VK_TRUE;
 
-    GET_ROOT((&app.scene));
+    /*GET_ROOT((&app.scene));
     root->data.NumChildren = 1;
     GET_CHILD_IDX((&app.scene), root, 0);
     SceneNode* node = &app.scene.scene_nodes[childIdx];
     app.scene.node_indices[root->data.childrenIndex] = childIdx;
-    GET_CHILD((&app.scene), node, 0);
+    GET_CHILD((&app.scene), node, 0);*/
 
     if (app.vk_info.ray_tracing) {
         //flatten_scene(&app.scene);
