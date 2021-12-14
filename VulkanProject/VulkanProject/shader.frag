@@ -1,5 +1,6 @@
 #version 460
 #extension GL_EXT_nonuniform_qualifier : enable
+#define RAY_TRACE
 #ifdef RAY_TRACE
 #extension GL_EXT_ray_query : require
 #endif		
@@ -58,7 +59,7 @@ layout(binding = 2, set = 0) buffer IndexBuffer { int[] indices; };
 layout(binding = 3, set = 0) buffer MaterialBuffer { Material[] materials; };
 layout(binding = 4, set = 0) buffer LightBuffer {Light[] lights;};
 // Scene nodes
-layout(binding = 5, set = 0) buffer NodeTransforms { mat4[] transforms; }; // correleates 1-1 with NodeBuffer, is alone cause of alignment
+layout(binding = 5, set = 0, row_major) buffer NodeTransforms { mat4[] transforms; }; // correleates 1-1 with NodeBuffer, is alone cause of alignment
 layout(binding = 6, set = 0) buffer NodeBuffer { SceneNode[] nodes;}; // the array of sceneNodes
 layout(binding = 7, set = 0) buffer ChildBuffer { uint[] childIndices;}; // the index array for node children
 
@@ -142,11 +143,120 @@ bool vertexIntersect(vec3 rayOrigin, vec3 rayDir, vec3 postion){
 	t = t1;
 	return true;
 }
+// ONLY modify these when in the instanceShader or the rayTrace Loop
+struct TraversalPayload{
+	vec3 transformed_origin;
+	vec3 transformed_direction;
+	uint node_idx;
+};
+
+const int BUFFER_SIZE = 14;
+int stackSize = 0;
+TraversalPayload traversalBuffer[BUFFER_SIZE];
+
+// for a given rayQuery this method returns a ray and a tlasNumber
+#ifdef RAY_TRACE
+void instanceShader(rayQueryEXT ray_query, TraversalPayload load, SceneNode node) {
+	uint iIdx = rayQueryGetIntersectionInstanceIdEXT(ray_query, false);
+	uint cIdx = rayQueryGetIntersectionInstanceCustomIndexEXT(ray_query, false);
+	uint pIdx = rayQueryGetIntersectionPrimitiveIndexEXT(ray_query, false);
+	SceneNode next;
+	if(node.numEven>0 && iIdx == 0){ // only do the even case for instance 0 and if there are even nodes, otherwise any aabb is ODD
+		// handle even child
+		next = nodes[childIndices[node.childrenIndex+pIdx]];
+	} else {
+		// handle odd child
+		SceneNode directChild = nodes[cIdx]; // use the custom index to take a shortcut
+		next = nodes[childIndices[directChild.childrenIndex + pIdx]];
+	}
+
+	// we can now do LOD or whatever we feel like doing
+
+
+	vec3 origin = rayQueryGetIntersectionObjectRayOriginEXT(ray_query, false);;
+	vec3 direction = rayQueryGetIntersectionObjectRayDirectionEXT(ray_query, false);
+
+	// here the shader adds the next payloads
+	TraversalPayload nextLoad;
+	nextLoad.transformed_origin = origin;
+	nextLoad.transformed_direction = direction;
+	nextLoad.node_idx = next.Index;
+	traversalBuffer[stackSize] = nextLoad;
+	stackSize++;
+}
+
+#endif
+
+
+
+
 bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, out vec3 tuv, out int triangle_index) {
 #ifdef RAY_TRACE
+	tuv = vec3(0);
+
 	float min_t = 1.0e-3f;
-	float max_t = t_max;
-	SceneNode node = nodes[root];
+	float best_t = t_max;
+
+	TraversalPayload start; // start at root node
+	start.transformed_origin = rayOrigin;
+	start.transformed_direction = rayDirection;
+	start.node_idx = root;
+
+	traversalBuffer[0] = start;
+
+	triangle_index = -1;
+	
+	stackSize = 1;
+	while(stackSize>0){
+		//SceneNode node = nodes[root];
+		TraversalPayload load = traversalBuffer[stackSize-1];
+		SceneNode node = nodes[load.node_idx]; // remove last element
+		// if(load.node_idx != root) return true;
+
+		uint tlasNumber = node.tlasNumber;
+        vec3 query_origin = load.transformed_origin;
+        vec3 query_direction = load.transformed_direction;
+
+		rayQueryEXT ray_query;
+		rayQueryInitializeEXT(ray_query, tlas[tlasNumber], 0, 0xFF, 
+			query_origin, min_t, 
+			query_direction, best_t);
+        stackSize--; // remove last element, add BUFFERSize cause negative mod is weird
+		while(rayQueryProceedEXT(ray_query)){
+			uint type = rayQueryGetIntersectionTypeEXT(ray_query, false);
+			switch(type){
+				case gl_RayQueryCandidateIntersectionTriangleEXT:
+					// might want to check for opaque
+					rayQueryConfirmIntersectionEXT(ray_query);
+					break;
+				case gl_RayQueryCandidateIntersectionAABBEXT:
+					// we do not want to generate intersections, since AABB hit does not guarantee a hit in the traversal
+					// instead call instanceShader and add the new parameters to the traversalList
+					instanceShader(ray_query, load, node);
+					//rayQueryGenerateIntersectionEXT(ray_query, 1);
+					break;
+				default: break;
+			}
+		}
+		uint commitedType = rayQueryGetIntersectionTypeEXT(ray_query, true);
+		if(commitedType == gl_RayQueryCommittedIntersectionTriangleEXT ) {
+			float t = rayQueryGetIntersectionTEXT(ray_query, true);
+			if(t<best_t){
+				best_t = t;
+				triangle_index = node.IndexBuferIndex + rayQueryGetIntersectionPrimitiveIndexEXT(ray_query, true);
+				tuv.x = t;
+				vec2 uv = rayQueryGetIntersectionBarycentricsEXT(ray_query, true);
+				tuv.y = uv.y;
+				tuv.z = uv.x;
+			}
+			// triangle_index = -1;
+		}
+	}
+	if(triangle_index >= 0) return true;
+	return false;
+
+/*
+
 	tuv = vec3(0);
 	rayQueryEXT ray_query;
 	rayQueryInitializeEXT(ray_query, tlas[node.tlasNumber], 0, 0xFF, rayOrigin, min_t, rayDirection, max_t);
@@ -158,6 +268,9 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 				rayQueryConfirmIntersectionEXT(ray_query);
 				break;
 			case gl_RayQueryCandidateIntersectionAABBEXT:
+				// we do not want to generate intersections, since AABB hit does not guarantee a hit in the traversal
+				// instead call instanceShader and add the new parameters to the traversalList
+
 				uint iIdx = rayQueryGetIntersectionInstanceIdEXT(ray_query, false);
 				//if (iIdx != 0) break;
 				// TODO rayQuery stuff
@@ -175,37 +288,7 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 		tuv.z = uv.x;
 		return true;
 	}
-	if(commitedType == gl_RayQueryCommittedIntersectionGeneratedEXT) {
-		triangle_index = -1;
-		uint iIdx = rayQueryGetIntersectionInstanceIdEXT(ray_query, true);
-		uint cIdx = rayQueryGetIntersectionInstanceCustomIndexEXT(ray_query, true);
-		uint pIdx = rayQueryGetIntersectionPrimitiveIndexEXT(ray_query,true);
-		SceneNode next;
-		if(node.numEven>0 && iIdx == 0){ // only do the even case for instance 0 and if there are even nodes, otherwise any aabb is ODD
-			// handle even child
-			next = nodes[childIndices[node.childrenIndex+pIdx]];
-			outColor = vec4(next.tlasNumber & 1, next.tlasNumber & 2, next.tlasNumber & 4, 1);
-		} else {
-			// handle odd child
-			SceneNode directChild = nodes[cIdx]; // use the custom index to take a shortcut
-			next = nodes[childIndices[directChild.childrenIndex + pIdx]];
-		}
-		vec3 newRayOrigin = rayQueryGetIntersectionObjectRayOriginEXT(ray_query, true);
-		vec3 newRayDirection = rayQueryGetIntersectionObjectRayDirectionEXT(ray_query, true);
-
-		rayQueryEXT next_query;
-		rayQueryInitializeEXT(next_query, tlas[next.tlasNumber], 0, 0xFF, newRayOrigin, min_t, newRayDirection, max_t);
-		while(rayQueryProceedEXT(next_query)){
-			if(rayQueryGetIntersectionTypeEXT(next_query, false) == gl_RayQueryCandidateIntersectionTriangleEXT){
-				rayQueryConfirmIntersectionEXT(next_query);
-			}
-		}
-		if(rayQueryGetIntersectionTypeEXT(next_query, true) == gl_RayQueryCommittedIntersectionTriangleEXT ) {
-			triangle_index = -1;
-			return true;
-		}
-	}
-	return false;
+	return false;*/
 #endif
 #ifndef RAY_TRACE
 	vec3 tuv_next;
@@ -351,8 +434,10 @@ void main() {
 
 	float t_max = 300;
 	vec3 tuv;
+	outColor = vec4(3, 215, 252, 255) /255;
 	if(ray_trace_loop(rayOrigin, rayDirection, t_max,rootSceneNode, tuv, triangle_index)){
 		if(triangle_index >= 0){
+			//outColor = vec4(0,0,1,1);
 			vec3 P = rayOrigin + tuv.x * rayDirection;
 			shadeFragment(P, rayDirection, tuv, triangle_index);
 		} else {
@@ -379,7 +464,5 @@ void main() {
 				return;
 			}		
 		}*/
-		outColor = vec4(3, 215, 252, 255) /255;
 	}
-	return;
 }

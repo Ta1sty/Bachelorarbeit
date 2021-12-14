@@ -233,6 +233,16 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 		};
 
 		memcpy(&instance.transform.matrix, &child.data.transform, sizeof(float) * 4 * 3);
+		/*instance.transform.matrix[0][0] = 1;
+		instance.transform.matrix[1][0] = 0;
+		instance.transform.matrix[2][0] = 0;
+		instance.transform.matrix[0][1] = 0;
+		instance.transform.matrix[1][1] = 1;
+		instance.transform.matrix[2][1] = 0;
+		instance.transform.matrix[0][2] = 0;
+		instance.transform.matrix[1][2] = 0;
+		instance.transform.matrix[2][2] = 1;*/
+
 
 		float maxNew[3] = { 0 };
 		float minNew[3] = { 0 };
