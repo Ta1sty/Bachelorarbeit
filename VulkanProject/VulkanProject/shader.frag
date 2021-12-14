@@ -17,15 +17,20 @@ struct Material{
 	int texture_index;
 };
 struct SceneNode{
-	int IndexBuferIndex;
-	int NumTriangles;
-	int NumChildren;
-	int childrenIndex;
-	int Index;
-	int level;
-	uint numEven;
-	uint numOdd;
-	uint tlasNumber;
+	mat4 object_to_world;	// 64
+	mat4 world_to_object;	// 128
+	int IndexBuferIndex;	// 132
+	int NumTriangles;		// 136	
+	int NumChildren;		// 140
+	int childrenIndex;		// 144
+	int Index;				// 148
+	int level;				// 152
+	uint numEven;			// 156
+	uint numOdd;			// 160
+	uint tlasNumber;		// 164
+	float pad1;				// 168
+	float pad2;				// 172
+	float pad3;				// 176 % 16 == 0
 };
 const uint LIGHT_ON = 1;
 const uint LIGHT_TYPE_POINT = 2;
@@ -58,14 +63,14 @@ layout(binding = 2, set = 0) buffer IndexBuffer { int[] indices; };
 layout(binding = 3, set = 0) buffer MaterialBuffer { Material[] materials; };
 layout(binding = 4, set = 0) buffer LightBuffer {Light[] lights;};
 // Scene nodes
-layout(binding = 5, set = 0) buffer NodeTransforms { mat4[] transforms; }; // correleates 1-1 with NodeBuffer, is alone cause of alignment
-layout(binding = 6, set = 0) buffer NodeBuffer { SceneNode[] nodes;}; // the array of sceneNodes
-layout(binding = 7, set = 0) buffer ChildBuffer { uint[] childIndices;}; // the index array for node children
+// correleates 1-1 with NodeBuffer, is alone cause of alignment
+layout(binding = 5, set = 0, row_major) buffer NodeBuffer { SceneNode[] nodes;}; // the array of sceneNodes
+layout(binding = 6, set = 0) buffer ChildBuffer { uint[] childIndices;}; // the index array for node children
 
-layout(binding = 8, set = 1) uniform sampler samp;
-layout(binding = 9, set = 1) uniform texture2D textures[];
+layout(binding = 7, set = 1) uniform sampler samp;
+layout(binding = 8, set = 1) uniform texture2D textures[];
 
-layout(binding = 10, set = 2) uniform FrameData {
+layout(binding = 9, set = 2) uniform FrameData {
 	mat4 view_to_world;
 	uint width;
 	uint height;
@@ -78,7 +83,7 @@ layout(binding = 10, set = 2) uniform FrameData {
 };
 
 #ifdef RAY_TRACE
-layout(binding = 11, set = 3) uniform accelerationStructureEXT[] tlas;
+layout(binding = 10, set = 3) uniform accelerationStructureEXT[] tlas;
 #endif
 
 layout(location = 0) in vec3 fragColor;

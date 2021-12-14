@@ -115,13 +115,6 @@ void create_descriptor_containers(VkInfo* info, Scene* scene)
 		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-	BufferInfo nodeTransforms = create_buffer_info(NODE_TRANSFORM_BINDING,
-		VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
-		sizeof(float) * 4 * 4 * scene->scene_data.numSceneNodes,
-		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-		VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
 	BufferInfo nodeBuffer = create_buffer_info(NODE_BUFFER_BINDING,
 		VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
 		sizeof(ShaderSceneNode) * scene->scene_data.numSceneNodes,
@@ -142,9 +135,8 @@ void create_descriptor_containers(VkInfo* info, Scene* scene)
 	globalInfos[2] = indexBuffer;
 	globalInfos[3] = materialBuffer;
 	globalInfos[4] = lightBuffer;
-	globalInfos[5] = nodeTransforms;
-	globalInfos[6] = nodeBuffer;
-	globalInfos[7] = nodeIndices;
+	globalInfos[5] = nodeBuffer;
+	globalInfos[6] = nodeIndices;
 	
 	info->global_buffers = create_descriptor_set(info, 0, globalInfos, GLOBAL_BUFFER_COUNT, 1);
 

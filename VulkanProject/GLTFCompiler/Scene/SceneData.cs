@@ -137,25 +137,39 @@ namespace GLTFCompiler.Scene
                 }
 
                 var rotation = Matrix4x4.Identity;
+                var invRotation = Matrix4x4.Identity;
                 var translation = Matrix4x4.Identity;
+                var invTranslation = Matrix4x4.Identity;
                 var scale = Matrix4x4.Identity;
+                var invScale = Matrix4x4.Identity;
                 if (node.Rotation != null)
                 {
                     rotation = Matrix4x4.CreateFromQuaternion(
                         new Quaternion(node.Rotation[0], node.Rotation[1], node.Rotation[2], node.Rotation[3]));
+                    Matrix4x4.Invert(rotation, out invRotation);
                 }
 
                 if (node.Scale != null)
                 {
                     scale = Matrix4x4.CreateScale(node.Scale[0], node.Scale[1], node.Scale[2]);
+                    Matrix4x4.Invert(scale, out invScale);
                 }
 
                 if (node.Translation != null)
                 {
                     translation = Matrix4x4.CreateTranslation(node.Translation[0], node.Translation[1], node.Translation[2]);
+                    invTranslation = Matrix4x4.CreateTranslation(-node.Translation[0], -node.Translation[1], -node.Translation[2]);
                 }
 
-                scNode.Transform =  scale * rotation * translation; 
+                scNode.ObjectToWorld =  scale * rotation * translation;
+                scNode.WorldToObject = invTranslation * invRotation * invScale;
+                // TEST
+                /*
+                var v = new Vector4(4, -3, 2, 1);
+                var res1 = Vector4.Transform(v, scNode.ObjectToWorld * scNode.WorldToObject);
+                var res2 = Vector4.Transform(v, scNode.WorldToObject * scNode.ObjectToWorld);
+                */
+
                 scNode.Source = node;
                 Nodes.Add(scNode);
             }
@@ -163,7 +177,7 @@ namespace GLTFCompiler.Scene
             {
                 Children = file.Scenes[0].Nodes.Select(x=>Nodes[x]).ToList(),
                 NumChildren = file.Scenes[0].Nodes.Count,
-                Transform = Matrix4x4.Identity,
+                ObjectToWorld = Matrix4x4.Identity,
             };
 
             var arr = Nodes.ToArray();
@@ -196,9 +210,9 @@ namespace GLTFCompiler.Scene
                     {
                         if (x.Source.Mesh < 0) return true;
                         if (x.Children.Count > 0) return true;
-                        if (x.Transform.M41 != 0) return true;
-                        if (x.Transform.M42 != 0) return true;
-                        if (x.Transform.M43 != 0) return true;
+                        if (x.ObjectToWorld.M41 != 0) return true;
+                        if (x.ObjectToWorld.M42 != 0) return true;
+                        if (x.ObjectToWorld.M43 != 0) return true;
                         return false;
                     }).ToList();
             }

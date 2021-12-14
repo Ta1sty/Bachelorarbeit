@@ -154,7 +154,7 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 				.NumTriangles = 0,
 				.IndexBufferIndex = -1,
 				.Index = -1,
-				.transform = {
+				.object_to_world = {
 					{1, 0, 0, 0},
 					{0, 1, 0, 0},
 					{0, 0, 1, 0},
@@ -179,7 +179,7 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 				.childrenIndex = -1,
 				.Index = -1,
 				.IndexBufferIndex = node->data.IndexBufferIndex,
-				.transform = {
+				.object_to_world = {
 					{1, 0, 0, 0},
 					{0, 1, 0, 0},
 					{0, 0, 1, 0},
@@ -232,7 +232,7 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 			// this is the reference to use in case this is an odd level node
 		};
 
-		memcpy(&instance.transform.matrix, &child.data.transform, sizeof(float) * 4 * 3);
+		memcpy(&instance.transform.matrix, &child.data.object_to_world, sizeof(float) * 4 * 3);
 
 		float maxNew[3] = { 0 };
 		float minNew[3] = { 0 };
@@ -395,7 +395,7 @@ void build_blas(VkInfo* info, Scene* scene, SceneNode* node)
 						.NumTriangles = 0,
 						.Index = -1,
 						.IndexBufferIndex = -1,
-						.transform = {
+						.object_to_world = {
 							{1, 0, 0, 0},
 							{0, 1, 0, 0},
 							{0, 0, 1, 0},
@@ -433,7 +433,7 @@ void build_blas(VkInfo* info, Scene* scene, SceneNode* node)
 			};
 			if (child->Level % 2 == 0)
 			{
-				memcpy(&transform, &child->data.transform, sizeof(float) * 4 * 4);
+				memcpy(&transform, &child->data.object_to_world, sizeof(float) * 4 * 4);
 				transformAABB(transform, child->tlas.min, child->tlas.max, minNew, maxNew);
 			}
 			else {

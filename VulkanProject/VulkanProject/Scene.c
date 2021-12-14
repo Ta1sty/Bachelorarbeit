@@ -54,7 +54,7 @@ void load_scene(Scene* scene, char** path)
 	{
 		scene->scene_nodes[i].data = buffer[i];
 	}
-
+	//free(buffer);
 	// SceneNode children
 	fread(&scene->scene_data.numNodeIndices, sizeof(uint32_t), 1, file);
 	scene->node_indices = malloc(sizeof(uint32_t) * scene->scene_data.numNodeIndices);
@@ -89,9 +89,9 @@ void flatten_scene(Scene* scene)
 	GET_ROOT(scene);
 
 	float id[4][4] = {
-		{1,0,0,0},
-		{0,1,0,0},
-		{0,0,1,0},
+		{1,0,0,0.5f},
+		{0,1,0,-0.5f},
+		{0,0,1,1},
 		{0,0,0,1}
 	};
 
@@ -120,7 +120,10 @@ void flatten_scene(Scene* scene)
 		.data.NumChildren = 0
 	};
 	scene->scene_nodes[0] = everything;
-	memcpy(scene->scene_nodes[0].data.transform, id, sizeof(float) * 4 * 4);
+	memcpy(scene->scene_nodes[0].data.object_to_world, id, sizeof(float) * 4 * 4);
+	memcpy(scene->scene_nodes[0].data.world_to_object, id, sizeof(float) * 4 * 4);
+
+
 	scene->node_indices = malloc(sizeof(uint32_t));
 	scene->scene_data.numNodeIndices = 1;
 	scene->scene_data.numSceneNodes = 1;
@@ -133,10 +136,10 @@ FlatNodeResult flatten_node(Scene* scene, float parentTransform[4][4], SceneNode
 	float tr[4][4];
 	for (uint32_t r = 0; r != 4; r++) {
 		for (uint32_t s = 0; s != 4; s++){
-			tr[r][s] = parentTransform[r][0] * node->data.transform[0][s]
-				+ parentTransform[r][1] * node->data.transform[1][s]
-				+ parentTransform[r][2] * node->data.transform[2][s]
-				+ parentTransform[r][3] * node->data.transform[3][s];
+			tr[r][s] = parentTransform[r][0] * node->data.object_to_world[0][s]
+				+ parentTransform[r][1] * node->data.object_to_world[1][s]
+				+ parentTransform[r][2] * node->data.object_to_world[2][s]
+				+ parentTransform[r][3] * node->data.object_to_world[3][s];
 		}
 	}
 
@@ -280,7 +283,7 @@ void collapse_parent_nodes(Scene* scene)
 	uint32_t newNum = 0;
 	for (int i = 0; i < root.data.NumChildren; i++) {
 		SceneNode child = scene->scene_nodes[scene->node_indices[root.data.childrenIndex + i]];
-		results[i] = collapse_node(scene, root.data.transform, &child);
+		results[i] = collapse_node(scene, root.data.object_to_world, &child);
 		newNum += results[i].numChildren;
 	}
 	SceneNode* newNodes = malloc(sizeof(SceneNode) * (newNum + 1));
@@ -299,7 +302,7 @@ void collapse_parent_nodes(Scene* scene)
 		.data.NumChildren = newNum
 	};
 	newNodes[newNum] = newRoot;
-	memcpy(newNodes->data.transform, root.data.transform, sizeof(float) * 4 * 4);
+	memcpy(newNodes->data.object_to_world, root.data.object_to_world, sizeof(float) * 4 * 4);
 	uint32_t* newIndices = malloc(sizeof(uint32_t) * newNum);
 	for (int i = 0; i < newNum; i++) {
 		newIndices[i] = i;
@@ -317,17 +320,17 @@ NodeCollapseResult collapse_node(Scene* scene, float transform[4][4], SceneNode*
 	float tr[4][4];
 	for (uint32_t r = 0; r != 4; r++) {
 		for (uint32_t s = 0; s != 4; s++) {
-			tr[r][s] = transform[r][0] * node->data.transform[0][s]
-				+ transform[r][1] * node->data.transform[1][s]
-				+ transform[r][2] * node->data.transform[2][s]
-				+ transform[r][3] * node->data.transform[3][s];
+			tr[r][s] = transform[r][0] * node->data.object_to_world[0][s]
+				+ transform[r][1] * node->data.object_to_world[1][s]
+				+ transform[r][2] * node->data.object_to_world[2][s]
+				+ transform[r][3] * node->data.object_to_world[3][s];
 		}
 	}
 	if (node->data.IndexBufferIndex > -1) { // this node references geometry
 		result.numChildren = 1;
 		result.children = malloc(sizeof(SceneNode));
 
-		memcpy(result.children[0].data.transform, tr, sizeof(float) * 4 * 4);
+		memcpy(result.children[0].data.object_to_world, tr, sizeof(float) * 4 * 4);
 
 		result.children[0].data.NumTriangles = node->data.NumTriangles;
 		result.children[0].data.IndexBufferIndex = node->data.IndexBufferIndex;

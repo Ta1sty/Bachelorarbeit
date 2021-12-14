@@ -9,7 +9,8 @@ namespace GLTFCompiler.Scene
     {
         public int IndexBufferIndex = -1; // this index points to the first vertex-index in the index buffer
         public int NumTriangles = -1; // amount of triangles
-        public Matrix4x4 Transform = Matrix4x4.Identity;
+        public Matrix4x4 ObjectToWorld = Matrix4x4.Identity;
+        public Matrix4x4 WorldToObject = Matrix4x4.Identity;
         public int NumChildren = 0;
         public List<SceneNode> Children = new();
         public SceneNode Brother = null; // this node is practically identical to this one, project others onto this one#
@@ -27,7 +28,7 @@ namespace GLTFCompiler.Scene
             if (ths.NumTriangles != node.NumTriangles) return false;
             if (ths.NumChildren != node.NumChildren) return false;
 
-            if (!MatrixAlmostZero(node.Transform - ths.Transform)) return false;
+            if (!MatrixAlmostZero(node.ObjectToWorld - ths.ObjectToWorld)) return false;
 
             using var itLeft = ths.Children.GetEnumerator();
             using var itRight = node.Children.GetEnumerator();

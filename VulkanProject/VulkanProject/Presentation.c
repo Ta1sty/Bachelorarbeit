@@ -48,11 +48,8 @@ void set_global_buffers(VkInfo* vk, Scene* scene)
 		0, sizeof(Light) * scene->scene_data.numLights, 0, &lightData), "");
 	memcpy(lightData, scene->lights, sizeof(Light) * scene->scene_data.numLights);
 	vkUnmapMemory(vk->device, GET_LIGHT_BUFFER(vk).vk_buffer_memory);
-	// Scenenodes and their transforms
-	float* transformData;
+	// Scenenodes
 	ShaderSceneNode* sceneNodeData;
-	check(vkMapMemory(vk->device, GET_TRANSFORM_BUFFER(vk).vk_buffer_memory,
-		0, sizeof(float) * 4 * 4 * scene->scene_data.numSceneNodes, 0, (void**) &transformData), "");
 	check(vkMapMemory(vk->device, GET_NODE_BUFFER(vk).vk_buffer_memory,
 		0, sizeof(ShaderSceneNode) * scene->scene_data.numSceneNodes, 0, (void**) &sceneNodeData), "");
 
@@ -70,10 +67,11 @@ void set_global_buffers(VkInfo* vk, Scene* scene)
 			.level = node.Level,
 			.tlasNumber = node.tlas_number
 		};
-		memcpy(&transformData[i * 4 * 4], &scene->scene_nodes[i].data.transform, sizeof(float) * 4 * 4);
+		memcpy(data.object_to_world, node.data.object_to_world, sizeof(float) * 4 * 4);
+		memcpy(data.world_to_object, node.data.world_to_object, sizeof(float) * 4 * 4);
+
 		memcpy(&sceneNodeData[i], &data, sizeof(ShaderSceneNode));
 	}
-	vkUnmapMemory(vk->device, GET_TRANSFORM_BUFFER(vk).vk_buffer_memory);
 	vkUnmapMemory(vk->device, GET_NODE_BUFFER(vk).vk_buffer_memory);
 
 	// child indices

@@ -38,7 +38,8 @@ typedef struct blas {
 
 typedef struct sceneNodeData
 {
-	float transform[4][4]; // transform first cause of alignment
+	float object_to_world[4][4]; // transform first cause of alignment
+	float world_to_object[4][4];
 	int32_t IndexBufferIndex; // if this nodes directly references geometry this is >-1					4
 	int32_t NumTriangles;	// the amount of triangles in the mesh,ie the range from					8
 							//[IndexBufferIndex, IndexBufferIndex + 3 * NumTriangles)					
@@ -58,17 +59,22 @@ typedef struct sceneNode
 	BLAS blas; // the BLAS for this SceneNode, it is set if this node has an odd level or if this node has an even level but it contains geometry
 } SceneNode;
 
-typedef struct shaderSceneNode {
-	int32_t IndexBuferIndex;
-	int32_t NumTriangles;
-	int32_t NumChildren;
-	int32_t childrenIndex;
-	int32_t Index;
-	int32_t level;
-	uint32_t numEven;
-	uint32_t numOdd;
-	uint32_t tlasNumber;
-} ShaderSceneNode;
+typedef struct shaderSceneNode { // 16 byte alignment (4 floats)
+	float object_to_world[4][4];	// 0
+	float world_to_object[4][4];	// 0
+	int32_t IndexBuferIndex;		// 4
+	int32_t NumTriangles;			// 8
+	int32_t NumChildren;			// 12
+	int32_t childrenIndex;			// 0
+	int32_t Index;					// 4
+	int32_t level;					// 8
+	uint32_t numEven;				// 12
+	uint32_t numOdd;				// 0
+	uint32_t tlasNumber;			// 4
+	float pad1;						// 8
+	float pad2;						// 12
+	float pad3;						// 0
+} ShaderSceneNode;						
 
 typedef struct vertex // ALWAYS KEEP THIS PADDED
 {
@@ -89,8 +95,8 @@ typedef struct vertex // ALWAYS KEEP THIS PADDED
 #define LIGHT_DISTANCE_IGNORE 8 // the intensity remains unchanged by distance
 #define LIGHT_DISTANCE_LINEAR 16 // the intensity falls linearly
 #define LIGHT_DISTANCE_QUADRATIC 32 // the intensity falls quadraticly
-#define LIGHT_IGNORE_MAX_DISTANCE = 64;
-#define LIGHT_USE_MIN_DST = 128;
+#define LIGHT_IGNORE_MAX_DISTANCE = 64; // this light is respected regardless of distance
+#define LIGHT_USE_MIN_DST = 128; // this light in only respected if there is no occlusion for the minDst range
 typedef struct light // 24 byte
 {
 	float position[3];

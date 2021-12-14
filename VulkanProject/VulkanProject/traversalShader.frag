@@ -83,7 +83,8 @@ void main() {
         float min_t = 1.0e-3f;
         float max_t = 0x7F7FFFFF; // 2139095039, does max_t work with infinity? read set tmax only to 10000, uintBitsToFloat()
         rayQueryEXT ray_query;
-		rayQueryInitializeEXT(ray_query, tlas_arr[tlas_index], 0, 0xFF, ray_orign, min_t, ray_direction, max_t);
+		rayQueryInitializeEXT(ray_query, tlas_arr[tlas_index], 0, 0xFF, ray_orign, 
+        min_t, ray_direction, max_t);
         while(rayQueryProceedEXT(ray_query)){
             if(rayQueryGetIntersectionTypeEXT(ray_query, false) == gl_RayQueryCandidateIntersectionAABBEXT ){ // instance intersection
                 int index = rayQueryGetIntersectionInstanceIdEXT(ray_query, false);
