@@ -8,14 +8,23 @@ using System.Drawing;
 
 namespace GLTFCompiler.Scene
 {
-    public class SceneDataWriter : IDisposable
+    public class SceneWriter : IDisposable
     {
-        private FileStream str; 
-        public SceneDataWriter(string dst)
+        private FileStream str;
+
+        public void WriteBuffers(string dst, ASceneCompiler compiler)
         {
             if (File.Exists(dst))
                 File.Delete(dst);
             str = File.Create(dst);
+
+            WriteVertices(compiler.Buffers.VertexBuffer);
+            WriteIndices(compiler.Buffers.IndexBuffer);
+            WriteSceneNodes(compiler.Buffers.Nodes);
+            WriteMaterials(compiler.Buffers.MaterialBuffer);
+            compiler.WriteTextures(str);
+            str.Dispose();
+            str = null;
         }
 
         public void WriteVertices(List<Vertex> vertexBuffer)
@@ -145,42 +154,7 @@ namespace GLTFCompiler.Scene
             }
             str.Write(materialBuffer);
         }
-
-        public void WriteTextures(SceneData data)
-        {
-            str.Write(BitConverter.GetBytes(data.file.Textures.Count));
-            foreach (var texture in data.file.Textures)
-            {
-                var imagePtr = data.file.Images[texture.Source];
-                var view = data.file.BufferViews[imagePtr.BufferView];
-                var bufferReader = new BufferReader(data, view);
-                data.usedBuffers.Add(bufferReader);
-                var imgData = bufferReader.GetAllBytes();
-
-                using var srcStr = new MemoryStream(imgData);
-                using var image = Image.FromStream(srcStr);
-                using var bmp = new Bitmap(image);
-                var size = bmp.Width * bmp.Height * sizeof(int);
-                str.Write(BitConverter.GetBytes(bmp.Width));
-                str.Write(BitConverter.GetBytes(bmp.Height));
-                str.Write(BitConverter.GetBytes(size));
-
-                var dst = new byte[size];
-                var i = 0;
-                for (var y = 0; y < bmp.Height; y++) {
-                    for (var x = 0; x < bmp.Width; x++) { 
-                        var col = bmp.GetPixel(x, y);
-                        dst[i] = col.R;
-                        dst[i + 1] = col.G;
-                        dst[i + 2] = col.B;
-                        dst[i + 3] = col.A;
-                        i += 4;
-                    }
-                }
-                str.Write(dst);
-            }
-        }
-
+        
         public void Dispose()
         {
             str?.Dispose();

@@ -1,46 +1,43 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Text.Json;
 using GLTFCompiler.GltfFileTypes;
 
 namespace GLTFCompiler.Scene
 {
-    public class SceneData
+    public class GLTFCompiler : ASceneCompiler
     {
-        public readonly GltfFile file;
-        public SceneData(GltfFile file)
-        {
-            this.file = file;
-        }
+        internal GltfFile File { get; set; }
 
-        public List<BufferReader> usedBuffers = new();
-        public List<Vertex> VertexBuffer { get; set; } = new();
-        public List<uint> IndexBuffer { get; set; } = new();
-        public List<byte[]> Buffers { get; set; } = new();
-        public List<MeshData> Meshes { get; set; } = new();
-        public List<SceneNode> Nodes { get; set; } = new(); // the last node is the root node, this is due to the format of gltf
-        public void DecodeBuffers()
+        private readonly List<BufferReader> usedReaders = new();
+        internal List<byte[]> GltfBuffers { get; set; } = new();
+        private List<MeshData> Meshes { get; set; } = new();
+        private void DecodeBuffers()
         {
-            foreach (var buffer in file.Buffers)
+            foreach (var buffer in File.Buffers)
             {
                 var start = buffer.Uri.IndexOf(";base64,", StringComparison.CurrentCultureIgnoreCase);
                 var span = buffer.Uri.Substring(start+8);
                 var bytes = Convert.FromBase64String(span);
-                Buffers.Add(bytes);
+                GltfBuffers.Add(bytes);
             }
         }
-        public void ParseMeshes()
+        private void ParseMeshes()
         {
-            foreach (var mesh in file.Meshes)
+            var indexBuffer = Buffers.IndexBuffer;
+            var vertexBuffer = Buffers.VertexBuffer;
+            foreach (var mesh in File.Meshes)
             {
-                uint start = (uint) IndexBuffer.Count;
+                uint start = (uint) indexBuffer.Count;
                 foreach (var arr in mesh.Primitives)
                 {
-                    var positionAccessor = file.Accessors[arr.Attributes.Position];
-                    var normalAccessor = file.Accessors[arr.Attributes.Normal];
-                    var texCoordAccessor = file.Accessors[arr.Attributes.TexCoord_0];
+                    var positionAccessor = File.Accessors[arr.Attributes.Position];
+                    var normalAccessor = File.Accessors[arr.Attributes.Normal];
+                    var texCoordAccessor = File.Accessors[arr.Attributes.TexCoord_0];
 
                     int numElements = positionAccessor.Count;
                     if (numElements !=normalAccessor.Count || numElements != texCoordAccessor.Count)
@@ -51,11 +48,11 @@ namespace GLTFCompiler.Scene
                     var norReader = new BufferReader(this, normalAccessor);
                     var texReader = new BufferReader(this, texCoordAccessor);
 
-                    usedBuffers.Add(posReader);
-                    usedBuffers.Add(norReader);
-                    usedBuffers.Add(texReader);
+                    usedReaders.Add(posReader);
+                    usedReaders.Add(norReader);
+                    usedReaders.Add(texReader);
 
-                    uint vertexStart = (uint)VertexBuffer.Count;
+                    uint vertexStart = (uint)vertexBuffer.Count;
 
                     for (var i = 0; i < numElements; i++)
                     {
@@ -66,12 +63,12 @@ namespace GLTFCompiler.Scene
                             TexCoords = texReader.GetVec2(),
                             MaterialIndex = arr.Material
                         };
-                        VertexBuffer.Add(ver);
+                        vertexBuffer.Add(ver);
                     }
-                    var faceAccessor = file.Accessors[arr.Indices];
+                    var faceAccessor = File.Accessors[arr.Indices];
                     var faceReader = new BufferReader(this, faceAccessor);
 
-                    usedBuffers.Add(faceReader);
+                    usedReaders.Add(faceReader);
                     if (true) // vertex array
                     {
                         for (var i = 0; i < faceAccessor.Count; i+=3)
@@ -80,9 +77,9 @@ namespace GLTFCompiler.Scene
                             uint v2 = faceReader.GetUshort();
                             uint v3 = faceReader.GetUshort();
                             if (v1 == v2 || v2 == v3 || v3 == v1) continue; // just a line
-                            IndexBuffer.Add(v1 + vertexStart);
-                            IndexBuffer.Add(v2 + vertexStart);
-                            IndexBuffer.Add(v3 + vertexStart);
+                            indexBuffer.Add(v1 + vertexStart);
+                            indexBuffer.Add(v2 + vertexStart);
+                            indexBuffer.Add(v3 + vertexStart);
                         }
                     }
                     else // triangle strip
@@ -98,15 +95,15 @@ namespace GLTFCompiler.Scene
                             if (v1 != uint.MaxValue)
                             {
                                 if(v1 == v2 || v2 == v3 || v3 == v1) continue; // just a line
-                                IndexBuffer.Add(v1 + vertexStart);
-                                IndexBuffer.Add(v2 + vertexStart);
-                                IndexBuffer.Add(v3 + vertexStart);
+                                indexBuffer.Add(v1 + vertexStart);
+                                indexBuffer.Add(v2 + vertexStart);
+                                indexBuffer.Add(v3 + vertexStart);
                             }
                         }
                     }
                 }
 
-                uint end = (uint) IndexBuffer.Count;
+                uint end = (uint) indexBuffer.Count;
                 var length = end - start;
                 Meshes.Add(new MeshData
                 {
@@ -116,19 +113,20 @@ namespace GLTFCompiler.Scene
             }
         }
 
-        public void BuildSceneGraph()
+        private void BuildSceneGraph()
         {
-            foreach (var node in file.Nodes)
+            var nodes = Buffers.Nodes;
+            foreach (var node in File.Nodes)
             {
                 var scNode = new SceneNode();
                 if (node.Mesh == -1) // this node does not point to any geometry
                 {
-                    scNode.Children = node.Children.Select(x => Nodes[x]).ToList();
+                    scNode.Children = node.Children.Select(x => nodes[x]).ToList();
                     scNode.NumChildren = scNode.Children.Count;
                 }
                 else
                 {
-                    scNode.Children = node.Children.Select(x => Nodes[x]).ToList();
+                    scNode.Children = node.Children.Select(x => nodes[x]).ToList();
                     scNode.NumChildren = scNode.Children.Count;
 
 
@@ -171,16 +169,16 @@ namespace GLTFCompiler.Scene
                 */
 
                 scNode.Source = node;
-                Nodes.Add(scNode);
+                nodes.Add(scNode);
             }
             var end = new SceneNode
             {
-                Children = file.Scenes[0].Nodes.Select(x=>Nodes[x]).ToList(),
-                NumChildren = file.Scenes[0].Nodes.Count,
+                Children = File.Scenes[0].Nodes.Select(x=>nodes[x]).ToList(),
+                NumChildren = File.Scenes[0].Nodes.Count,
                 ObjectToWorld = Matrix4x4.Identity,
             };
 
-            var arr = Nodes.ToArray();
+            var arr = nodes.ToArray();
             for(int i = 0;i<arr.Length;i++) // might change this
             {
                 for (int j = i + 1; j < arr.Length; j++)
@@ -192,12 +190,12 @@ namespace GLTFCompiler.Scene
                 }
             }
 
-            foreach (var node in Nodes)
+            foreach (var node in nodes)
             {
                 node.Children = node.Children.Select(x => x.ThisOrBrother()).ToList();
             }
 
-            Nodes = Nodes.Where(x => x.Brother == null).ToList();
+            nodes = nodes.Where(x => x.Brother == null).ToList();
             end.Children = end.Children.Select(x => x.ThisOrBrother()).ToList();
             if (end.Children.Count(x => x.Source.Mesh >= 0) == 1) // scene consists of only one mesh with a scene node
             {
@@ -219,22 +217,65 @@ namespace GLTFCompiler.Scene
 
             end.NumChildren = end.Children.Count;
             var index = 0;
-            Nodes.Add(end);
-            foreach (var node in Nodes)
+            nodes.Add(end);
+            foreach (var node in nodes)
             {
                 node.Index = index;
                 index++;
             }
+
+            Buffers.Nodes = nodes;
         }
 
-        public void WriteBytes(string dst)
+        public override void CompileScene(string path)
         {
-            using var writer = new SceneDataWriter(dst);
-            writer.WriteVertices(VertexBuffer);
-            writer.WriteIndices(IndexBuffer);
-            writer.WriteSceneNodes(Nodes);
-            writer.WriteMaterials(file.Materials);
-            writer.WriteTextures(this);
+            using var str = new StreamReader(path);
+            var res = str.ReadToEnd();
+            var opt = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+             File = JsonSerializer.Deserialize<GltfFile>(res, opt);
+             DecodeBuffers();
+             ParseMeshes();
+             BuildSceneGraph();
+             Buffers.MaterialBuffer = File.Materials;
+        }
+        public override void WriteTextures(FileStream str)
+        {
+            str.Write(BitConverter.GetBytes(File.Textures.Count));
+            foreach (var texture in File.Textures)
+            {
+                var imagePtr = File.Images[texture.Source];
+                var view = File.BufferViews[imagePtr.BufferView];
+                var bufferReader = new BufferReader(this, view);
+                usedReaders.Add(bufferReader);
+                var imgData = bufferReader.GetAllBytes();
+
+                using var srcStr = new MemoryStream(imgData);
+                using var image = Image.FromStream(srcStr);
+                using var bmp = new Bitmap(image);
+                var size = bmp.Width * bmp.Height * sizeof(int);
+                str.Write(BitConverter.GetBytes(bmp.Width));
+                str.Write(BitConverter.GetBytes(bmp.Height));
+                str.Write(BitConverter.GetBytes(size));
+
+                var dst = new byte[size];
+                var i = 0;
+                for (var y = 0; y < bmp.Height; y++)
+                {
+                    for (var x = 0; x < bmp.Width; x++)
+                    {
+                        var col = bmp.GetPixel(x, y);
+                        dst[i] = col.R;
+                        dst[i + 1] = col.G;
+                        dst[i + 2] = col.B;
+                        dst[i + 3] = col.A;
+                        i += 4;
+                    }
+                }
+                str.Write(dst);
+            }
         }
     }
 }

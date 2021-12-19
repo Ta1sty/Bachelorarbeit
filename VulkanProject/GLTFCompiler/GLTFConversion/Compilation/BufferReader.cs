@@ -8,17 +8,17 @@ namespace GLTFCompiler.Scene
         private readonly byte[] _buffer;
         private int _currentPos;
         private readonly int _length;
-        public BufferReader(SceneData scene, Accessor acc)
+        public BufferReader(GLTFCompiler scene, Accessor acc)
         {
-            BufferView view = scene.file.BufferViews[acc.BufferView];
+            BufferView view = scene.File.BufferViews[acc.BufferView];
             _currentPos = view.ByteOffset;
-            _buffer = scene.Buffers[view.Buffer];
+            _buffer = scene.GltfBuffers[view.Buffer];
             _length = view.ByteLength;
         }
-        public BufferReader(SceneData scene, BufferView view)
+        public BufferReader(GLTFCompiler scene, BufferView view)
         {
             _currentPos = view.ByteOffset;
-            _buffer = scene.Buffers[view.Buffer];
+            _buffer = scene.GltfBuffers[view.Buffer];
             _length = view.ByteLength;
         }
         public byte[] GetAllBytes()

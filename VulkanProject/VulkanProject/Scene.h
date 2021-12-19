@@ -92,9 +92,6 @@ typedef struct vertex // ALWAYS KEEP THIS PADDED
 #define LIGHT_ON 1 // light is on
 #define LIGHT_TYPE_POINT_LIGHT 2 // light is a point light
 #define LIGHT_TYPE_DIRECTIONAL_LIGHT 4 // light is a directional light
-#define LIGHT_DISTANCE_IGNORE 8 // the intensity remains unchanged by distance
-#define LIGHT_DISTANCE_LINEAR 16 // the intensity falls linearly
-#define LIGHT_DISTANCE_QUADRATIC 32 // the intensity falls quadraticly
 #define LIGHT_IGNORE_MAX_DISTANCE = 64; // this light is respected regardless of distance
 #define LIGHT_USE_MIN_DST = 128; // this light in only respected if there is no occlusion for the minDst range
 typedef struct light // 24 byte
@@ -103,6 +100,8 @@ typedef struct light // 24 byte
 	uint32_t type; // 0th bit = on/off, 1st bit = Point light, 2nd bit = Directional Light
 	float intensity[3]; // the intensity for each 
 	float maxDst; // the maximum distance this light is still respected
+	float quadratic[3]; // the quadratic components [0] + [1]d + [2]d^2
+	float radius;
 	float direction[3]; // the direction in case this light is directional
 	float minDst;	// if this light is directional, the light counts as occluded
 					// if there is any object along the fragPos + minDst*direction line

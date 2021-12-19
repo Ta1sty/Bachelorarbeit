@@ -1,6 +1,5 @@
 #version 460
 #extension GL_EXT_nonuniform_qualifier : enable
-#define RAY_TRACE
 #ifdef RAY_TRACE
 #extension GL_EXT_ray_query : require
 #endif		
@@ -36,9 +35,6 @@ struct SceneNode{
 const uint LIGHT_ON = 1;
 const uint LIGHT_TYPE_POINT = 2;
 const uint LIGHT_TYPE_DIRECTIONAL = 4;
-const uint LIGHT_DISTANCE_IGNROE = 8;
-const uint LIGHT_DISTANCE_LINEAR = 16;
-const uint LIGHT_DISTANCE_QUADRATIC = 32;
 const uint LIGHT_IGNORE_MAX_DISTANCE = 64;
 const uint LIGHT_USE_MIN_DST = 128;
 struct Light{
@@ -46,6 +42,8 @@ struct Light{
 	uint type;
 	vec3 intensity;
 	float maxDst;
+	vec3 quadratic;
+	float radius;
 	vec3 direction;
 	float minDst;
 };
@@ -434,17 +432,14 @@ void shadeFragment(vec3 P, vec3 V, vec3 tuv, int triangle) {
 				specular = ks * pow(max(0,dot(R,-light.direction)),n);
 			}
 		}
-		float l_mult = 0;
-		if((light.type & LIGHT_DISTANCE_IGNROE	) != 0) {
-			l_mult = 1;
+		// https://developer.valvesoftware.com/wiki/Constant-Linear-Quadratic_Falloff
+		float d = l_dst - light.radius;
+		if(d<0)
+			sum+=vec3(1);
+		else {
+			float l_mult = light.quadratic.x + light.quadratic.y / d + light.quadratic.z / (d*d);
+			sum += (specular+diffuse) * l_mult * light.intensity * color;
 		}
-		if((light.type & LIGHT_DISTANCE_LINEAR) != 0) {
-			l_mult = 1/l_dst;
-		}
-		if((light.type & LIGHT_DISTANCE_QUADRATIC) != 0) {
-			l_mult = 1/(l_dst * l_dst);
-		}
-		sum += (specular+diffuse) * light.intensity * l_mult * color;
 	}
 	sum += ka * color;
 	outColor = vec4(sum.xyz, 1);

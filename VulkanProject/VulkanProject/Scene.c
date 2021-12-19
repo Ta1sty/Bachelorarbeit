@@ -68,16 +68,19 @@ void load_scene(Scene* scene, char** path)
 	scene->scene_data.numLights = 2;
 	scene->lights = malloc(sizeof(Light) * scene->scene_data.numLights);
 	Light light1 = {
-		.position = {0,1,0},
-		.type = LIGHT_ON | LIGHT_TYPE_POINT_LIGHT | LIGHT_DISTANCE_QUADRATIC,
+		.position = {0,1.49f,0},
+		.type = LIGHT_ON | LIGHT_TYPE_POINT_LIGHT,
+		.quadratic = {0.2f,0.7f,0.1f},
+		.radius = -0.2f,
 		.intensity = {2,2,2},
 		.maxDst = 30
 	};
 	Light light2 = {
 		.position = {0,3,2},
-		.type = LIGHT_ON | LIGHT_TYPE_POINT_LIGHT | LIGHT_DISTANCE_QUADRATIC,
-		.intensity = {6,6,6},
-		.maxDst = 30
+		.type = LIGHT_ON | LIGHT_TYPE_POINT_LIGHT,
+		.intensity = {2,2,2},
+		.maxDst = 30,
+		.quadratic = {1,0,0}
 	};
 	scene->lights[0] = light1;
 	scene->lights[1] = light2;

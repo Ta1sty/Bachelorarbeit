@@ -47,19 +47,10 @@ namespace GLTFCompiler
             var location = Assembly.GetExecutingAssembly().Location;
             var regex = new Regex(@"VulkanProject\\.*");
             var dst = regex.Replace(location, @"VulkanProject\VulkanProject\dump.bin");
-            var p = Path.GetFullPath(dst);
-            using var str = new StreamReader(path);
-            var res = str.ReadToEnd();
-            var opt = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
-            var result = JsonSerializer.Deserialize<GltfFile>(res, opt);
-            SceneData s = new SceneData(result);
-            s.DecodeBuffers();
-            s.ParseMeshes();
-            s.BuildSceneGraph();
-            s.WriteBytes(dst);
+            ASceneCompiler compiler = new Scene.GLTFCompiler();
+            compiler.CompileScene(path);
+            var writer = new SceneWriter();
+            writer.WriteBuffers(dst, compiler);
         }
     }
 }
