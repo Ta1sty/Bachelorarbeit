@@ -119,11 +119,18 @@ typedef struct sceneData
 } SceneData;
 
 typedef struct renderSettings {
-	float fov;
-	uint32_t displayUV;
-	uint32_t displayTex;
-	uint32_t displayTriangles;
-	uint32_t displayLights;
+	float fov; // Field of view [0,90)
+	uint32_t debug; // if this is disabled the image is rendered normally
+	int32_t colorSensitivity;
+	uint32_t displayUV; // displays the triangle UV coordinates
+	uint32_t displayTex; // displays the triangle Texture Coordinates
+	uint32_t displayTriangles; // displays the Borders of triangles
+	uint32_t displayLights; // displays the light sources as Spheres
+	uint32_t displayIntersectionT; // displays the intersection T with HSV encoding
+	uint32_t displayAABBs; // displays the AABBs
+	uint32_t displayTraversalDepth; // displays the maximum Depth the traversal took
+	uint32_t displayTraversalCount; // displays the amount of times the loop ran and executed a query (skipped due to hight T is not counted)
+	uint32_t displayQueryCount; // displays the total number of rayqueries that were used for this
 } RenderSettings;
 
 typedef struct camera

@@ -17,6 +17,7 @@ void init_scene(Scene* scene)
 	scene->camera.rotation_x = 0;
 	scene->camera.rotation_y = 0;
 	scene->camera.settings.fov = 45;
+	scene->camera.settings.colorSensitivity = 15;
 	load_scene(scene, "asd");
 }
 

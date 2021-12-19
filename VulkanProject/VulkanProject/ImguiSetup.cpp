@@ -162,12 +162,30 @@ void draw_imgui_frame(VkInfo* info, Scene* scene)
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 	ImGui::Begin("Settings");
+
+	bool enable = true;
+	//ImGui::ShowDemoWindow(&enable);
+
 	ImGui::Text("Framerate: %f", info->frameRate);
 	ImGui::SliderFloat("FOV", &scene->camera.settings.fov, 1, 89);
-	ImGui::Checkbox("UV", (bool*) &scene->camera.settings.displayUV);
-	ImGui::Checkbox("TEX", (bool*)&scene->camera.settings.displayTex);
-	ImGui::Checkbox("TRINAGLEs", (bool*)&scene->camera.settings.displayTriangles);
-	ImGui::Checkbox("LIGHTS", (bool*)&scene->camera.settings.displayLights);
+	if (ImGui::CollapsingHeader("DEBUG")) {
+		ImGui::Checkbox("Enable Debug", (bool*)&scene->camera.settings.debug);
+		ImGui::SliderInt("Color Sensitvity", &scene->camera.settings.colorSensitivity, 5, 30);
+		ImGui::BeginDisabled(scene->camera.settings.debug == 0);
+		ImGui::Checkbox("UV", (bool*)&scene->camera.settings.displayUV);
+		ImGui::Checkbox("TEX", (bool*)&scene->camera.settings.displayTex);
+		ImGui::Checkbox("Triangles", (bool*)&scene->camera.settings.displayTriangles);
+		ImGui::Checkbox("Lights", (bool*)&scene->camera.settings.displayLights);
+		ImGui::Checkbox("Intersection T", (bool*)&scene->camera.settings.displayIntersectionT);
+		ImGui::Checkbox("AABBs", (bool*)&scene->camera.settings.displayAABBs);
+
+		ImGui::Checkbox("TraversalDepth", (bool*)&scene->camera.settings.displayTraversalDepth);
+		ImGui::Checkbox("TraversalCount", (bool*)&scene->camera.settings.displayTraversalCount);
+		ImGui::Checkbox("QueryCount", (bool*)&scene->camera.settings.displayQueryCount);
+
+		ImGui::EndDisabled();
+	}
+
 	ImGui::End();
 	ImGui::Render();
 }

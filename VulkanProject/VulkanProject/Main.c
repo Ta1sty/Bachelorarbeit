@@ -127,7 +127,7 @@ int main()
 
     /*GET_ROOT((&app.scene));
     root->data.NumChildren = 1;
-    GET_CHILD_IDX((&app.scene), root, 0);
+    GET_CHILD_IDX((&app.scene), root, 5);
     SceneNode* node = &app.scene.scene_nodes[childIdx];
     app.scene.node_indices[root->data.childrenIndex] = childIdx;
     GET_CHILD((&app.scene), node, 0);*/

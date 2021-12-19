@@ -16,34 +16,34 @@ void set_global_buffers(VkInfo* vk, Scene* scene)
 {
 
 	// Scene Data
-	void* sceneData;
+	SceneData* sceneData;
 	check(vkMapMemory(vk->device, GET_SCENE_DATA_BUFFER(vk).vk_buffer_memory,
 		0, sizeof(SceneData), 0, &sceneData), "");
 	memcpy(sceneData, &scene->scene_data, sizeof(SceneData));
 	vkUnmapMemory(vk->device, GET_SCENE_DATA_BUFFER(vk).vk_buffer_memory);
 
 	// Vertex buffer
-	void* vertexData;
+	Vertex* vertexData;
 	check(vkMapMemory(vk->device, GET_VERTEX_BUFFER(vk).vk_buffer_memory, 
 		0, sizeof(Vertex) * scene->scene_data.numVertices, 0, &vertexData), "");
 	memcpy(vertexData, scene->vertices, sizeof(Vertex) * scene->scene_data.numVertices);
 	vkUnmapMemory(vk->device, GET_VERTEX_BUFFER(vk).vk_buffer_memory);
 
 	// IndexBuffer
-	void* indexData;
+	uint32_t* indexData;
 	check(vkMapMemory(vk->device, GET_INDEX_BUFFER(vk).vk_buffer_memory,
 		0, sizeof(uint32_t) * scene->scene_data.numTriangles * 3, 0, &indexData), "");
 	memcpy(indexData, scene->indices, sizeof(uint32_t) * scene->scene_data.numTriangles * 3);
 	vkUnmapMemory(vk->device, GET_INDEX_BUFFER(vk).vk_buffer_memory);
 
 	// materialBuffer
-	void* materialData;
+	Material* materialData;
 	check(vkMapMemory(vk->device, GET_MATERIAL_BUFFER(vk).vk_buffer_memory,
 		0, sizeof(Material) * scene->texture_data.num_materials, 0, &materialData), "");
 	memcpy(materialData, scene->texture_data.materials, sizeof(Material) * scene->texture_data.num_materials);
 	vkUnmapMemory(vk->device, GET_MATERIAL_BUFFER(vk).vk_buffer_memory);
 
-	void* lightData;
+	Light* lightData;
 	check(vkMapMemory(vk->device, GET_LIGHT_BUFFER(vk).vk_buffer_memory,
 		0, sizeof(Light) * scene->scene_data.numLights, 0, &lightData), "");
 	memcpy(lightData, scene->lights, sizeof(Light) * scene->scene_data.numLights);
