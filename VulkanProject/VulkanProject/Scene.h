@@ -101,7 +101,8 @@ typedef struct light // 24 byte
 	float intensity[3]; // the intensity for each 
 	float maxDst; // the maximum distance this light is still respected
 	float quadratic[3]; // the quadratic components [0] + [1]d + [2]d^2
-	float radius;
+	float radius; // the radius of the light source, everything in it is white.
+					// can be negative to make the area around the light less bright
 	float direction[3]; // the direction in case this light is directional
 	float minDst;	// if this light is directional, the light counts as occluded
 					// if there is any object along the fragPos + minDst*direction line

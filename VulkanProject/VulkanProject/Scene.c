@@ -78,7 +78,7 @@ void load_scene(Scene* scene, char** path)
 	Light light2 = {
 		.position = {0,3,2},
 		.type = LIGHT_ON | LIGHT_TYPE_POINT_LIGHT,
-		.intensity = {2,2,2},
+		.intensity = {1,1,1},
 		.maxDst = 30,
 		.quadratic = {1,0,0}
 	};

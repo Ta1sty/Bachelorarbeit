@@ -380,7 +380,7 @@ void shadeFragment(vec3 P, vec3 V, vec3 tuv, int triangle) {
 	float ka, kd, ks;
 	vec3 color;
 	if(v0.material_index < 0){
-		ka = 0.3f; kd = 0.4f; ks = 0.3f;
+		ka = 0.15f; kd = 0.5f; ks = 0.35f;
 		color = vec3(0.2,0.4,0.8);
 	} else {
 		Material m = materials[v0.material_index];
