@@ -23,7 +23,7 @@ void init_scene(Scene* scene)
 
 void load_scene(Scene* scene, char** path)
 {
-	//int vert = system("buildScene.bat");
+	int vert = system("buildScene.bat");
 
 	FILE* file;
 	fopen_s(&file, "dump.bin", "rb");

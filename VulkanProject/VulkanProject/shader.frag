@@ -342,7 +342,7 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 		vec3 v2 = vert_v1.position;
 		vec3 v1 = vert_v2.position;
 		if(rayTriangleIntersect(rayOrigin, rayDirection, tuv_next, v0, v1, v2) ){
-			if(tuv_next.x < tuv.x) {
+			if(tuv_next.x < tuv.x-0.1f) {
 				tuv = tuv_next;
 				triangle_index = i;
 			}
@@ -378,19 +378,23 @@ void shadeFragment(vec3 P, vec3 V, vec3 tuv, int triangle) {
 
 	// get material and texture properties, if there are not set use default values
 	float ka, kd, ks;
-	vec3 color;
+	vec4 color;
 	if(v0.material_index < 0){
 		ka = 0.15f; kd = 0.5f; ks = 0.35f;
-		color = vec3(0.2,0.4,0.8);
+		color = vec4(0.2,0.4,0.8,1);
 	} else {
 		Material m = materials[v0.material_index];
 		ka = m.k_a;
 		kd = m.k_d;
 		ks = m.k_s;
 		if(m.texture_index < 0)
-			color = vec3(0.2,0.4,0.8);
+			color = vec4(0.2,0.4,0.8,1);
 		else
-			color = texture(sampler2D(textures[m.texture_index], samp), tex).xyz;
+			color = texture(sampler2D(textures[m.texture_index], samp), tex);
+	}
+	if(color[3] != 1){
+		outColor = vec4(1,0,0,1);
+		return;
 	}
 	float n = 1; // todo phong exponent
 	// calculate lighting for each light source
@@ -438,10 +442,10 @@ void shadeFragment(vec3 P, vec3 V, vec3 tuv, int triangle) {
 			sum+=vec3(1);
 		else {
 			float l_mult = light.quadratic.x + light.quadratic.y / d + light.quadratic.z / (d*d);
-			sum += (specular+diffuse) * l_mult * light.intensity * color;
+			sum += (specular+diffuse) * l_mult * light.intensity * color.xyz;
 		}
 	}
-	sum += ka * color;
+	sum += ka * color.xyz;
 	outColor = vec4(sum.xyz, 1);
 }
 
