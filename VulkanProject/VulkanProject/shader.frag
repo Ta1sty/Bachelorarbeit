@@ -281,12 +281,21 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 			}
 			float t = rayQueryGetIntersectionTEXT(ray_query, true);
 			if(t<best_t){
-				best_t = t;
-				triangle_index = node.IndexBuferIndex/3 + rayQueryGetIntersectionPrimitiveIndexEXT(ray_query, true);
+
 				tuv.x = t;
 				vec2 uv = rayQueryGetIntersectionBarycentricsEXT(ray_query, true);
+				triangle_index_tmp = node.IndexBuferIndex/3 + rayQueryGetIntersectionPrimitiveIndexEXT(ray_query, true);
 				tuv.y = uv.y;
 				tuv.z = uv.x;
+				Vertex v = vertices[indices[triangle_index]];
+				if(v.material_index >= 0) {
+					Material m = materials[v.material_index];
+					if(m.texture_index>=0 && texture(sampler2D(textures[m.texture_index], samp), tex)[3] >= 0f){
+						best_t = t;
+						triangle_index = triangle_index_tmp;
+						continue;
+					}
+				}
 			}
 			// triangle_index = -1;
 		}
@@ -448,7 +457,6 @@ void shadeFragment(vec3 P, vec3 V, vec3 tuv, int triangle) {
 	sum += ka * color.xyz;
 	outColor = vec4(sum.xyz, 1);
 }
-
 
 void main() {
 	debugColor = vec4(0,0,0,0);
