@@ -230,7 +230,7 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 				}
 			},
 			.mask = 0xFF,
-			.flags = VK_GEOMETRY_INSTANCE_FORCE_OPAQUE_BIT_KHR |
+			.flags = VK_GEOMETRY_INSTANCE_FORCE_NO_OPAQUE_BIT_KHR |
 			VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR,
 			.accelerationStructureReference = pvkGetAccelerationStructureDeviceAddressKHR(
 				info->device, &address_request),
