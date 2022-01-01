@@ -4,10 +4,10 @@
 #include <vulkan/vulkan_core.h>
 
 // gets the index of the i-th child of this node
-#define GET_CHILD_IDX(scene, node, i) uint32_t childIdx = ##scene->node_indices[##node->data.childrenIndex + ##i]
+#define GET_CHILD_IDX(scene, node, i) uint32_t childIdx = ##scene->node_indices[##node->ChildrenIndex + ##i]
 
 // gets a pointer to the i-th child of this node
-#define GET_CHILD(scene, node, i) SceneNode* child = &##scene->scene_nodes[##scene->node_indices[##node->data.childrenIndex + ##i]]
+#define GET_CHILD(scene, node, i) SceneNode* child = &##scene->scene_nodes[##scene->node_indices[##node->ChildrenIndex + ##i]]
 
 // gets the root node of the scene
 #define GET_ROOT(scene) SceneNode* root = &##scene->scene_nodes[##scene->scene_data.numSceneNodes - 1]
@@ -21,60 +21,36 @@ typedef struct viewData {
 } ViewData;
 // this stays constant (for now)
 
-typedef struct tlas {
+typedef struct accelerationStructure
+{
 	VkAccelerationStructureKHR structure;
 	VkBuffer buffer;
 	VkDeviceMemory memory;
-	float min[3]; // min Vector for the AABB
-	float max[3]; // max Vector for the AABB
-} TLAS;
-typedef struct blas {
-	VkAccelerationStructureKHR structure;
-	VkBuffer buffer;
-	VkDeviceMemory memory;
-	float min[3]; // min Vector for the AABB
-	float max[3]; // max Vector for the AABB
-} BLAS;
+} AccelerationStructure;
 
-typedef struct sceneNodeData
-{
-	float object_to_world[4][4]; // transform first cause of alignment
-	float world_to_object[4][4];
-	int32_t IndexBufferIndex; // if this nodes directly references geometry this is >-1					4
-	int32_t NumTriangles;	// the amount of triangles in the mesh,ie the range from					8
-							//[IndexBufferIndex, IndexBufferIndex + 3 * NumTriangles)					
-	int32_t NumChildren;	// the number of children this node references								12
-	int32_t childrenIndex; // points to an index array that in turn refers back to the sceneNode index	16
-	int32_t Index;			// the own index															20
-} SceneNodeData;
+typedef struct nodeStructures {
+	AccelerationStructure tlas;
+	AccelerationStructure blas;
+} NodeStructures;
 
-typedef struct sceneNode
-{
-	SceneNodeData data;
-	int32_t Level;			// the depth of this node in the scene graph, this is always 1 lower than the lowest parent
-	uint32_t numEven;	// > 0 if this node references children with an even level
-	uint32_t numOdd;    // > 0 if this node references children with an odd  level
-	uint32_t tlas_number;
-	TLAS tlas; // the TLAS for this SceneNode, it is set if this node has an even level
-	BLAS blas; // the BLAS for this SceneNode, it is set if this node has an odd level or if this node has an even level but it contains geometry
+typedef struct sceneNode { // 16 byte alignment (4 floats)
+	float object_to_world[4][4];	// 0	64
+	float world_to_object[4][4];	// 0	128
+	float AABB_min[4];				// 0	144
+	float AABB_max[4];				// 0	160
+	int32_t IndexBufferIndex;		// 4	164
+	int32_t NumTriangles;			// 8	168
+	int32_t NumChildren;			// 12	172
+	int32_t ChildrenIndex;			// 0	176
+	int32_t Index;					// 4	180
+	int32_t Level;					// 8	184
+	uint32_t NumEven;				// 12	188
+	uint32_t NumOdd;				// 0	192
+	uint32_t TlasNumber;			// 4	196
+	float pad1;						// 8	200	// worst case is that we need 2 dummies, for the case that node is even, 
+	float pad2;						// 12	204	// references even children and geometry
+	float pad3;						// 0	208
 } SceneNode;
-
-typedef struct shaderSceneNode { // 16 byte alignment (4 floats)
-	float object_to_world[4][4];	// 0
-	float world_to_object[4][4];	// 0
-	int32_t IndexBuferIndex;		// 4
-	int32_t NumTriangles;			// 8
-	int32_t NumChildren;			// 12
-	int32_t childrenIndex;			// 0
-	int32_t Index;					// 4
-	int32_t level;					// 8
-	uint32_t numEven;				// 12
-	uint32_t numOdd;				// 0
-	uint32_t tlasNumber;			// 4
-	float pad1;						// 8
-	float pad2;						// 12
-	float pad3;						// 0
-} ShaderSceneNode;						
 
 typedef struct vertex // ALWAYS KEEP THIS PADDED
 {
@@ -94,7 +70,7 @@ typedef struct vertex // ALWAYS KEEP THIS PADDED
 #define LIGHT_TYPE_DIRECTIONAL_LIGHT 4 // light is a directional light
 #define LIGHT_IGNORE_MAX_DISTANCE = 64; // this light is respected regardless of distance
 #define LIGHT_USE_MIN_DST = 128; // this light in only respected if there is no occlusion for the minDst range
-typedef struct light // 24 byte
+typedef struct light // 64 bytes
 {
 	float position[3];
 	uint32_t type; // 0th bit = on/off, 1st bit = Point light, 2nd bit = Directional Light
@@ -181,13 +157,21 @@ typedef struct scene
 {
 	VkSampler sampler;
 	Camera camera;
+
 	SceneData scene_data;
+
 	TextureData texture_data;
+
 	Vertex* vertices;
 	uint32_t* indices;
+
 	SceneNode* scene_nodes;
 	uint32_t* node_indices;
+
+	NodeStructures* acceleration_structures; // 1-1 with sceneNodes
+
 	Light* lights;
+
 	uint32_t numTLAS;
 	VkAccelerationStructureKHR* TLASs;
 } Scene;

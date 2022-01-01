@@ -1,4 +1,4 @@
-﻿namespace GLTFCompiler.Scene
+﻿namespace SceneCompiler.GLTFConversion.Compilation
 {
     public class MeshData
     {

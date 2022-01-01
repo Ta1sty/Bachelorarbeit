@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace GLTFCompiler.GltfFileTypes
+namespace SceneCompiler.GLTFConversion.GltfFileTypes
 {
     public class Mesh
     {

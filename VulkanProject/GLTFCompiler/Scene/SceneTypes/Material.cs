@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace GLTFCompiler.GltfFileTypes
+﻿namespace SceneCompiler.Scene.SceneTypes
 {
     public class Material
     {

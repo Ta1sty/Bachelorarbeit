@@ -5,9 +5,11 @@ using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Text.Json;
-using GLTFCompiler.GltfFileTypes;
+using SceneCompiler.GLTFConversion.GltfFileTypes;
+using SceneCompiler.Scene;
+using SceneCompiler.Scene.SceneTypes;
 
-namespace GLTFCompiler.Scene
+namespace SceneCompiler.GLTFConversion.Compilation
 {
     public class GLTFCompiler : ASceneCompiler
     {
@@ -216,15 +218,15 @@ namespace GLTFCompiler.Scene
             }
 
             end.NumChildren = end.Children.Count;
-            var index = 0;
             nodes.Add(end);
-            foreach (var node in nodes)
+
+            for (int i = 0; i < nodes.Count; i++)
             {
-                node.Index = index;
-                index++;
+                nodes[i].Index = i;
             }
 
             Buffers.Nodes = nodes;
+            Buffers.RootNode = Buffers.Nodes.Count - 1; // because the node for the scene is added last
         }
 
         public override void CompileScene(string path)

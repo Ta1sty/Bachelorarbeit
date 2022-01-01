@@ -1,12 +1,13 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using GLTFCompiler.GltfFileTypes;
 using System.Drawing.Imaging;
 using System.Drawing;
+using SceneCompiler.Scene.SceneTypes;
 
-namespace GLTFCompiler.Scene
+namespace SceneCompiler.Scene
 {
     public class SceneWriter : IDisposable
     {
@@ -34,22 +35,7 @@ namespace GLTFCompiler.Scene
             BitConverter.GetBytes((uint)vertexBuffer.Count).CopyTo(vertices.AsSpan(pos += 4));
             foreach (var vertex in vertexBuffer)
             {
-                BitConverter.GetBytes(vertex.Position[0]).CopyTo(vertices.AsSpan(pos += 4));
-                BitConverter.GetBytes(vertex.Position[1]).CopyTo(vertices.AsSpan(pos += 4));
-                BitConverter.GetBytes(vertex.Position[2]).CopyTo(vertices.AsSpan(pos += 4));
-                BitConverter.GetBytes(0).CopyTo(vertices.AsSpan(pos += 4));  // pad1
-
-                BitConverter.GetBytes(vertex.Normal[0]).CopyTo(vertices.AsSpan(pos += 4));
-                BitConverter.GetBytes(vertex.Normal[1]).CopyTo(vertices.AsSpan(pos += 4));
-                BitConverter.GetBytes(vertex.Normal[2]).CopyTo(vertices.AsSpan(pos += 4));
-                BitConverter.GetBytes(0).CopyTo(vertices.AsSpan(pos += 4));  // pad2
-
-
-                BitConverter.GetBytes(vertex.TexCoords[0]).CopyTo(vertices.AsSpan(pos += 4));
-                BitConverter.GetBytes(vertex.TexCoords[1]).CopyTo(vertices.AsSpan(pos += 4));
-                BitConverter.GetBytes(vertex.MaterialIndex).CopyTo(vertices.AsSpan(pos += 4));  // material index, TODO
-                BitConverter.GetBytes(0).CopyTo(vertices.AsSpan(pos += 4));  // pad3
-                if ((pos) % 16 != 0) throw new Exception();
+                pos = vertex.WriteToByteArray(vertices, pos);
             }
             str.Write(vertices);
         }
@@ -66,63 +52,17 @@ namespace GLTFCompiler.Scene
         }
         public void WriteSceneNodes(List<SceneNode> nodes)
         {
-            var indices = new List<int>();
+            var indices = new List<int>(nodes.Sum(x=>x.NumChildren));
             // write sceneNodes
             {
-                var size = 20 + 64 + 64; // data + transform1 + transform2
+                var size = 208; // see C project SceneNode
                 var nodeBuffer = new byte[4 + nodes.Count * size];
                 var pos = -4;
                 BitConverter.GetBytes((uint)nodes.Count).CopyTo(nodeBuffer.AsSpan(pos += 4));
                 foreach (var node in nodes)
                 {
-                    // OBJECT TO WORLD
-                    BitConverter.GetBytes(node.ObjectToWorld.M11).CopyTo(nodeBuffer.AsSpan(pos += 4));
-                    BitConverter.GetBytes(node.ObjectToWorld.M21).CopyTo(nodeBuffer.AsSpan(pos += 4));
-                    BitConverter.GetBytes(node.ObjectToWorld.M31).CopyTo(nodeBuffer.AsSpan(pos += 4));
-                    BitConverter.GetBytes(node.ObjectToWorld.M41).CopyTo(nodeBuffer.AsSpan(pos += 4));
-
-                    BitConverter.GetBytes(node.ObjectToWorld.M12).CopyTo(nodeBuffer.AsSpan(pos += 4));
-                    BitConverter.GetBytes(node.ObjectToWorld.M22).CopyTo(nodeBuffer.AsSpan(pos += 4));
-                    BitConverter.GetBytes(node.ObjectToWorld.M32).CopyTo(nodeBuffer.AsSpan(pos += 4));
-                    BitConverter.GetBytes(node.ObjectToWorld.M42).CopyTo(nodeBuffer.AsSpan(pos += 4));
-
-                    BitConverter.GetBytes(node.ObjectToWorld.M13).CopyTo(nodeBuffer.AsSpan(pos += 4));
-                    BitConverter.GetBytes(node.ObjectToWorld.M23).CopyTo(nodeBuffer.AsSpan(pos += 4));
-                    BitConverter.GetBytes(node.ObjectToWorld.M33).CopyTo(nodeBuffer.AsSpan(pos += 4));
-                    BitConverter.GetBytes(node.ObjectToWorld.M43).CopyTo(nodeBuffer.AsSpan(pos += 4));
-
-                    BitConverter.GetBytes(node.ObjectToWorld.M14).CopyTo(nodeBuffer.AsSpan(pos += 4));
-                    BitConverter.GetBytes(node.ObjectToWorld.M24).CopyTo(nodeBuffer.AsSpan(pos += 4));
-                    BitConverter.GetBytes(node.ObjectToWorld.M34).CopyTo(nodeBuffer.AsSpan(pos += 4));
-                    BitConverter.GetBytes(node.ObjectToWorld.M44).CopyTo(nodeBuffer.AsSpan(pos += 4));
-
-                    // WORLD TO OBJECT
-                    BitConverter.GetBytes(node.WorldToObject.M11).CopyTo(nodeBuffer.AsSpan(pos += 4));
-                    BitConverter.GetBytes(node.WorldToObject.M21).CopyTo(nodeBuffer.AsSpan(pos += 4));
-                    BitConverter.GetBytes(node.WorldToObject.M31).CopyTo(nodeBuffer.AsSpan(pos += 4));
-                    BitConverter.GetBytes(node.WorldToObject.M41).CopyTo(nodeBuffer.AsSpan(pos += 4));
-
-                    BitConverter.GetBytes(node.WorldToObject.M12).CopyTo(nodeBuffer.AsSpan(pos += 4));
-                    BitConverter.GetBytes(node.WorldToObject.M22).CopyTo(nodeBuffer.AsSpan(pos += 4));
-                    BitConverter.GetBytes(node.WorldToObject.M32).CopyTo(nodeBuffer.AsSpan(pos += 4));
-                    BitConverter.GetBytes(node.WorldToObject.M42).CopyTo(nodeBuffer.AsSpan(pos += 4));
-
-                    BitConverter.GetBytes(node.WorldToObject.M13).CopyTo(nodeBuffer.AsSpan(pos += 4));
-                    BitConverter.GetBytes(node.WorldToObject.M23).CopyTo(nodeBuffer.AsSpan(pos += 4));
-                    BitConverter.GetBytes(node.WorldToObject.M33).CopyTo(nodeBuffer.AsSpan(pos += 4));
-                    BitConverter.GetBytes(node.WorldToObject.M43).CopyTo(nodeBuffer.AsSpan(pos += 4));
-
-                    BitConverter.GetBytes(node.WorldToObject.M14).CopyTo(nodeBuffer.AsSpan(pos += 4));
-                    BitConverter.GetBytes(node.WorldToObject.M24).CopyTo(nodeBuffer.AsSpan(pos += 4));
-                    BitConverter.GetBytes(node.WorldToObject.M34).CopyTo(nodeBuffer.AsSpan(pos += 4));
-                    BitConverter.GetBytes(node.WorldToObject.M44).CopyTo(nodeBuffer.AsSpan(pos += 4));
-
-                    // THE REST
-                    BitConverter.GetBytes(node.IndexBufferIndex).CopyTo(nodeBuffer.AsSpan(pos += 4));
-                    BitConverter.GetBytes(node.NumTriangles).CopyTo(nodeBuffer.AsSpan(pos += 4));
-                    BitConverter.GetBytes(node.NumChildren).CopyTo(nodeBuffer.AsSpan(pos += 4));
-                    BitConverter.GetBytes(node.NumChildren > 0 ? indices.Count : -1).CopyTo(nodeBuffer.AsSpan(pos += 4)); // children index
-                    BitConverter.GetBytes(node.Index).CopyTo(nodeBuffer.AsSpan(pos += 4));
+                    node.ChildrenIndex = node.NumChildren > 0 ? indices.Count : -1;
+                    pos = node.WriteToByteArray(nodeBuffer, pos);
                     indices.AddRange(node.Children.Select(x => x.Index));
                 }
                 str.Write(nodeBuffer);

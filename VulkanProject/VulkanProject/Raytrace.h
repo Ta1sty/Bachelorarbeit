@@ -14,5 +14,4 @@ void transformAABB(float transform[4][4], float min[3], float max[3], float* min
 void build_tlas(VkInfo* info, Scene* scene, SceneNode* node);
 void build_blas(VkInfo* info, Scene* scene, SceneNode* node);
 
-void expandTLASAABB(SceneNode* node);
-void expandBLASAABB(SceneNode* node);
+void expandAABB(SceneNode* node);

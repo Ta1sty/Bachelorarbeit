@@ -1,4 +1,4 @@
-﻿namespace GLTFCompiler.GltfFileTypes
+﻿namespace SceneCompiler.GLTFConversion.GltfFileTypes
 {
     public class BufferView
     {

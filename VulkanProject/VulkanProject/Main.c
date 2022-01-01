@@ -129,7 +129,7 @@ int main()
     root->data.NumChildren = 1;
     GET_CHILD_IDX((&app.scene), root, 5);
     SceneNode* node = &app.scene.scene_nodes[childIdx];
-    app.scene.node_indices[root->data.childrenIndex] = childIdx;
+    app.scene.node_indices[root->data.ChildrenIndex] = childIdx;
     GET_CHILD((&app.scene), node, 0);*/
 
     if (app.vk_info.ray_tracing) {

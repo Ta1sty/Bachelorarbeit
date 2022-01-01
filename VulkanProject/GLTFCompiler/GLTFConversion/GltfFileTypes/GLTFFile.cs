@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
+using SceneCompiler.Scene.SceneTypes;
 
-namespace GLTFCompiler.GltfFileTypes
+namespace SceneCompiler.GLTFConversion.GltfFileTypes
 {
     public class GltfFile
     {

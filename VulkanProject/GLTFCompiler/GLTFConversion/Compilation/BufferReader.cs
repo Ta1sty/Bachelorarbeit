@@ -1,7 +1,7 @@
 ﻿using System;
-using GLTFCompiler.GltfFileTypes;
+using SceneCompiler.GLTFConversion.GltfFileTypes;
 
-namespace GLTFCompiler.Scene
+namespace SceneCompiler.GLTFConversion.Compilation
 {
     public class BufferReader
     {

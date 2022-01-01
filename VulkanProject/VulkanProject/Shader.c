@@ -117,7 +117,7 @@ void create_descriptor_containers(VkInfo* info, Scene* scene)
 
 	BufferInfo nodeBuffer = create_buffer_info(NODE_BUFFER_BINDING,
 		VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT,
-		sizeof(ShaderSceneNode) * scene->scene_data.numSceneNodes,
+		sizeof(SceneNode) * scene->scene_data.numSceneNodes,
 		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 		VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);

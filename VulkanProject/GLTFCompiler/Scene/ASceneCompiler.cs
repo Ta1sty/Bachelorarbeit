@@ -1,6 +1,7 @@
 ﻿using System.IO;
+using SceneCompiler.Scene.SceneTypes;
 
-namespace GLTFCompiler.Scene
+namespace SceneCompiler.Scene
 {
     public abstract class ASceneCompiler
     {

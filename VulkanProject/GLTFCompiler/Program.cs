@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Threading;
-using GLTFCompiler.GltfFileTypes;
-using GLTFCompiler.Scene;
 using System.Windows.Forms;
 using Microsoft.VisualBasic;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using SceneCompiler.Scene;
 
-namespace GLTFCompiler
+namespace SceneCompiler
 {
     class Program
     {
@@ -47,7 +46,7 @@ namespace GLTFCompiler
             var location = Assembly.GetExecutingAssembly().Location;
             var regex = new Regex(@"VulkanProject\\.*");
             var dst = regex.Replace(location, @"VulkanProject\VulkanProject\dump.bin");
-            ASceneCompiler compiler = new Scene.GLTFCompiler();
+            ASceneCompiler compiler = new GLTFConversion.Compilation.GLTFCompiler();
             compiler.CompileScene(path);
             var writer = new SceneWriter();
             writer.WriteBuffers(dst, compiler);

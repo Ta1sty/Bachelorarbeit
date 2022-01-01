@@ -48,34 +48,16 @@ void set_global_buffers(VkInfo* vk, Scene* scene)
 		0, sizeof(Light) * scene->scene_data.numLights, 0, &lightData), "");
 	memcpy(lightData, scene->lights, sizeof(Light) * scene->scene_data.numLights);
 	vkUnmapMemory(vk->device, GET_LIGHT_BUFFER(vk).vk_buffer_memory);
+
 	// Scenenodes
-	ShaderSceneNode* sceneNodeData;
+	SceneNode* sceneNodeData;
 	check(vkMapMemory(vk->device, GET_NODE_BUFFER(vk).vk_buffer_memory,
-		0, sizeof(ShaderSceneNode) * scene->scene_data.numSceneNodes, 0, (void**) &sceneNodeData), "");
-
-	for(size_t i = 0;i<scene->scene_data.numSceneNodes;i++)
-	{
-		SceneNode node = scene->scene_nodes[i];
-		ShaderSceneNode data = {
-			.NumChildren = node.data.NumChildren,
-			.NumTriangles = node.data.NumTriangles,
-			.numEven = node.numEven,
-			.childrenIndex = node.data.childrenIndex,
-			.numOdd = node.numOdd,
-			.Index = node.data.Index,
-			.IndexBuferIndex = node.data.IndexBufferIndex,
-			.level = node.Level,
-			.tlasNumber = node.tlas_number
-		};
-		memcpy(data.object_to_world, node.data.object_to_world, sizeof(float) * 4 * 4);
-		memcpy(data.world_to_object, node.data.world_to_object, sizeof(float) * 4 * 4);
-
-		memcpy(&sceneNodeData[i], &data, sizeof(ShaderSceneNode));
-	}
+		0, sizeof(SceneNode) * scene->scene_data.numSceneNodes, 0, (void**) &sceneNodeData), "");
+	memcpy(sceneNodeData, scene->scene_nodes, sizeof(SceneNode) * scene->scene_data.numSceneNodes);
 	vkUnmapMemory(vk->device, GET_NODE_BUFFER(vk).vk_buffer_memory);
 
 	// child indices
-	void* childrenData;
+	uint32_t* childrenData;
 	check(vkMapMemory(vk->device, GET_CHILD_BUFFER(vk).vk_buffer_memory,
 		0, sizeof(uint32_t) * scene->scene_data.numNodeIndices, 0, &childrenData), "");
 	memcpy(childrenData, scene->node_indices, sizeof(uint32_t) * scene->scene_data.numNodeIndices);
