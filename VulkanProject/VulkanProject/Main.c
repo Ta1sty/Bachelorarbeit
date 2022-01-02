@@ -24,7 +24,7 @@ int resizeH = -1;
 
 
 App* globalApplication;
-void exception_callback_impl()
+void exception_callback_impl(void)
 {
 	if(globalApplication!=NULL)
 	{
@@ -86,7 +86,7 @@ void updatePosition(GLFWwindow* window, Camera* camera)
     float up = 0;
 
     float spd = 1;
-    float dst = spd * (float) diff;
+    float dst = spd * (float)diff;
     straight += (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) * dst;
     straight -= (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) * dst;
     sideways -= (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) * dst;
@@ -101,22 +101,31 @@ void updatePosition(GLFWwindow* window, Camera* camera)
     camera->pos[0] += sin_y * straight;
     camera->pos[2] -= cos_y * straight;
 
-	camera->pos[1] += up;
+    camera->pos[1] += up;
 
     camera->pos[0] += cos_y * sideways;
     camera->pos[2] += sin_y * sideways;
 }
+void changeScene(App* app)
+{
+    printf("Switching to scene:\n");
+    printf(app->sceneSelection.availableScenes[app->sceneSelection.nextScene]);
+    app->sceneSelection.currentScene = app->sceneSelection.nextScene;
 
+}
 
 int main()
 {
     App app;
     memset(&app, 0, sizeof(app));
+    
+    get_available_scenes(&app.sceneSelection);
+
     App* appPtr = &app;
     globalApplication = appPtr;
     setExceptionCallback(exception_callback_impl);
     app.vk_info.rasterize = VK_TRUE;
-    init_scene(&app.scene);
+    load_scene(&app.scene, app.sceneSelection.availableScenes[app.sceneSelection.nextScene]);
     init_window(&app.window);
     init_vulkan(&app.vk_info, &app.window, &app.scene);
 	glfwSetFramebufferSizeCallback(app.window, resize_callback);
@@ -144,8 +153,8 @@ int main()
     create_or_resize_swapchain(&app.vk_info, &app.window, WINDOW_WIDTH, WINDOW_HEIGHT, &app.scene);
 
     init_imgui(&app, WINDOW_WIDTH, WINDOW_HEIGHT);
-    init_imgui_command_buffers(&app.vk_info, &app.scene);
-    resize_callback_imgui(&app.vk_info, &app.scene);
+    init_imgui_command_buffers(&app.vk_info, &app.scene, &app.sceneSelection);
+    resize_callback_imgui(&app.vk_info, &app.scene, &app.sceneSelection);
 
     //app.scene.scene_data.numTriangles = min(app.scene.scene_data.numTriangles, 500);
     // scene renderes fluently for up to 1000 triangles when intersecting with linear time complexity
@@ -154,16 +163,18 @@ int main()
     // we will have a depth of 16. 
     set_global_buffers(&app.vk_info, &app.scene);
 	while (!glfwWindowShouldClose(app.window)) {
+        if (app.sceneSelection.currentScene != app.sceneSelection.nextScene)
+            changeScene(&app);
 		glfwPollEvents();
 		if(WINDOW_WIDTH > 0 && WINDOW_HEIGHT > 0)
             {
                 updatePosition(app.window, &app.scene.camera);
-                drawFrame(&app.vk_info, &app.scene);
+                drawFrame(&app.vk_info, &app.scene, &app.sceneSelection);
             }
 		if (resizeW >= 0 || resizeH >= 0)
 		{
 			create_or_resize_swapchain(&app.vk_info, &app.window, resizeW, resizeH, &app.scene);
-            resize_callback_imgui(&app.vk_info, &app.scene);
+            resize_callback_imgui(&app.vk_info, &app.scene, &app.sceneSelection);
 			WINDOW_WIDTH = resizeW;
 			WINDOW_HEIGHT = resizeH;
 			resizeW = -1;

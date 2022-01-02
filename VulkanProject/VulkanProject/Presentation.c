@@ -114,7 +114,7 @@ void set_frame_buffers(VkInfo* vk, Scene* scene, uint32_t image_index) {
 	vkUnmapMemory(vk->device, GET_FRAMEDATA_BUFFER(vk,image_index).vk_buffer_memory);
 }
 
-void drawFrame(VkInfo* info, Scene* scene) // see https://vulkan-tutorial.com/
+void drawFrame(VkInfo* info, Scene* scene, SceneSelection* scene_selection) // see https://vulkan-tutorial.com/
 {
 	size_t currentFrame = info->currentFrame;
 	vkWaitForFences(info->device, 1, &info->inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
@@ -122,7 +122,7 @@ void drawFrame(VkInfo* info, Scene* scene) // see https://vulkan-tutorial.com/
 	uint32_t imageIndex;
 	vkAcquireNextImageKHR(info->device, info->swapchain.vk_swapchain, UINT64_MAX, info->imageAvailableSemaphore[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
-	update_imgui_commandBuffer(info, scene,imageIndex);
+	update_imgui_commandBuffer(info, scene, scene_selection, imageIndex);
 
 	if (info->imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
 		vkWaitForFences(info->device, 1, &info->imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);

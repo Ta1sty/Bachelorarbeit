@@ -46,7 +46,7 @@ typedef struct sceneNode { // 16 byte alignment (4 floats)
 	int32_t Level;					// 8	184
 	uint32_t NumEven;				// 12	188
 	uint32_t NumOdd;				// 0	192
-	uint32_t TlasNumber;			// 4	196
+	int32_t TlasNumber;				// 4	196
 	float pad1;						// 8	200	// worst case is that we need 2 dummies, for the case that node is even, 
 	float pad2;						// 12	204	// references even children and geometry
 	float pad3;						// 0	208
@@ -187,8 +187,17 @@ typedef struct {
 	SceneNode* children;
 } NodeCollapseResult;
 
+typedef struct sceneSelection
+{
+	int numScenes;
+	char** availableScenes;
+
+	int currentScene;
+	int nextScene;
+} SceneSelection;
+
 void init_scene(Scene* scene);
-void load_scene(Scene* scene, char** path);
+void load_scene(Scene* scene, char* path);
 void load_textures(TextureData* data, FILE* file);
 void load_texture(Texture* texture, FILE* file);
 void flatten_scene(Scene* scene);

@@ -8,7 +8,6 @@
 #include <math.h>
 
 #include "Globals.h"
-
 void init_scene(Scene* scene)
 {
 	scene->camera.pos[0] = 0;
@@ -18,15 +17,20 @@ void init_scene(Scene* scene)
 	scene->camera.rotation_y = 0;
 	scene->camera.settings.fov = 45;
 	scene->camera.settings.colorSensitivity = 15;
-	load_scene(scene, "asd");
 }
 
-void load_scene(Scene* scene, char** path)
+void load_scene(Scene* scene, char* path)
 {
 	//int vert = system("buildScene.bat");
 
+	size_t size = sizeof(char) * 256;
+	char* buffer = malloc(size);
+	strcpy_s(buffer, size, "../Scenes/");
+	strcat_s(buffer, size, path);
+	strcat_s(buffer, size, ".vksc");
+
 	FILE* file;
-	fopen_s(&file, "dump.bin", "rb");
+	fopen_s(&file, buffer, "rb");
 
 	if (!file)
 		error("failed to open scene file");
@@ -45,6 +49,8 @@ void load_scene(Scene* scene, char** path)
 
 	// SceneNodes
 	fread(&scene->scene_data.numSceneNodes, sizeof(uint32_t), 1, file);
+	fread(&scene->scene_data.rootSceneNode, sizeof(uint32_t), 1, file);
+
 	scene->scene_nodes = malloc(sizeof(SceneNode) * scene->scene_data.numSceneNodes);
 	fread(scene->scene_nodes, sizeof(SceneNode), scene->scene_data.numSceneNodes, file);
 
@@ -79,6 +85,8 @@ void load_scene(Scene* scene, char** path)
 	scene->lights[1] = light2;
 	load_textures(&scene->texture_data, file);
 	fclose(file);
+
+	init_scene(scene);
 }
 void flatten_scene(Scene* scene)
 {

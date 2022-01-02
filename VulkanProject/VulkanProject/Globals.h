@@ -146,11 +146,13 @@ typedef struct vkInfo {
 	double frameRate;
 } VkInfo;
 
+typedef void (*ChangeSceneCallback)(void);
+
 typedef struct app {
 	VkInfo vk_info;
 	GLFWwindow* window;
 	Scene scene;
-	void* imgui_window;
+	SceneSelection sceneSelection;
 } App;
 
 #define MAX_FRAMES_IN_FLIGHT 2

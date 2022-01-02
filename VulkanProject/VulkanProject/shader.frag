@@ -29,7 +29,7 @@ struct SceneNode{
 	int level;					// 8
 	uint numEven;				// 12
 	uint numOdd;				// 0
-	uint tlasNumber;			// 4
+	int tlasNumber;				// 4
 	float pad3;					// 8
 	float pad4;					// 12
 	float pad5;					// 0

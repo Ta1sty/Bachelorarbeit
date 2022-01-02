@@ -4,6 +4,15 @@
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
+
+#include <windows.h>
+#include <tchar.h> 
+#include <stdio.h>
+#include <strsafe.h>
+#pragma comment(lib, "User32.lib")
+
+#include <string>
+
 #include "Util.h"
 extern "C" {
 	#include "VulkanUtil.h"
@@ -87,7 +96,7 @@ void init_imgui(App* app, int width, int height) // see https://frguthmann.githu
 	ImGui_ImplVulkan_CreateFontsTexture(buf);
 	endSingleTimeCommands(&app->vk_info, buf);
 }
-void init_imgui_command_buffers(VkInfo* vk, Scene* scene)
+void init_imgui_command_buffers(VkInfo* vk, Scene* scene, SceneSelection* scene_selection)
 {
 	// see https://frguthmann.github.io/posts/vulkan_imgui/
 	VkCommandPoolCreateInfo pool_info = {};
@@ -122,15 +131,15 @@ void init_imgui_command_buffers(VkInfo* vk, Scene* scene)
 
 	for(uint32_t i = 0;i < vk->buffer_count;i++)
 	{
-		update_imgui_commandBuffer(vk, scene, i);
+		update_imgui_commandBuffer(vk, scene, scene_selection, i);
 	}
 }
 
-void update_imgui_commandBuffer(VkInfo* vk, Scene* scene, uint32_t index) // see https://frguthmann.github.io/posts/vulkan_imgui/
+void update_imgui_commandBuffer(VkInfo* vk, Scene* scene, SceneSelection* scene_selection, uint32_t index)
 {
 	check_result(vkResetCommandBuffer(vk->imgui_command_buffers[index], 0));
 
-	draw_imgui_frame(vk, scene);
+	draw_imgui_frame(vk, scene, scene_selection);
 
 	VkClearValue clearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
 
@@ -156,7 +165,7 @@ void update_imgui_commandBuffer(VkInfo* vk, Scene* scene, uint32_t index) // see
 	check_result(vkEndCommandBuffer(vk->imgui_command_buffers[index]));
 }
 
-void draw_imgui_frame(VkInfo* info, Scene* scene)
+void draw_imgui_frame(VkInfo* info, Scene* scene, SceneSelection* scene_selection)
 {
 	ImGui_ImplVulkan_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
@@ -186,12 +195,120 @@ void draw_imgui_frame(VkInfo* info, Scene* scene)
 		ImGui::EndDisabled();
 	}
 
+	ImGui::Combo("combo", &scene_selection->nextScene, scene_selection->availableScenes, scene_selection->numScenes);
+
 	ImGui::End();
 	ImGui::Render();
 }
 
-void resize_callback_imgui(VkInfo* vk, Scene* scene)
+bool hasEnding(std::string const& fullString, std::string const& ending) {
+	if (fullString.length() >= ending.length()) {
+		return (0 == fullString.compare(fullString.length() - ending.length(), ending.length(), ending));
+	}
+	else {
+		return false;
+	}
+}
+// https://docs.microsoft.com/en-us/windows/win32/fileio/listing-the-files-in-a-directory
+void get_available_scenes(SceneSelection* scene_selection)
+{
+	TCHAR text[] =  TEXT("../Scenes");
+
+	WIN32_FIND_DATA ffd;
+	LARGE_INTEGER filesize;
+	TCHAR szDir[MAX_PATH];
+	size_t length_of_arg;
+	HANDLE hFind = INVALID_HANDLE_VALUE;
+	DWORD dwError = 0;
+	
+	// Check that the input path plus 3 is not longer than MAX_PATH.
+	// Three characters are for the "\*" plus NULL appended below.
+
+	StringCchLength(text, MAX_PATH, &length_of_arg);
+
+	if (length_of_arg > (MAX_PATH - 3))
+	{
+		_tprintf(TEXT("\nDirectory path is too long.\n"));
+		return;
+	}
+
+	_tprintf(TEXT("\nTarget directory is %s\n\n"), text);
+
+	// Prepare string for use with FindFile functions.  First, copy the
+	// string to a buffer, then append '\*' to the directory name.
+
+	StringCchCopy(szDir, MAX_PATH, text);
+	StringCchCat(szDir, MAX_PATH, TEXT("\\*"));
+
+	// Find the first file in the directory.
+
+	hFind = FindFirstFile(szDir, &ffd);
+
+	if (INVALID_HANDLE_VALUE == hFind)
+	{
+		return;
+	}
+
+	// List all the files in the directory with some info about them.
+	const std::string fileEnding(".vksc");
+	const int extensionOffset = 6;
+
+	const std::string defaultFile("default.vksc");
+	int defaultSceneIndex = -1;
+
+	char** names = static_cast<char**>(malloc(sizeof(char*) * 32));
+	int numScenes = 0;
+	do
+	{
+		if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+		{
+
+		}
+		else
+		{
+#define BUFFER_SIZE 100
+			size_t i;
+			char* pMBBuffer = (char*)malloc(BUFFER_SIZE);
+			const wchar_t* pWCBuffer = ffd.cFileName;
+
+			wcstombs_s(&i, pMBBuffer, (size_t)BUFFER_SIZE,
+				pWCBuffer, (size_t)BUFFER_SIZE - 1);
+
+			std::string stringName(pMBBuffer);
+			if(!hasEnding(stringName, ".vksc"))
+			{
+				free(pMBBuffer);
+				continue;
+			}
+
+			if(stringName == defaultFile)
+			{
+				defaultSceneIndex = numScenes;
+			}
+
+			pMBBuffer[i - extensionOffset] = '\0';
+			names[numScenes] = pMBBuffer;
+			numScenes++;
+		}
+	} while (FindNextFile(hFind, &ffd) != 0);
+
+	printf("Available Scenes:\n");
+	for(int i = 0;i<numScenes;i++)
+	{
+		printf(names[i]);
+		printf("\n");
+	}
+
+	FindClose(hFind);
+
+	scene_selection->availableScenes = names;
+	scene_selection->numScenes = numScenes;
+	scene_selection->nextScene = defaultSceneIndex;
+	scene_selection->currentScene = defaultSceneIndex;
+}
+
+void resize_callback_imgui(VkInfo* vk, Scene* scene, SceneSelection* scene_selection)
 {
 	ImGui_ImplVulkan_SetMinImageCount(2);
-	init_imgui_command_buffers(vk, scene);
+	init_imgui_command_buffers(vk, scene, scene_selection);
 }
