@@ -10,7 +10,7 @@
 #define GET_CHILD(scene, node, i) SceneNode* child = &##scene->scene_nodes[##scene->node_indices[##node->ChildrenIndex + ##i]]
 
 // gets the root node of the scene
-#define GET_ROOT(scene) SceneNode* root = &##scene->scene_nodes[##scene->scene_data.numSceneNodes - 1]
+#define GET_ROOT(scene) SceneNode* root = &##scene->scene_nodes[##scene->scene_data.rootSceneNode]
 
 // this is subject to change
 typedef struct viewData {
@@ -189,7 +189,7 @@ typedef struct {
 
 typedef struct sceneSelection
 {
-	int numScenes;
+	uint32_t numScenes;
 	char** availableScenes;
 
 	int currentScene;

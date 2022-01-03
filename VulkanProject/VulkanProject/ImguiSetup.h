@@ -11,6 +11,8 @@ extern "C" {
 	void update_imgui_commandBuffer(VkInfo* vk, Scene* scene, SceneSelection* scene_selection, uint32_t index);
 	void draw_imgui_frame(VkInfo* info, Scene* scene, SceneSelection* scene_selection);
 	void get_available_scenes(SceneSelection* scene_selection);
+	void destroy_imgui_buffers(VkInfo* info);
+	void destroy_imgui(VkInfo* info, SceneSelection* scene_selection);
 #ifdef __cplusplus
 }
 #endif

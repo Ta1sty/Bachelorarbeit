@@ -28,7 +28,7 @@ void exception_callback_impl(void)
 {
 	if(globalApplication!=NULL)
 	{
-        destroy_vulkan(&globalApplication->vk_info, &globalApplication->scene);
+        destroy_vulkan(&globalApplication->vk_info, &globalApplication->scene, &globalApplication->sceneSelection);
         destroy_scene(&globalApplication->scene);
         destroy_window(globalApplication->window);
 	}
@@ -116,9 +116,8 @@ void changeScene(App* app)
 
 int main()
 {
-    App app;
-    memset(&app, 0, sizeof(app));
-    
+    App app = {0};
+
     get_available_scenes(&app.sceneSelection);
 
     App* appPtr = &app;
@@ -154,7 +153,7 @@ int main()
 
     init_imgui(&app, WINDOW_WIDTH, WINDOW_HEIGHT);
     init_imgui_command_buffers(&app.vk_info, &app.scene, &app.sceneSelection);
-    resize_callback_imgui(&app.vk_info, &app.scene, &app.sceneSelection);
+    // resize_callback_imgui(&app.vk_info, &app.scene, &app.sceneSelection);
 
     //app.scene.scene_data.numTriangles = min(app.scene.scene_data.numTriangles, 500);
     // scene renderes fluently for up to 1000 triangles when intersecting with linear time complexity
@@ -173,6 +172,8 @@ int main()
             }
 		if (resizeW >= 0 || resizeH >= 0)
 		{
+            vkDeviceWaitIdle(app.vk_info.device);
+            destroy_imgui_buffers(&app.vk_info);
 			create_or_resize_swapchain(&app.vk_info, &app.window, resizeW, resizeH, &app.scene);
             resize_callback_imgui(&app.vk_info, &app.scene, &app.sceneSelection);
 			WINDOW_WIDTH = resizeW;
@@ -181,9 +182,10 @@ int main()
 			resizeH = -1;
 		}
 	}
-	destroy_vulkan(&app.vk_info, &app.scene);
+	destroy_vulkan(&app.vk_info, &app.scene, &app.sceneSelection);
 	destroy_scene(&app.scene);
 	destroy_window(app.window);
-	int a = 5;
-	return 0;
+    printf("\n");
+    printf("Press ENTER to exit\n");
+    getchar();
 }

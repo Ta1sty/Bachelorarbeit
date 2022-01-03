@@ -105,7 +105,15 @@ void init_imgui_command_buffers(VkInfo* vk, Scene* scene, SceneSelection* scene_
 	pool_info.queueFamilyIndex = vk->queue_family_index;
 
 	vkCreateCommandPool(vk->device, &pool_info, NULL, &vk->imgui_command_pool);
-
+	if(vk->swapchain.imgui_frame_buffers)
+	{
+		for(uint32_t i = 0;i<vk->buffer_count; i++)
+		{
+			vkDestroyFramebuffer(vk->device, vk->swapchain.imgui_frame_buffers[i], nullptr);
+		}
+		free(vk->swapchain.imgui_frame_buffers);
+		vk->swapchain.imgui_frame_buffers = nullptr;
+	}
 	vk->swapchain.imgui_frame_buffers = static_cast<VkFramebuffer*>(malloc(sizeof(VkFramebuffer) * vk->buffer_count));
 
 	for (uint32_t i = 0; i < vk->buffer_count; i++)
@@ -311,4 +319,34 @@ void resize_callback_imgui(VkInfo* vk, Scene* scene, SceneSelection* scene_selec
 {
 	ImGui_ImplVulkan_SetMinImageCount(2);
 	init_imgui_command_buffers(vk, scene, scene_selection);
+}
+
+void destroy_imgui_buffers(VkInfo* info)
+{
+	free(info->imgui_command_buffers);
+	vkDestroyCommandPool(info->device, info->imgui_command_pool, nullptr);
+	if (info->swapchain.imgui_frame_buffers)
+	{
+		for (uint32_t i = 0; i < info->buffer_count; i++)
+		{
+			vkDestroyFramebuffer(info->device, info->swapchain.imgui_frame_buffers[i], nullptr);
+		}
+		free(info->swapchain.imgui_frame_buffers);
+		info->swapchain.imgui_frame_buffers = nullptr;
+	}
+}
+
+void destroy_imgui(VkInfo* info, SceneSelection* scene_selection)
+{
+	destroy_imgui_buffers(info);
+	ImGui_ImplVulkan_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
+	vkDestroyRenderPass(info->device, info->imguiPass, nullptr);
+
+	for(uint32_t i = 0;i<scene_selection->numScenes;i++)
+	{
+		free(scene_selection->availableScenes[i]);
+	}
+	free(scene_selection->availableScenes);
 }

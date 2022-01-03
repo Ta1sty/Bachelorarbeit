@@ -6,6 +6,7 @@
 
 #include "Util.h"
 #include "Globals.h"
+#include "ImguiSetup.h"
 #include "Raster.h"
 #include "Shader.h"
 #include "VulkanStructs.h"
@@ -24,8 +25,6 @@ void init_vulkan(VkInfo* info, GLFWwindow** window, Scene* scene)
 }
 void create_or_resize_swapchain(VkInfo* vk, GLFWwindow** window, uint32_t width, uint32_t height, Scene* scene)
 {
-	vkDeviceWaitIdle(vk->device);
-
 	destroy_swapchain(vk); // destroys the old one
 
 	if (width == 0 || height == 0) return;
@@ -41,12 +40,24 @@ void create_or_resize_swapchain(VkInfo* vk, GLFWwindow** window, uint32_t width,
 	create_command_buffers(vk);
 	create_semaphores(vk);
 }
-void destroy_vulkan(VkInfo* vk, Scene* scene)
+void destroy_vulkan(VkInfo* vk, Scene* scene, SceneSelection* scene_selection)
 {
-	if (vk->imageAvailableSemaphore) vkDestroySemaphore(vk->device, vk->imageAvailableSemaphore, NULL);
-	if (vk->renderFinishedSemaphore) vkDestroySemaphore(vk->device, vk->renderFinishedSemaphore, NULL);
+	vkDeviceWaitIdle(vk->device);
+
+	for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+	{
+		vkDestroySemaphore(vk->device, vk->imageAvailableSemaphore[i], NULL);
+		vkDestroySemaphore(vk->device, vk->renderFinishedSemaphore[i], NULL);
+		vkDestroyFence(vk->device, vk->inFlightFences[i], NULL);
+	}
+	free(vk->imageAvailableSemaphore);
+	free(vk->renderFinishedSemaphore);
+	free(vk->inFlightFences);
+	free(vk->imagesInFlight);
+
 
 	destroy_shaders(vk, scene);
+	destroy_imgui(vk, scene_selection);
 	destroy_swapchain(vk);
 	vkDestroySampler(vk->device, scene->sampler, NULL);
 

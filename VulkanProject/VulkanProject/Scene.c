@@ -28,12 +28,12 @@ void load_scene(Scene* scene, char* path)
 	strcpy_s(buffer, size, "../Scenes/");
 	strcat_s(buffer, size, path);
 	strcat_s(buffer, size, ".vksc");
-
 	FILE* file;
 	fopen_s(&file, buffer, "rb");
 
 	if (!file)
 		error("failed to open scene file");
+	free(buffer);
 
 	// VertexBuffer
 	fread(&scene->scene_data.numVertices, sizeof(uint32_t), 1, file);
@@ -60,8 +60,6 @@ void load_scene(Scene* scene, char* path)
 	scene->node_indices = malloc(sizeof(uint32_t) * scene->scene_data.numNodeIndices);
 	fread(scene->node_indices, sizeof(uint32_t), scene->scene_data.numNodeIndices, file);
 
-	// set Scene Root
-	scene->scene_data.rootSceneNode = scene->scene_data.numSceneNodes - 1;
 
 	// init a light source
 	scene->scene_data.numLights = 2;
@@ -271,6 +269,7 @@ void destroy_scene(Scene* scene)
 	free(scene->vertices);
 	free(scene->scene_nodes);
 	free(scene->texture_data.materials);
+	free(scene->lights);
 	for (uint32_t i = 0; i < scene->texture_data.num_textures; i++)
 	{
 		free(scene->texture_data.textures[i].pixel_data);
