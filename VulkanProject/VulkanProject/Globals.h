@@ -131,6 +131,7 @@ typedef struct vkInfo {
 	VkBuffer vertexBuffer;
 	VkDeviceMemory vertexBufferMemory;
 
+	VkDescriptorPool imgui_descriptor_pool;
 	VkDescriptorPool descriptor_pool;
 
 	VkRenderPass renderPass;

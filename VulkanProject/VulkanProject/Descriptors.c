@@ -80,27 +80,27 @@ void create_descriptor_pool(VkInfo* vk)
 {
 	VkDescriptorPoolSize uniCount = { 0 };
 	uniCount.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	uniCount.descriptorCount = 10;
+	uniCount.descriptorCount = 50;
 
 	VkDescriptorPoolSize uniDynCount = { 0 };
 	uniDynCount.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-	uniDynCount.descriptorCount = 10;
+	uniDynCount.descriptorCount = 50;
 
 	VkDescriptorPoolSize sampler_image = { 0 };
 	sampler_image.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	sampler_image.descriptorCount = 10;
+	sampler_image.descriptorCount = 50;
 
 	VkDescriptorPoolSize sampler = { 0 };
 	sampler.type = VK_DESCRIPTOR_TYPE_SAMPLER;
-	sampler.descriptorCount = 10;
+	sampler.descriptorCount = 50;
 
 	VkDescriptorPoolSize texture_image = { 0 };
 	texture_image.type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-	texture_image.descriptorCount = 10;
+	texture_image.descriptorCount = 50;
 
 	VkDescriptorPoolSize tlas = { 0 };
 	tlas.type = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
-	tlas.descriptorCount = 10;
+	tlas.descriptorCount = 50;
 
 	VkDescriptorPoolSize poolSizes[] = { uniCount, uniDynCount , sampler_image, sampler, texture_image, tlas };
 
@@ -176,4 +176,5 @@ void destroy_buffer(VkInfo* vk, DescriptorSetContainer* container)
 	free(container->descriptor_sets);
 	free(container->buffer_containers);
 	vkDestroyDescriptorSetLayout(vk->device, container->set_layout, NULL);
+	memset(container, 0, sizeof(DescriptorSetContainer));
 }

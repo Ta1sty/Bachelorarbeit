@@ -59,10 +59,8 @@ void destroy_vulkan(VkInfo* vk, Scene* scene, SceneSelection* scene_selection)
 	destroy_shaders(vk, scene);
 	destroy_imgui(vk, scene_selection);
 	destroy_swapchain(vk);
-	vkDestroySampler(vk->device, scene->sampler, NULL);
 
 	vkDestroyDescriptorPool(vk->device, vk->descriptor_pool, NULL);
-
 	if (vk->command_pool) vkDestroyCommandPool(vk->device, vk->command_pool, NULL);
 	free(vk->device_extension_names);
 	free(vk->instance_extension_names);

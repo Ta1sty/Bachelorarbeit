@@ -275,6 +275,7 @@ void destroy_scene(Scene* scene)
 		free(scene->texture_data.textures[i].pixel_data);
 	}
 	free(scene->texture_data.textures);
+	memset(scene, 0, sizeof(Scene));
 }
 // collapses all scene Nodes that do not reference any geometry, after that only the last node references children, the rest only references geometry
 void collapse_parent_nodes(Scene* scene)

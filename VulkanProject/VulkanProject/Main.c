@@ -18,6 +18,7 @@
 #include "Presentation.h"
 #include "Raytrace.h"
 #include "ImguiSetup.h"
+#include "Shader.h"
 
 int resizeW = -1;
 int resizeH = -1;
@@ -110,6 +111,27 @@ void changeScene(App* app)
 {
     printf("Switching to scene:\n");
     printf(app->sceneSelection.availableScenes[app->sceneSelection.nextScene]);
+    printf("\n");
+    vkDeviceWaitIdle(app->vk_info.device);
+    destroy_shaders(&app->vk_info, &app->scene);
+    destroy_scene(&app->scene);
+    load_scene(&app->scene, app->sceneSelection.availableScenes[app->sceneSelection.nextScene]);
+
+    VkBool32 useMutliLevel = VK_TRUE;
+    if (app->vk_info.ray_tracing) {
+        //flatten_scene(&app.scene);
+        prepare_scene(&app->scene, useMutliLevel);
+    }
+    else {
+        flatten_scene(&app->scene);
+    }
+
+    destroy_imgui_buffers(&app->vk_info);
+    create_or_resize_swapchain(&app->vk_info, &app->window, WINDOW_WIDTH, WINDOW_HEIGHT, &app->scene);
+    resize_callback_imgui(&app->vk_info, &app->scene, &app->sceneSelection);
+
+    set_global_buffers(&app->vk_info, &app->scene);
+
     app->sceneSelection.currentScene = app->sceneSelection.nextScene;
 
 }
@@ -162,8 +184,6 @@ int main()
     // we will have a depth of 16. 
     set_global_buffers(&app.vk_info, &app.scene);
 	while (!glfwWindowShouldClose(app.window)) {
-        if (app.sceneSelection.currentScene != app.sceneSelection.nextScene)
-            changeScene(&app);
 		glfwPollEvents();
 		if(WINDOW_WIDTH > 0 && WINDOW_HEIGHT > 0)
             {
@@ -181,6 +201,8 @@ int main()
 			resizeW = -1;
 			resizeH = -1;
 		}
+        if (app.sceneSelection.currentScene != app.sceneSelection.nextScene)
+            changeScene(&app);
 	}
 	destroy_vulkan(&app.vk_info, &app.scene, &app.sceneSelection);
 	destroy_scene(&app.scene);

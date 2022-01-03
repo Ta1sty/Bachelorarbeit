@@ -68,6 +68,25 @@ void create_imgui_RenderPass(VkInfo* vk)
 
 void init_imgui(App* app, int width, int height) // see https://frguthmann.github.io/posts/vulkan_imgui/
 {
+	// Create Imgui Descriptor Pool
+	const VkDescriptorPoolSize pool_sizes[] =
+	{
+		{ VK_DESCRIPTOR_TYPE_SAMPLER, 10 },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 10 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 10 },
+	};
+
+
+	VkDescriptorPoolCreateInfo poolInfo{};
+	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	poolInfo.poolSizeCount = 3;
+	poolInfo.pPoolSizes = pool_sizes;
+	poolInfo.maxSets = 30;
+
+	check_result(vkCreateDescriptorPool(app->vk_info.device, &poolInfo, nullptr, &app->vk_info.imgui_descriptor_pool));
+
+
+
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -81,7 +100,7 @@ void init_imgui(App* app, int width, int height) // see https://frguthmann.githu
 	init_info.QueueFamily = app->vk_info.queue_family_index;
 	init_info.Queue = app->vk_info.graphics_queue;
 	init_info.PipelineCache = VK_NULL_HANDLE;
-	init_info.DescriptorPool = app->vk_info.descriptor_pool;
+	init_info.DescriptorPool = app->vk_info.imgui_descriptor_pool;
 	init_info.Allocator = VK_NULL_HANDLE;
 	init_info.MinImageCount = 2;
 	init_info.ImageCount = app->vk_info.buffer_count;
@@ -343,6 +362,7 @@ void destroy_imgui(VkInfo* info, SceneSelection* scene_selection)
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
 	vkDestroyRenderPass(info->device, info->imguiPass, nullptr);
+	vkDestroyDescriptorPool(info->device, info->imgui_descriptor_pool, nullptr);
 
 	for(uint32_t i = 0;i<scene_selection->numScenes;i++)
 	{

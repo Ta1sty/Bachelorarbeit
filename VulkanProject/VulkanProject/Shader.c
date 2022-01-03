@@ -165,7 +165,13 @@ void init_descriptor_containers(VkInfo* info, Scene* scene)
 	create_buffers(info, &info->global_buffers);
 	create_buffers(info, &info->per_frame_buffers);
 	create_texture_buffers(info, scene);
-	create_descriptor_pool(info);
+	if(info->descriptor_pool)
+	{
+		vkResetDescriptorPool(info->device, info->descriptor_pool, 0);
+	} else
+	{
+		create_descriptor_pool(info);
+	}
 	create_descriptor_sets(info, &info->global_buffers);
 	init_texture_descriptor(info, scene);
 	create_descriptor_sets(info, &info->per_frame_buffers);
@@ -190,4 +196,5 @@ void destroy_shaders(VkInfo* vk, Scene* scene)
 		vkFreeMemory(vk->device, t->texture_image_memory, NULL);
 		vkDestroyImage(vk->device, t->texture_image, NULL);
 	}
+	vkDestroySampler(vk->device, scene->sampler, NULL);
 }
