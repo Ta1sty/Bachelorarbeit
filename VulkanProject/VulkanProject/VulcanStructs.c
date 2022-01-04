@@ -588,6 +588,9 @@ void create_command_buffers(VkInfo* info) // see https://vulkan-tutorial.com/ fo
 
 void create_semaphores(VkInfo* info) // see https://vulkan-tutorial.com/
 {
+	if (info->renderFinishedSemaphore)
+		return;
+
 	VkSemaphoreCreateInfo semaphore_info = {
 		semaphore_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
 		.pNext = NULL
@@ -596,6 +599,7 @@ void create_semaphores(VkInfo* info) // see https://vulkan-tutorial.com/
 		.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
 		.flags = VK_FENCE_CREATE_SIGNALED_BIT
 	};
+
 
 	info->renderFinishedSemaphore = malloc(sizeof(VkSemaphore) * MAX_FRAMES_IN_FLIGHT);
 	info->imageAvailableSemaphore = malloc(sizeof(VkSemaphore) * MAX_FRAMES_IN_FLIGHT);

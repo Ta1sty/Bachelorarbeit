@@ -131,6 +131,7 @@ typedef struct vkInfo {
 	VkBuffer vertexBuffer;
 	VkDeviceMemory vertexBufferMemory;
 
+	VkDescriptorPool imgui_descriptor_pool;
 	VkDescriptorPool descriptor_pool;
 
 	VkRenderPass renderPass;
@@ -146,11 +147,13 @@ typedef struct vkInfo {
 	double frameRate;
 } VkInfo;
 
+typedef void (*ChangeSceneCallback)(void);
+
 typedef struct app {
 	VkInfo vk_info;
 	GLFWwindow* window;
 	Scene scene;
-	void* imgui_window;
+	SceneSelection sceneSelection;
 } App;
 
 #define MAX_FRAMES_IN_FLIGHT 2

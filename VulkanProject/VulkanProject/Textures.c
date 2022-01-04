@@ -271,5 +271,7 @@ void init_texture_descriptor(VkInfo* vk, Scene* scene)
 	textureWrite.pImageInfo = infos;
 
 	vkUpdateDescriptorSets(vk->device, 1, &textureWrite, 0, NULL);
+
+	free(infos);
 }
 

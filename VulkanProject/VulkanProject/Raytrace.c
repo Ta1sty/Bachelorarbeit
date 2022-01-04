@@ -20,34 +20,31 @@ void prepare_scene(Scene* scene, VkBool32 useMultiLevel)
 		for (uint32_t i = 0; i < scene->scene_data.numSceneNodes; i++)
 		{
 			SceneNode* node = &scene->scene_nodes[i];
-			node->numEven = 0;
-			node->numOdd = 0;
+			node->NumEven = 0;
+			node->NumOdd = 0;
 			uint32_t evenOffset = 0;
-			uint32_t oddOffset = node->data.NumChildren - 1;
-			uint32_t* buffer = malloc(sizeof(uint32_t) * node->data.NumChildren);
-			for (int32_t j = 0; j < node->data.NumChildren; j++)
+			uint32_t oddOffset = node->NumChildren - 1;
+			uint32_t* buffer = malloc(sizeof(uint32_t) * node->NumChildren);
+			for (int32_t j = 0; j < node->NumChildren; j++)
 			{
 				GET_CHILD_IDX(scene, node, j);
 				GET_CHILD(scene, node, j);
-
 				if (child->Level % 2 == 0)
 				{
 					buffer[evenOffset] = childIdx;
 					evenOffset++;
-					node->numEven++;
+					node->NumEven++;
 				}
 				else
 				{
 					buffer[oddOffset] = childIdx;
 					oddOffset--;
-					node->numOdd++;
+					node->NumOdd++;
 				}
 			}
-			for (int32_t j = 0; j < node->data.NumChildren; j++)
+			for (int32_t j = 0; j < node->NumChildren; j++)
 			{
-				scene->node_indices[node->data.childrenIndex + j] = buffer[j];
-				GET_CHILD(scene, node, j);
-				int a = 0;
+				scene->node_indices[node->ChildrenIndex + j] = buffer[j];
 			}
 			free(buffer);
 		}
@@ -62,7 +59,7 @@ void prepare_scene(Scene* scene, VkBool32 useMultiLevel)
 // this method writes the depth levels for every scene node
 void depth_recursion(Scene* scene, SceneNode* node)
 {
-	for (int32_t i = 0; i < node->data.NumChildren; i++)
+	for (int32_t i = 0; i < node->NumChildren; i++)
 	{
 		GET_CHILD(scene, node, i);
 		child->Level = max(node->Level + 1, child->Level);
@@ -84,15 +81,15 @@ void build_node_acceleration_structure(VkInfo* info, Scene* scene, SceneNode* no
 	//BLAS blas; the BLAS for this SceneNode, it is set if this node has an odd level or if this node has an even level but it contains geometry
 
 	// check if they were already built
-	if (node->tlas.structure != NULL || node->blas.structure != NULL)
+	if (scene->acceleration_structures[node->Index].tlas.structure != NULL
+		|| scene->acceleration_structures[node->Index].blas.structure != NULL)
 		return;
 
 	// if not we build all child ASs
-	for (int i = 0; i < node->data.NumChildren; i++)
+	for (int i = 0; i < node->NumChildren; i++)
 	{
 		GET_CHILD(scene, node, i);
 		build_node_acceleration_structure(info, scene, child);
-		int a = 1;
 	}
 	// and then we combine them
 	if (node->Level % 2 == 0) // Even level = TLAS
@@ -120,9 +117,9 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 	// if node references geometry calls build BLAS for just the geometry
 	// if node references children call buildBLAS for every child node
 
-	uint32_t instance_count = node->numOdd; // regular odd level BLAS children
-	if (node->numEven > 0) instance_count++; // even level children get put into one node
-	if (node->data.NumTriangles > 0) instance_count++; // geometry also gets its own child
+	uint32_t instance_count = node->NumOdd; // regular odd level BLAS children
+	if (node->NumEven > 0) instance_count++; // even level children get put into one node
+	if (node->NumTriangles > 0) instance_count++; // geometry also gets its own child
 	uint32_t instanceOffset = 0;
 
 	VkBuffer stagingBuffer = 0;
@@ -134,78 +131,52 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 				 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &stagingBuffer, &stagingMemory);
 
 	check(vkMapMemory(info->device, stagingMemory, 0, sizeof(VkAccelerationStructureInstanceKHR) * instance_count, 0,
-					  &staging_data), "");
+					  (void**) & staging_data), "");
 
-	TLAS tlas = { 0 };
-	tlas.max[0] = -FLT_MAX;
-	tlas.max[1] = -FLT_MAX;
-	tlas.max[2] = -FLT_MAX;
-	tlas.min[0] = FLT_MAX;
-	tlas.min[1] = FLT_MAX;
-	tlas.min[2] = FLT_MAX;
+
+	node->AABB_min[0] = -FLT_MAX;
+	node->AABB_min[1] = -FLT_MAX;
+	node->AABB_min[2] = -FLT_MAX;
+	node->AABB_max[0] = FLT_MAX;
+	node->AABB_max[1] = FLT_MAX;
+	node->AABB_max[2] = FLT_MAX;
 
 	SceneNode* children = malloc(sizeof(SceneNode) * instance_count);
-	if (node->numEven > 0) // handle the even children, such that the instanceIndex is 0 when there are even children
+	if (node->NumEven > 0 || node->NumTriangles > 0) 
+	// handle the even children and geometry
 	{
 		SceneNode dummyChild = {
-			.data = {
-				.NumChildren = node->numEven,
-				.childrenIndex = node->data.childrenIndex,
-				.NumTriangles = 0,
-				.IndexBufferIndex = -1,
-				.Index = -1,
-				.object_to_world = {
-					{1, 0, 0, 0},
-					{0, 1, 0, 0},
-					{0, 0, 1, 0},
-					{0, 0, 0, 1}
-				}
-			},
-			.Level = node->Level + 1,
-			.numEven = node->numEven,
-			.numOdd = 0
-		};
-		build_blas(info, scene, &dummyChild);
-		children[instanceOffset] = dummyChild;
-		instanceOffset++;
-	}
-
-	if (node->data.NumTriangles > 0) // handle geometry in case this node references any
-	{
-		SceneNode dummyChild = {
-			.data = {
-				.NumChildren = 0,
-				.NumTriangles = node->data.NumTriangles,
-				.childrenIndex = -1,
-				.Index = -1,
-				.IndexBufferIndex = node->data.IndexBufferIndex,
+				.NumChildren = (int32_t) node->NumEven,
+				.ChildrenIndex = node->ChildrenIndex,
+				.NumTriangles = node->NumTriangles,
+				.IndexBufferIndex = node->IndexBufferIndex,
+				.Index = node->Index,
 				.object_to_world = {
 					{1, 0, 0, 0},
 					{0, 1, 0, 0},
 					{0, 0, 1, 0},
 					{0, 0, 0, 1}
 				},
-				.world_to_object = {
+			.world_to_object = {
 					{1, 0, 0, 0},
 					{0, 1, 0, 0},
 					{0, 0, 1, 0},
 					{0, 0, 0, 1}
-				}
-			},
+				},
 			.Level = node->Level + 1,
-			.numEven = 0,
-			.numOdd = 0
+			.NumEven = node->NumEven,
+			.NumOdd = 0,
 		};
 		build_blas(info, scene, &dummyChild);
 		children[instanceOffset] = dummyChild;
 		instanceOffset++;
 	}
 
-	if (node->numOdd > 0) // handle the normal case for odd level nodes
+	if (node->NumOdd > 0) // handle the normal case for odd level nodes
 	{
-		for (uint32_t i = 0; i < node->numOdd; i++)
+		for (uint32_t i = 0; i < node->NumOdd; i++)
 		{
-			GET_CHILD(scene, node, node->numEven + i);
+			GET_CHILD(scene, node, node->NumEven + i);
 			// since this is depth first the BLAS should already be built
 			children[instanceOffset + i] = *child;
 		}
@@ -219,7 +190,7 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 		// Specify the only instance
 		VkAccelerationStructureDeviceAddressInfoKHR address_request = {
 			.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR,
-			.accelerationStructure = child.blas.structure,
+			.accelerationStructure = scene->acceleration_structures[child.Index].blas.structure,
 		};
 		VkAccelerationStructureInstanceKHR instance = {
 			.transform = {
@@ -234,11 +205,11 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 			VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR,
 			.accelerationStructureReference = pvkGetAccelerationStructureDeviceAddressKHR(
 				info->device, &address_request),
-			.instanceCustomIndex = child.data.Index >= 0 ? child.data.Index : 0xFFFFFFFF
+			.instanceCustomIndex = child.Index >= 0 ? child.Index : 0xFFFFFFFF
 			// this is the reference to use in case this is an odd level node
 		};
 
-		memcpy(&instance.transform.matrix, &child.data.object_to_world, sizeof(float) * 4 * 3);/*instance.transform.matrix[0][0] = 1;
+		memcpy(&instance.transform.matrix, &child.object_to_world, sizeof(float) * 4 * 3);/*instance.transform.matrix[0][0] = 1;
 		instance.transform.matrix[1][0] = 0;
 		instance.transform.matrix[2][0] = 0;
 		instance.transform.matrix[0][1] = 0;
@@ -251,19 +222,14 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 
 		float maxNew[3] = { 0 };
 		float minNew[3] = { 0 };
-		if (child.Level % 2 == 0) {
-			transformAABB(instance.transform.matrix, child.tlas.min, child.tlas.max, minNew, maxNew);
-		}
-		else {
-			transformAABB(instance.transform.matrix, child.blas.min, child.blas.max, minNew, maxNew);
-		}
+		transformAABB(instance.transform.matrix, child.AABB_min, child.AABB_max, minNew, maxNew);
 
-		tlas.min[0] = min(tlas.min[0], minNew[0]);
-		tlas.min[1] = min(tlas.min[1], minNew[1]);
-		tlas.min[2] = min(tlas.min[2], minNew[2]);
-		tlas.max[0] = max(tlas.max[0], maxNew[0]);
-		tlas.max[1] = max(tlas.max[1], maxNew[1]);
-		tlas.max[2] = max(tlas.max[2], maxNew[2]);
+		node->AABB_min[0] = min(node->AABB_min[0], minNew[0]);
+		node->AABB_min[1] = min(node->AABB_min[1], minNew[1]);
+		node->AABB_min[2] = min(node->AABB_min[2], minNew[2]);
+		node->AABB_max[0] = max(node->AABB_max[0], maxNew[0]);
+		node->AABB_max[1] = max(node->AABB_max[1], maxNew[1]);
+		node->AABB_max[2] = max(node->AABB_max[2], maxNew[2]);
 
 		memcpy(&staging_data[i], &instance, sizeof(VkAccelerationStructureInstanceKHR));
 	}
@@ -330,7 +296,6 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 	VkAccelerationStructureBuildRangeInfoKHR build_ranges[] = {
 		{.primitiveCount = instance_count}
 	};
-	const char* level_name = "top";
 	VkAccelerationStructureBuildGeometryInfoKHR build_info = top_build_info;
 	VkBufferDeviceAddressInfo scratch_adress_info = {
 		.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
@@ -353,13 +318,15 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 
 	endSingleTimeCommands(info, cmd);
 
-	tlas.buffer = tlasBuffer;
-	tlas.memory = tlasMemory;
-	tlas.structure = structure;
-	node->tlas = tlas;
-	expandTLASAABB(node);
-	scene->TLASs[scene->numTLAS] = tlas.structure;
-	node->tlas_number = scene->numTLAS;
+	AccelerationStructure acceleration_structure = {
+		.structure = structure,
+		.buffer = tlasBuffer,
+		.memory = tlasMemory
+	};
+	scene->acceleration_structures[node->Index].tlas = acceleration_structure;
+	expandAABB(node);
+	scene->TLASs[scene->numTLAS] = acceleration_structure.structure;
+	node->TlasNumber = scene->numTLAS;
 	scene->numTLAS++;
 }
 
@@ -374,69 +341,72 @@ void build_blas(VkInfo* info, Scene* scene, SceneNode* node)
 
 	// credits to christopher
 	VK_LOAD(vkGetAccelerationStructureBuildSizesKHR)
-		VK_LOAD(vkCreateAccelerationStructureKHR)
-		VK_LOAD(vkGetAccelerationStructureDeviceAddressKHR)
-		VK_LOAD(vkCmdBuildAccelerationStructuresKHR)
+	VK_LOAD(vkCreateAccelerationStructureKHR)
+	VK_LOAD(vkGetAccelerationStructureDeviceAddressKHR)
+	VK_LOAD(vkCmdBuildAccelerationStructuresKHR)
 
 		uint32_t primitive_count = 0;
-	if (node->data.NumChildren > 0) primitive_count += node->data.NumChildren;
-	if (node->data.NumTriangles > 0) primitive_count += node->data.NumTriangles;
+	if (node->NumChildren > 0) primitive_count += node->NumChildren;
+	if (node->NumTriangles > 0) primitive_count += node->NumTriangles;
 	uint32_t geometryNum = 0;
 	VkAccelerationStructureGeometryKHR geometries[2] = { 0 };
 
-	BLAS blas = { 0 };
-	blas.max[0] = -FLT_MAX;
-	blas.max[1] = -FLT_MAX;
-	blas.max[2] = -FLT_MAX;
-	blas.min[0] = FLT_MAX;
-	blas.min[1] = FLT_MAX;
-	blas.min[2] = FLT_MAX;
+
+	node->AABB_min[0] = -FLT_MAX;
+	node->AABB_min[1] = -FLT_MAX;
+	node->AABB_min[2] = -FLT_MAX;
+	node->AABB_max[0] = FLT_MAX;
+	node->AABB_max[1] = FLT_MAX;
+	node->AABB_max[2] = FLT_MAX;
 
 	VkBuffer aabbBuffer = 0;
 	VkDeviceMemory aabbMemory = 0;
 
 	// Handle node children
-	if (node->data.NumChildren > 0)
+	if (node->NumChildren > 0)
 	{
-		for (int32_t i = 0; i < node->data.NumChildren; i++)
+		for (int32_t i = 0; i < node->NumChildren; i++)
 		{
 			GET_CHILD(scene, node, i);
-			if (child->Level % 2 == 1 && child->tlas.structure == NULL) // child is odd, we need a TLAS for it
+			if (child->Level % 2 == 1 && scene->acceleration_structures[child->Index].tlas.structure == NULL) // child is odd, we need a TLAS for it
 			{
-				if (child->blas.structure == NULL) error("Odd child does not have a BLAS??");
+				if (scene->acceleration_structures[child->Index].blas.structure == NULL) error("Odd child does not have a BLAS??");
 				SceneNode dummyNode = {
-					.data = {
 						.NumChildren = 1,
-						.childrenIndex = node->data.childrenIndex + i, // this is the node we want to create a TLAS for
+						.ChildrenIndex = node->ChildrenIndex + i, // this is the node we want to create a TLAS for
 						.NumTriangles = 0,
-						.Index = -1,
+						.Index = child->Index,
 						.IndexBufferIndex = -1,
 						.object_to_world = {
 							{1, 0, 0, 0},
 							{0, 1, 0, 0},
 							{0, 0, 1, 0},
 							{0, 0, 0, 1}
-						}
+						},
+					.world_to_object = {
+					{1, 0, 0, 0},
+					{0, 1, 0, 0},
+					{0, 0, 1, 0},
+					{0, 0, 0, 1}
 					},
 					.Level = node->Level + 1,
-					.numOdd = 1,
-					.numEven = 0,
+					.NumOdd = 1,
+					.NumEven = 0,
 				};
 				build_tlas(info, scene, &dummyNode);
-				child->tlas = dummyNode.tlas;
-				child->tlas_number = dummyNode.tlas_number;
+				child->TlasNumber = dummyNode.TlasNumber;
 			}
 		}
 
 		VkAabbPositionsKHR* aabbData;
-		createBuffer(info, sizeof(VkAabbPositionsKHR) * node->data.NumChildren,
+		createBuffer(info, sizeof(VkAabbPositionsKHR) * node->NumChildren,
 			VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
 			VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &aabbBuffer, &aabbMemory);
-		check(vkMapMemory(info->device, aabbMemory, 0, sizeof(VkAabbPositionsKHR) * node->data.NumChildren, 0,
-			&aabbData), "error Mapping memory");
+		check(vkMapMemory(info->device, aabbMemory, 0, sizeof(VkAabbPositionsKHR) * node->NumChildren, 0,
+			(void**) & aabbData), "error Mapping memory");
 
-		for (int32_t i = 0; i < node->data.NumChildren; i++)
+		for (int32_t i = 0; i < node->NumChildren; i++)
 		{
 			GET_CHILD(scene, node, i);
 			float maxNew[3] = { 1,1,1 };
@@ -449,12 +419,10 @@ void build_blas(VkInfo* info, Scene* scene, SceneNode* node)
 			};
 			if (child->Level % 2 == 0)
 			{
-				memcpy(&transform, &child->data.object_to_world, sizeof(float) * 4 * 4);
-				transformAABB(transform, child->tlas.min, child->tlas.max, minNew, maxNew);
+				memcpy(&transform, &child->object_to_world, sizeof(float) * 4 * 4);
 			}
-			else {
-				transformAABB(transform, child->blas.min, child->blas.max, minNew, maxNew);
-			}
+			transformAABB(transform, child->AABB_min, child->AABB_max, minNew, maxNew);
+
 			VkAabbPositionsKHR position = {
 				.maxX = maxNew[0],
 				.maxY = maxNew[1],
@@ -463,12 +431,13 @@ void build_blas(VkInfo* info, Scene* scene, SceneNode* node)
 				.minY = minNew[1],
 				.minZ = minNew[2]
 			};
-			blas.min[0] = min(blas.min[0], minNew[0]);
-			blas.min[1] = min(blas.min[1], minNew[1]);
-			blas.min[2] = min(blas.min[2], minNew[2]);
-			blas.max[0] = max(blas.max[0], maxNew[0]);
-			blas.max[1] = max(blas.max[1], maxNew[1]);
-			blas.max[2] = max(blas.max[2], maxNew[2]);
+
+			node->AABB_min[0] = min(node->AABB_min[0], minNew[0]);
+			node->AABB_min[1] = min(node->AABB_min[1], minNew[1]);
+			node->AABB_min[2] = min(node->AABB_min[2], minNew[2]);
+			node->AABB_max[0] = max(node->AABB_max[0], maxNew[0]);
+			node->AABB_max[1] = max(node->AABB_max[1], maxNew[1]);
+			node->AABB_max[2] = max(node->AABB_max[2], maxNew[2]);
 
 			memcpy(&aabbData[i], &position, sizeof(VkAabbPositionsKHR));
 		}
@@ -503,32 +472,32 @@ void build_blas(VkInfo* info, Scene* scene, SceneNode* node)
 	VkDeviceMemory vertexStageMemeory = 0;
 	VkBuffer indexStage = 0;
 	VkDeviceMemory indexStageMemeory = 0;
-	if (node->data.NumTriangles > 0)
+	if (node->NumTriangles > 0)
 	{
 		void* index_data;
-		createBuffer(info, sizeof(uint32_t) * node->data.NumTriangles * 3,
+		createBuffer(info, sizeof(uint32_t) * node->NumTriangles * 3,
 			VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
 			VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &indexStage, &indexStageMemeory);
-		check(vkMapMemory(info->device, indexStageMemeory, 0, sizeof(uint32_t) * node->data.NumTriangles * 3, 0,
+		check(vkMapMemory(info->device, indexStageMemeory, 0, sizeof(uint32_t) * node->NumTriangles * 3, 0,
 			&index_data), "error Mapping memory");
 
 		uint32_t maxIndex = 0; // the maximum index used in the indexBuffer for this mesh
 		uint32_t minIndex = UINT32_MAX; // the minimum index used in the indexBuffer for this mesh.
 		uint32_t* indices = index_data;
-		for (uint32_t i = 0; i != node->data.NumTriangles * 3; ++i)
+		for (int32_t i = 0; i != node->NumTriangles * 3; ++i)
 		{
-			minIndex = min(minIndex, scene->indices[i + node->data.IndexBufferIndex]);
-			maxIndex = max(maxIndex, scene->indices[i + node->data.IndexBufferIndex]);
+			minIndex = min(minIndex, scene->indices[i + node->IndexBufferIndex]);
+			maxIndex = max(maxIndex, scene->indices[i + node->IndexBufferIndex]);
 		}
 
-		for (uint32_t i = 0; i != node->data.NumTriangles; ++i)
+		for (int32_t i = 0; i != node->NumTriangles; ++i)
 		{
-			indices[i * 3 + 0] = scene->indices[i * 3 + 0 + node->data.IndexBufferIndex] - minIndex;
+			indices[i * 3 + 0] = scene->indices[i * 3 + 0 + node->IndexBufferIndex] - minIndex;
 			// there should always be one where this is 0
-			indices[i * 3 + 1] = scene->indices[i * 3 + 1 + node->data.IndexBufferIndex] - minIndex;
+			indices[i * 3 + 1] = scene->indices[i * 3 + 1 + node->IndexBufferIndex] - minIndex;
 			// there should always be one where this is 0
-			indices[i * 3 + 2] = scene->indices[i * 3 + 2 + node->data.IndexBufferIndex] - minIndex;
+			indices[i * 3 + 2] = scene->indices[i * 3 + 2 + node->IndexBufferIndex] - minIndex;
 			// there should always be one where this is 0
 		}
 		// create vertex stage buffer
@@ -546,8 +515,8 @@ void build_blas(VkInfo* info, Scene* scene, SceneNode* node)
 			for (uint32_t j = 0; j < 3; j++)
 			{
 				vertices[i * 3 + j] = scene->vertices[i + minIndex].position[j];
-				blas.min[j] = min(blas.min[j], vertices[i * 3 + j]);
-				blas.max[j] = max(blas.max[j], vertices[i * 3 + j]);
+				node->AABB_min[j] = min(node->AABB_min[j], vertices[i * 3 + j]);
+				node->AABB_max[j] = max(node->AABB_max[j], vertices[i * 3 + j]);
 			}
 		}
 
@@ -602,8 +571,6 @@ void build_blas(VkInfo* info, Scene* scene, SceneNode* node)
 		geometries[geometryNum] = bottom_geometry;
 		geometryNum++;
 	}
-
-	{
 		VkAccelerationStructureBuildSizesInfoKHR bottom_size = {
 			.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR,
 		};
@@ -655,7 +622,6 @@ void build_blas(VkInfo* info, Scene* scene, SceneNode* node)
 		VkAccelerationStructureBuildRangeInfoKHR build_ranges[] = {
 			{.primitiveCount = primitive_count}
 		};
-		const char* level_name = "bottom";
 		VkBufferDeviceAddressInfo scratch_adress_info = {
 			.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
 			.buffer = scratchBuffer
@@ -685,35 +651,24 @@ void build_blas(VkInfo* info, Scene* scene, SceneNode* node)
 		vkFreeMemory(info->device, indexStageMemeory, NULL);
 		vkFreeMemory(info->device, scratchBufferMemeory, NULL);
 
-		blas.structure = structure;
-		blas.buffer = blasBuffer;
-		blas.memory = blasMemory;
-	}
-
-	node->blas = blas;
-	expandBLASAABB(node);
+		AccelerationStructure acceleration_structure = {
+			.buffer = blasBuffer,
+			.memory = blasMemory,
+			.structure = structure
+		};
+		scene->acceleration_structures[node->Index].blas = acceleration_structure;
+	expandAABB(node);
 }
 
-void expandTLASAABB(SceneNode* node)
+void expandAABB(SceneNode* node)
 {
 	float inc = 0.02f;
-	node->tlas.min[0] -= inc;
-	node->tlas.min[1] -= inc;
-	node->tlas.min[2] -= inc;
-	node->tlas.max[0] += inc;
-	node->tlas.max[1] += inc;
-	node->tlas.max[2] += inc;
-}
-
-void expandBLASAABB(SceneNode* node)
-{
-	float inc = 0.02f;
-	node->blas.min[0] -= inc;
-	node->blas.min[1] -= inc;
-	node->blas.min[2] -= inc;
-	node->blas.max[0] += inc;
-	node->blas.max[1] += inc;
-	node->blas.max[2] += inc;
+	node->AABB_min[0] -= inc;
+	node->AABB_min[1] -= inc;
+	node->AABB_min[2] -= inc;
+	node->AABB_max[0] += inc;
+	node->AABB_max[1] += inc;
+	node->AABB_max[2] += inc;
 }
 
 void transformAABB(float transform[4][4], float min[3], float max[3], float* minNew, float* maxNew)

@@ -18,20 +18,22 @@ struct Material{
 	int texture_index;
 };
 struct SceneNode{
-	mat4 object_to_world;	// 64
-	mat4 world_to_object;	// 128
-	int IndexBuferIndex;	// 132
-	int NumTriangles;		// 136	
-	int NumChildren;		// 140
-	int childrenIndex;		// 144
-	int Index;				// 148
-	int level;				// 152
-	uint numEven;			// 156
-	uint numOdd;			// 160
-	uint tlasNumber;		// 164
-	float pad1;				// 168
-	float pad2;				// 172
-	float pad3;				// 176 % 16 == 0
+	mat4 object_to_world;		// 0
+	mat4 world_to_object;		// 0
+	vec4 AABB_min;				// 0
+	vec4 AABB_max;				// 0
+	int IndexBuferIndex;		// 4
+	int NumTriangles;			// 8
+	int NumChildren;			// 12
+	int childrenIndex;			// 0
+	int Index;					// 4
+	int level;					// 8
+	uint numEven;				// 12
+	uint numOdd;				// 0
+	int tlasNumber;				// 4
+	float pad3;					// 8
+	float pad4;					// 12
+	float pad5;					// 0
 };
 const uint LIGHT_ON = 1;
 const uint LIGHT_TYPE_POINT = 2;
