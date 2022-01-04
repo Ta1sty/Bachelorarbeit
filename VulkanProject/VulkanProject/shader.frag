@@ -1,6 +1,5 @@
 #version 460
 #extension GL_EXT_nonuniform_qualifier : enable
-#define RAY_TRACE
 #ifdef RAY_TRACE
 #extension GL_EXT_ray_query : require
 #endif		
@@ -176,7 +175,7 @@ void getHitPayload(int triangle, vec3 tuv, out vec4 color, out vec3 N, out Mater
 	if(displayUV != 0){ // debug
 		debugColor = vec4(u,v,0,1);
 	}
-	// compute interpolated Normal and Tex
+	// compute interpolated Normal and Tex - important this is in object space -> need to transform either 
 	N = w * v0.normal + v * v1.normal + u * v2.normal;
 	N = normalize(N);
 	vec2 tex = w * v0.tex_coord + v * v1.tex_coord + u * v2.tex_coord;
@@ -214,6 +213,13 @@ const int BUFFER_SIZE = 14;
 int stackSize = 0;
 TraversalPayload traversalBuffer[BUFFER_SIZE];
 
+// Problem, want to reconstruct the tranform path for the Normal and potentially other applications
+// Idea, have 2 arrays int[MAX_DEPTH] commited, candidate
+// if triangle is accepted by traversal, copy contents of candidate to commited. This array then contains the levels used.
+// in case there is a skip from exapmle level 3->6, we set 4,5 to -1 so we know to ignore them
+// for traversal proceed as follows. once node is popped write node.index to candidate[node.level]
+// if a path fails without any 
+
 // for a given rayQuery this method returns a ray and a tlasNumber
 #ifdef RAY_TRACE
 void instanceHit(rayQueryEXT ray_query, TraversalPayload load, SceneNode node) {
@@ -225,6 +231,7 @@ void instanceHit(rayQueryEXT ray_query, TraversalPayload load, SceneNode node) {
 	uint pIdx = rayQueryGetIntersectionPrimitiveIndexEXT(ray_query, false);
 	SceneNode next;
 	if(node.numEven>0 && iIdx == 0){ // only do the even case for instance 0 and if there are even nodes, otherwise any aabb is ODD
+		// TODO this case is avoided from now on, since the compiler eliminates every odd-odd and even-even pair
 		// handle even child
 		next = nodes[childIndices[node.childrenIndex+pIdx]];
 	} else {
@@ -252,7 +259,9 @@ void instanceHit(rayQueryEXT ray_query, TraversalPayload load, SceneNode node) {
 void triangleHit(rayQueryEXT ray_query, SceneNode node){
 	float t = rayQueryGetIntersectionTEXT(ray_query, false);
 	vec2 uv = rayQueryGetIntersectionBarycentricsEXT(ray_query, false);
-	int triangle = node.IndexBuferIndex/3 + rayQueryGetIntersectionPrimitiveIndexEXT(ray_query, false);
+	uint cIdx = rayQueryGetIntersectionInstanceCustomIndexEXT(ray_query, false);
+	SceneNode blasChild = nodes[cIdx];
+	int triangle = blasChild.IndexBuferIndex/3 + rayQueryGetIntersectionPrimitiveIndexEXT(ray_query, false);
 	Vertex v0 = vertices[indices[triangle * 3]];
 	Vertex v1 = vertices[indices[triangle * 3 + 1]];
 	Vertex v2 = vertices[indices[triangle * 3 + 2]];
@@ -343,7 +352,17 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 			float t = rayQueryGetIntersectionTEXT(ray_query, true);
 			if(t<best_t){
 				best_t = t;
-				triangle_index = node.IndexBuferIndex/3 + rayQueryGetIntersectionPrimitiveIndexEXT(ray_query, true);
+
+				uint cIdx = rayQueryGetIntersectionInstanceCustomIndexEXT(ray_query, true);
+				SceneNode blasChild = nodes[cIdx];
+				triangle_index = blasChild.IndexBuferIndex/3 + rayQueryGetIntersectionPrimitiveIndexEXT(ray_query, true);
+				if(blasChild.Index == 10){
+					debugColor = vec4(1,0,0,1);
+				} else {
+					debugColor = vec4(0,0,1,1);
+				}
+
+
 				tuv.x = t;
 				vec2 uv = rayQueryGetIntersectionBarycentricsEXT(ray_query, true);
 				tuv.y = uv.y;
@@ -427,9 +446,12 @@ vec4 shadeFragment(vec3 P, vec3 V, vec4 color, vec3 N, Material material) {
 			sum+=vec3(1);
 		else {
 			float l_mult = light.quadratic.x + light.quadratic.y / d + light.quadratic.z / (d*d);
+			diffuse = 0;
+			color = vec4(1,1,1,1);
 			sum += (specular+diffuse) * l_mult * light.intensity * color.xyz;
 		}
 	}
+	material.k_a = 0;
 	sum += material.k_a * color.xyz;
 	return vec4(sum.xyz, color[3]);
 }
@@ -478,7 +500,7 @@ vec4 rayTrace(vec3 rayOrigin, vec3 rayDirection, out float t) {
 			float alpha = fracColor[3];
 			color += frac*alpha*fracColor;
 			frac *= (1-alpha);
-			if(alpha == 1 || frac < 0.05f) break;
+			if(alpha >= 0.99f || frac < 0.05f) break;
 		} else {
 			// maybe environment map
 			t = MAX_T;

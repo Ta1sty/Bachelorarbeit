@@ -69,6 +69,8 @@ void depth_recursion(Scene* scene, SceneNode* node)
 
 void build_all_acceleration_structures(VkInfo* info, Scene* scene)
 {
+	scene->acceleration_structures = malloc(sizeof(NodeStructures) * scene->scene_data.numSceneNodes);
+	memset(scene->acceleration_structures, 0, sizeof(NodeStructures) * scene->scene_data.numSceneNodes);
 	scene->TLASs = malloc(sizeof(VkAccelerationStructureKHR) * scene->scene_data.numSceneNodes);
 	scene->numTLAS = 0;
 	GET_ROOT(scene);
@@ -134,12 +136,12 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 					  (void**) & staging_data), "");
 
 
-	node->AABB_min[0] = -FLT_MAX;
-	node->AABB_min[1] = -FLT_MAX;
-	node->AABB_min[2] = -FLT_MAX;
-	node->AABB_max[0] = FLT_MAX;
-	node->AABB_max[1] = FLT_MAX;
-	node->AABB_max[2] = FLT_MAX;
+	node->AABB_min[0] = FLT_MAX;
+	node->AABB_min[1] = FLT_MAX;
+	node->AABB_min[2] = FLT_MAX;
+	node->AABB_max[0] = -FLT_MAX;
+	node->AABB_max[1] = -FLT_MAX;
+	node->AABB_max[2] = -FLT_MAX;
 
 	SceneNode* children = malloc(sizeof(SceneNode) * instance_count);
 	if (node->NumEven > 0 || node->NumTriangles > 0) 
@@ -352,12 +354,12 @@ void build_blas(VkInfo* info, Scene* scene, SceneNode* node)
 	VkAccelerationStructureGeometryKHR geometries[2] = { 0 };
 
 
-	node->AABB_min[0] = -FLT_MAX;
-	node->AABB_min[1] = -FLT_MAX;
-	node->AABB_min[2] = -FLT_MAX;
-	node->AABB_max[0] = FLT_MAX;
-	node->AABB_max[1] = FLT_MAX;
-	node->AABB_max[2] = FLT_MAX;
+	node->AABB_min[0] = FLT_MAX;
+	node->AABB_min[1] = FLT_MAX;
+	node->AABB_min[2] = FLT_MAX;
+	node->AABB_max[0] = -FLT_MAX;
+	node->AABB_max[1] = -FLT_MAX;
+	node->AABB_max[2] = -FLT_MAX;
 
 	VkBuffer aabbBuffer = 0;
 	VkDeviceMemory aabbMemory = 0;

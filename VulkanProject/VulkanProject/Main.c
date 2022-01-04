@@ -119,7 +119,7 @@ void changeScene(App* app)
 
     VkBool32 useMutliLevel = VK_TRUE;
     if (app->vk_info.ray_tracing) {
-        //flatten_scene(&app.scene);
+        // flatten_scene(&app->scene);
         prepare_scene(&app->scene, useMutliLevel);
     }
     else {
@@ -156,15 +156,18 @@ int main()
     VkBool32 useMutliLevel = VK_TRUE;
 
     /*GET_ROOT((&app.scene));
-    root->data.NumChildren = 1;
-    GET_CHILD_IDX((&app.scene), root, 5);
+    root->NumChildren = 1;
+    root->NumOdd = 1;
+    root->NumEven = 0;
+    GET_CHILD_IDX((&app.scene), root, 2);
     SceneNode* node = &app.scene.scene_nodes[childIdx];
-    app.scene.node_indices[root->data.ChildrenIndex] = childIdx;
-    GET_CHILD((&app.scene), node, 0);*/
-
+    app.scene.node_indices[root->ChildrenIndex] = childIdx;
+    GET_CHILD((&app.scene), node, 0);
+    SceneNode* grandChild = &app.scene.scene_nodes[app.scene.node_indices[child->ChildrenIndex]];*/
+    app.vk_info.ray_tracing = 0;
     if (app.vk_info.ray_tracing) {
-        //flatten_scene(&app.scene);
-        prepare_scene(&app.scene, useMutliLevel);
+        // flatten_scene(&app.scene);
+        // prepare_scene(&app.scene, useMutliLevel);
     }
     else {
         flatten_scene(&app.scene);
