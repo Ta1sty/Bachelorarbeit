@@ -8,6 +8,7 @@ namespace SceneCompiler.Scene.SceneTypes
     public class SceneNode
     {
         public List<SceneNode> Children = new();
+        public List<SceneNode> Parents = new();
         public SceneNode Brother = null; // this node is practically identical to this one, project others onto this one#
         public Node Source;
 
@@ -149,13 +150,14 @@ namespace SceneCompiler.Scene.SceneTypes
         {
             var ret = "";
             ret += "I:" + Index + "\t";
+            ret += "P:" + Parents.Count + "\t";
+            ret += "C:" + NumChildren + "\t";
+            ret += "T:" + NumTriangles + "\t";
             for (int i = 0; i < Level; i++)
             {
                 ret += "  ";
             }
             ret += "L:" + Level + " ";
-            ret += "C:" + NumChildren + "\t";
-            ret += "T:" + NumTriangles + "\t";
 
             if (Name != null)
                 ret += Name + " ";

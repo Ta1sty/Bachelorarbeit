@@ -403,6 +403,8 @@ vec4 shadeFragment(vec3 P, vec3 V, vec4 color, vec3 N, Material material) {
 	float n = 1; // todo phong exponent
 	// calculate lighting for each light source
 
+	return vec4(0,0,0,1);
+
 	vec3 sum = vec3(0);
 	for(int i = 0;i<numLights;i++){
 		Light light = lights[i];
@@ -446,8 +448,6 @@ vec4 shadeFragment(vec3 P, vec3 V, vec4 color, vec3 N, Material material) {
 			sum+=vec3(1);
 		else {
 			float l_mult = light.quadratic.x + light.quadratic.y / d + light.quadratic.z / (d*d);
-			diffuse = 0;
-			color = vec4(1,1,1,1);
 			sum += (specular+diffuse) * l_mult * light.intensity * color.xyz;
 		}
 	}

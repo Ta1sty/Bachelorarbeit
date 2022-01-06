@@ -208,6 +208,14 @@ namespace SceneCompiler.GLTFConversion.Compilation
                 nodes[i].Index = i;
             }
 
+            foreach (var node in nodes)
+            {
+                foreach (var child in node.Children)
+                {
+                    child.Parents.Add(node);
+                }
+            }
+
             Buffers.Nodes = nodes;
             Buffers.RootNode = Buffers.Nodes.Count - 1; // because the node for the scene is added last
         }
