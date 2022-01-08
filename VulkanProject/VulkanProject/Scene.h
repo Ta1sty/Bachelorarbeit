@@ -96,11 +96,20 @@ typedef struct sceneData
 
 typedef struct renderSettings {
 	float fov; // Field of view [0,90)
+	uint32_t textures;
+	uint32_t ambient;
+	uint32_t diffuse;
+	uint32_t specular;
+	uint32_t shadows;
+	uint32_t maxDepth;
 	uint32_t debug; // if this is disabled the image is rendered normally
 	int32_t colorSensitivity;
 	uint32_t displayUV; // displays the triangle UV coordinates
 	uint32_t displayTex; // displays the triangle Texture Coordinates
 	uint32_t displayTriangles; // displays the Borders of triangles
+	uint32_t displayTriangleIdx; // displays the triangleIndex
+	uint32_t displayMaterialIdx; // displays the materialIndex
+	uint32_t displayTextureIdx; // displays the textureIndex
 	uint32_t displayLights; // displays the light sources as Spheres
 	uint32_t displayIntersectionT; // displays the intersection T with HSV encoding
 	uint32_t displayAABBs; // displays the AABBs

@@ -3,3 +3,5 @@ VMA
 (Ray Visusualization)
 
 -> transform aabb at the end of build to represent geometry and children transformed by the node-transform
+
+buffer->uniform

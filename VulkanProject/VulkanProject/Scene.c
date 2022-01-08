@@ -17,6 +17,12 @@ void init_scene(Scene* scene)
 	scene->camera.rotation_y = 0;
 	scene->camera.settings.fov = 45;
 	scene->camera.settings.colorSensitivity = 15;
+	scene->camera.settings.textures = 1;
+	scene->camera.settings.ambient = 1;
+	scene->camera.settings.diffuse = 1;
+	scene->camera.settings.specular = 1;
+	scene->camera.settings.shadows = 1;
+	scene->camera.settings.maxDepth = 5;
 }
 
 void load_scene(Scene* scene, char* path)
