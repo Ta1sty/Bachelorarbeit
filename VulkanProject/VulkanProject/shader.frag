@@ -88,6 +88,7 @@ layout(binding = 9, set = 2) uniform FrameData {
 	uint displayTraversalDepth; // displays the maximum Depth the traversal took
 	uint displayTraversalCount; // displays the amount of times the loop ran and executed a query (skipped due to hight T is not counted)
 	uint displayQueryCount; // displays the total number of rayqueries that were used for this
+	uint displayTLASNumber; // displays the tlas number of the first triangle intersection
 };
 
 #ifdef RAY_TRACE
@@ -304,6 +305,8 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 	triangle_index = -1;
 	stackSize = 1;
 
+	uint triangleTLAS = -1;
+
 	while(stackSize>0){
 		TraversalPayload load = traversalBuffer[stackSize-1];
 		stackSize--; // remove last element
@@ -356,20 +359,20 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 				uint cIdx = rayQueryGetIntersectionInstanceCustomIndexEXT(ray_query, true);
 				SceneNode blasChild = nodes[cIdx];
 				triangle_index = blasChild.IndexBuferIndex/3 + rayQueryGetIntersectionPrimitiveIndexEXT(ray_query, true);
-				if(blasChild.Index == 10){
-					debugColor = vec4(1,0,0,1);
-				} else {
-					debugColor = vec4(0,0,1,1);
-				}
 
 
 				tuv.x = t;
 				vec2 uv = rayQueryGetIntersectionBarycentricsEXT(ray_query, true);
 				tuv.y = uv.y;
 				tuv.z = uv.x;
+
+				triangleTLAS = tlasNumber;
 			}
 			// triangle_index = -1;
 		}
+	}
+	if(displayTLASNumber != 0 && debugColor[3] == 0){	// debug
+		debugColor = vec4(hsv2rgb(vec3(min(triangleTLAS * 1f/colorSensitivity,0.66f),1,1)),1);
 	}
 	if(triangle_index >= 0) return true;
 	return false;
@@ -402,8 +405,6 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 vec4 shadeFragment(vec3 P, vec3 V, vec4 color, vec3 N, Material material) {
 	float n = 1; // todo phong exponent
 	// calculate lighting for each light source
-
-	return vec4(0,0,0,1);
 
 	vec3 sum = vec3(0);
 	for(int i = 0;i<numLights;i++){
