@@ -135,14 +135,6 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 	check(vkMapMemory(info->device, stagingMemory, 0, sizeof(VkAccelerationStructureInstanceKHR) * instance_count, 0,
 					  (void**) & staging_data), "");
 
-
-	node->AABB_min[0] = FLT_MAX;
-	node->AABB_min[1] = FLT_MAX;
-	node->AABB_min[2] = FLT_MAX;
-	node->AABB_max[0] = -FLT_MAX;
-	node->AABB_max[1] = -FLT_MAX;
-	node->AABB_max[2] = -FLT_MAX;
-
 	SceneNode* children = malloc(sizeof(SceneNode) * instance_count);
 	if (node->NumEven > 0 || node->NumTriangles > 0) 
 	// handle the even children and geometry
@@ -211,27 +203,7 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 			// this is the reference to use in case this is an odd level node
 		};
 
-		memcpy(&instance.transform.matrix, &child.object_to_world, sizeof(float) * 4 * 3);/*instance.transform.matrix[0][0] = 1;
-		instance.transform.matrix[1][0] = 0;
-		instance.transform.matrix[2][0] = 0;
-		instance.transform.matrix[0][1] = 0;
-		instance.transform.matrix[1][1] = 1;
-		instance.transform.matrix[2][1] = 0;
-		instance.transform.matrix[0][2] = 0;
-		instance.transform.matrix[1][2] = 0;
-		instance.transform.matrix[2][2] = 1;*/
-
-
-		float maxNew[3] = { 0 };
-		float minNew[3] = { 0 };
-		transformAABB(instance.transform.matrix, child.AABB_min, child.AABB_max, minNew, maxNew);
-
-		node->AABB_min[0] = min(node->AABB_min[0], minNew[0]);
-		node->AABB_min[1] = min(node->AABB_min[1], minNew[1]);
-		node->AABB_min[2] = min(node->AABB_min[2], minNew[2]);
-		node->AABB_max[0] = max(node->AABB_max[0], maxNew[0]);
-		node->AABB_max[1] = max(node->AABB_max[1], maxNew[1]);
-		node->AABB_max[2] = max(node->AABB_max[2], maxNew[2]);
+		memcpy(&instance.transform.matrix, &child.object_to_world, sizeof(float) * 4 * 3);
 
 		memcpy(&staging_data[i], &instance, sizeof(VkAccelerationStructureInstanceKHR));
 	}
@@ -326,7 +298,6 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 		.memory = tlasMemory
 	};
 	scene->acceleration_structures[node->Index].tlas = acceleration_structure;
-	expandAABB(node);
 	scene->TLASs[scene->numTLAS] = acceleration_structure.structure;
 	node->TlasNumber = scene->numTLAS;
 	scene->numTLAS++;
@@ -352,14 +323,6 @@ void build_blas(VkInfo* info, Scene* scene, SceneNode* node)
 	if (node->NumTriangles > 0) primitive_count += node->NumTriangles;
 	uint32_t geometryNum = 0;
 	VkAccelerationStructureGeometryKHR geometries[2] = { 0 };
-
-
-	node->AABB_min[0] = FLT_MAX;
-	node->AABB_min[1] = FLT_MAX;
-	node->AABB_min[2] = FLT_MAX;
-	node->AABB_max[0] = -FLT_MAX;
-	node->AABB_max[1] = -FLT_MAX;
-	node->AABB_max[2] = -FLT_MAX;
 
 	VkBuffer aabbBuffer = 0;
 	VkDeviceMemory aabbMemory = 0;
@@ -411,35 +374,15 @@ void build_blas(VkInfo* info, Scene* scene, SceneNode* node)
 		for (int32_t i = 0; i < node->NumChildren; i++)
 		{
 			GET_CHILD(scene, node, i);
-			float maxNew[3] = { 1,1,1 };
-			float minNew[3] = { -1,-1 ,-1 };
-			float transform[4][4] = {
-							{1, 0, 0, 0},
-							{0, 1, 0, 0},
-							{0, 0, 1, 0},
-							{0, 0, 0, 1}
-			};
-			if (child->Level % 2 == 0)
-			{
-				memcpy(&transform, &child->object_to_world, sizeof(float) * 4 * 4);
-			}
-			transformAABB(transform, child->AABB_min, child->AABB_max, minNew, maxNew);
 
 			VkAabbPositionsKHR position = {
-				.maxX = maxNew[0],
-				.maxY = maxNew[1],
-				.maxZ = maxNew[2],
-				.minX = minNew[0],
-				.minY = minNew[1],
-				.minZ = minNew[2]
+				.maxX = child->AABB_max[0],
+				.maxY = child->AABB_max[1],
+				.maxZ = child->AABB_max[2],
+				.minX = child->AABB_min[0],
+				.minY = child->AABB_min[1],
+				.minZ = child->AABB_min[2]
 			};
-
-			node->AABB_min[0] = min(node->AABB_min[0], minNew[0]);
-			node->AABB_min[1] = min(node->AABB_min[1], minNew[1]);
-			node->AABB_min[2] = min(node->AABB_min[2], minNew[2]);
-			node->AABB_max[0] = max(node->AABB_max[0], maxNew[0]);
-			node->AABB_max[1] = max(node->AABB_max[1], maxNew[1]);
-			node->AABB_max[2] = max(node->AABB_max[2], maxNew[2]);
 
 			memcpy(&aabbData[i], &position, sizeof(VkAabbPositionsKHR));
 		}
@@ -517,8 +460,6 @@ void build_blas(VkInfo* info, Scene* scene, SceneNode* node)
 			for (uint32_t j = 0; j < 3; j++)
 			{
 				vertices[i * 3 + j] = scene->vertices[i + minIndex].position[j];
-				node->AABB_min[j] = min(node->AABB_min[j], vertices[i * 3 + j]);
-				node->AABB_max[j] = max(node->AABB_max[j], vertices[i * 3 + j]);
 			}
 		}
 
@@ -659,61 +600,6 @@ void build_blas(VkInfo* info, Scene* scene, SceneNode* node)
 			.structure = structure
 		};
 		scene->acceleration_structures[node->Index].blas = acceleration_structure;
-	expandAABB(node);
-}
-
-void expandAABB(SceneNode* node)
-{
-	float inc = 0.02f;
-	node->AABB_min[0] -= inc;
-	node->AABB_min[1] -= inc;
-	node->AABB_min[2] -= inc;
-	node->AABB_max[0] += inc;
-	node->AABB_max[1] += inc;
-	node->AABB_max[2] += inc;
-}
-
-void transformAABB(float transform[4][4], float min[3], float max[3], float* minNew, float* maxNew)
-{
-	float AABBVertices[8][3] = {
-		{min[0], min[1], min[2]},
-		{min[0], min[1], max[2]},
-		{min[0], max[1], min[2]},
-		{min[0], max[1], max[2]},
-		{max[0], min[1], min[2]},
-		{max[0], min[1], max[2]},
-		{max[0], max[1], min[2]},
-		{max[0], max[1], max[2]},
-	};
-
-	max[0] = -FLT_MAX;
-	max[1] = -FLT_MAX;
-	max[2] = -FLT_MAX;
-	min[0] = FLT_MAX;
-	min[1] = FLT_MAX;
-	min[2] = FLT_MAX;
-
-	for (uint32_t i = 0; i < 8; i++)
-	{
-		AABBVertices[i][0] = transform[0][0] * AABBVertices[i][0] + transform[0][1] * AABBVertices[i][1] +
-			transform[0][2] * AABBVertices[i][2] + transform[0][3];
-		AABBVertices[i][1] = transform[1][0] * AABBVertices[i][0] + transform[1][1] * AABBVertices[i][1] +
-			transform[1][2] * AABBVertices[i][2] + transform[1][3];
-		AABBVertices[i][2] = transform[2][0] * AABBVertices[i][0] + transform[2][1] * AABBVertices[i][1] +
-			transform[2][2] * AABBVertices[i][2] + transform[2][3];
-	}
-
-	for (uint32_t i = 0; i < 8; i++)
-	{
-		for (uint32_t j = 0; j < 3; j++)
-		{
-			max[j] = max(max[j], AABBVertices[i][j]);
-			min[j] = min(min[j], AABBVertices[i][j]);
-		}
-	}
-
-	memcpy(minNew, min, sizeof(float) * 3);
-	memcpy(maxNew, max, sizeof(float) * 3);
 }
 
 void create_ray_descriptors(VkInfo* info, Scene* scene, uint32_t binding)

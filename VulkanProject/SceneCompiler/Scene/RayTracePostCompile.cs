@@ -158,6 +158,8 @@ namespace SceneCompiler.Scene
             {
                 buffer[i].Index = i;
             }
+
+            ComputeAABBs(root);
         }
 
         public void Validate()
@@ -266,7 +268,7 @@ namespace SceneCompiler.Scene
             foreach (var child in node.Children) // children
             {
                 ComputeAABBs(child);
-                var (min, max) = TransformAABB(child.ObjectToWorld, child.AABB_min, child.AABB_max);
+                var (min, max) = TransformAABB(node.ObjectToWorld, child.AABB_min, child.AABB_max);
                 node.AABB_min = Min(node.AABB_min, min);
                 node.AABB_max = Max(node.AABB_max, max);
             }
@@ -278,8 +280,9 @@ namespace SceneCompiler.Scene
                 {
                     var v = _buffers.VertexBuffer[(int)_buffers.IndexBuffer[index + j]];
                     var pos = new Vector4(v.Position[0], v.Position[1], v.Position[2], 1);
-                    node.AABB_min = Min(node.AABB_min, pos);
-                    node.AABB_max = Max(node.AABB_max, pos);
+                    var posTr = Vector4.Transform(pos, node.ObjectToWorld);
+                    node.AABB_min = Min(node.AABB_min, posTr);
+                    node.AABB_max = Max(node.AABB_max, posTr);
                 }
             }
         }
@@ -306,7 +309,7 @@ namespace SceneCompiler.Scene
                 min = Min(min, vec);
                 max = Max(max, vec);
             }
-            return (min, max);
+            return (1.001f * min, 1.001f * max);
         }
 
         private Vector4 Max(Vector4 a, Vector4 b)
@@ -320,9 +323,9 @@ namespace SceneCompiler.Scene
         private Vector4 Min(Vector4 a, Vector4 b)
         {
             return new Vector4(
-                Math.Max(a.X, b.X),
-                Math.Max(a.Y, b.Y),
-                Math.Max(a.Z, b.Z),
+                Math.Min(a.X, b.X),
+                Math.Min(a.Y, b.Y),
+                Math.Min(a.Z, b.Z),
                 1);
         }
 

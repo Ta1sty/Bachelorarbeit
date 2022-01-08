@@ -344,9 +344,9 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 	while(stackSize>0){
 		TraversalPayload load = traversalBuffer[stackSize-1];
 		stackSize--; // remove last element
-
 		if(load.t > best_t) continue;// there was already a closer hit, we can skip this one
 
+		int start = stackSize;
 		SceneNode node = nodes[load.node_idx]; // retrieve scene Node
 		traversalDepth = max(node.level, traversalDepth); // not 100% correct but it gives a vague idea
 		uint tlasNumber = node.tlasNumber;
@@ -369,10 +369,23 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 				case gl_RayQueryCandidateIntersectionAABBEXT:
 					// we do not want to generate intersections, since AABB hit does not guarantee a hit in the traversal
 					// instead call instanceShader and add the new parameters to the traversalList
+					// we need to pay attention! the query goes from smallest to largest t value and adds these to the list
+					// for continuing traversal it is therfore beneficial to resume with the closest node, which was the one
+					// that replaces the node that executed the query, however we still want to do a DFS. Solution for this is:
+					// We reverse the list. Then the closest hit is at the end of the stack, and all added levels are still 
+					// right of this node
 					instanceHit(ray_query, load, node);
 					break;
 				default: break;
 			}
+		}
+		int end = stackSize;
+		int added = end - start;
+		for(int i = 0;i<added/2;i++){
+			TraversalPayload tmp1 = traversalBuffer[start+i];
+			TraversalPayload tmp2 = traversalBuffer[end-1-i];
+			traversalBuffer[start+i] = tmp2;
+			traversalBuffer[end-1-i] = tmp1;
 		}
 
 		uint commitedType = rayQueryGetIntersectionTypeEXT(ray_query, true);
