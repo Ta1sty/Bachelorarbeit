@@ -77,11 +77,20 @@ layout(binding = 9, set = 2) uniform FrameData {
 	uint height;
 	// Render settings struct
 	float fov; // Field of view [0,90)
+	uint renderTextures;
+	uint renderAmbient;
+	uint renderDiffuse;
+	uint renderSpecular;
+	uint renderShadows;
+	uint rayMaxDepth;
 	uint debug; // if this is disabled the image is rendered normally
 	int colorSensitivity;
 	uint displayUV; // displays the triangle UV coordinates
 	uint displayTex; // displays the triangle Texture Coordinates
 	uint displayTriangles; // displays the Borders of triangles
+	uint displayTriangleIdx; // displays the TriangleIdx
+	uint displayMaterialIdx; // displays the materialIndex
+	uint displayTextureIdx; // displays the textureIndex
 	uint displayLights; // displays the light sources as Spheres
 	uint displayIntersectionT; // displays the intersection T with HSV encoding
 	uint displayAABBs; // displays the AABBs
@@ -172,32 +181,57 @@ void getHitPayload(int triangle, vec3 tuv, out vec4 color, out vec3 N, out Mater
 	float u = tuv.y;
 	float v = tuv.z;
 	
-	if(displayUV != 0){ // debug
-		debugColor = vec4(u,v,0,1);
-	}
+
 	// compute interpolated Normal and Tex - important this is in object space -> need to transform either 
 	N = w * v0.normal + v * v1.normal + u * v2.normal;
 	N = normalize(N);
 	vec2 tex = w * v0.tex_coord + v * v1.tex_coord + u * v2.tex_coord;
 
-	if(displayTex != 0){	// debug
-		debugColor = vec4(tex.xy,0,1);
-	}
-
 	// get material and texture properties, if there are not set use default values
-	if(v0.material_index < 0){
+	if(v0.material_index < 0 || renderTextures == 0){
 		material.k_a = 0.15f;
 		material.k_d = 0.5f;
 		material.k_s = 0.35f;
 		material.texture_index = -1;
-		color = vec4(0.2,0.4,0.8,1);
+		if(renderTextures == 0)
+			color = vec4(0.8,0.8,0.8,1);
+		else
+			color = vec4(0.2,0.4,0.8,1);
 	} else {
 		material = materials[v0.material_index];
-		if(material.texture_index < 0)
+		if(material.texture_index < 0) {
 			color = vec4(0.2,0.4,0.8,1);
-		else
+		}
+		else {
 			color = texture(sampler2D(textures[material.texture_index], samp), tex);
+		}
 	}
+
+	// debug
+	if(debug == 0 || debugColor[3] != 0) return;
+
+	if(displayUV != 0)
+		debugColor = vec4(u,v,0,1);
+
+	if(displayTex != 0)
+		debugColor = vec4(tex.x,tex.y,0,1);
+
+	if(displayTriangleIdx != 0)
+		debugColor = vec4(hsv2rgb(vec3(triangle * 1.f / colorSensitivity,1,1)),1);
+
+	if(displayMaterialIdx != 0)
+		if(v0.material_index >= 0)
+			debugColor = vec4(hsv2rgb(vec3(min(v0.material_index * 1.f / colorSensitivity,0.66f),1,1)),1);
+		else
+			debugColor = vec4(0.2,0.4,0.8,1);
+
+	if(displayTextureIdx != 0)
+		if(material.texture_index >= 0)
+			debugColor = vec4(hsv2rgb(vec3(min(material.texture_index * 1.f / colorSensitivity,0.66f),1,1)),1);
+		else
+			debugColor = vec4(0.2,0.4,0.8,1);
+
+	
 }
 
 // ONLY modify these when in the instanceShader or the rayTrace Loop
@@ -281,7 +315,7 @@ void triangleHit(rayQueryEXT ray_query, SceneNode node){
 #endif
 
 
-int maxDepth = 0;
+int traversalDepth = 0;
 uint numTraversals = 0;
 uint queryCount = 0;
 bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, out vec3 tuv, out int triangle_index) {
@@ -311,7 +345,7 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 		if(load.t > best_t) continue;// there was already a closer hit, we can skip this one
 
 		SceneNode node = nodes[load.node_idx]; // retrieve scene Node
-		maxDepth = max(node.level, maxDepth); // not 100% correct but it gives a vague idea
+		traversalDepth = max(node.level, traversalDepth); // not 100% correct but it gives a vague idea
 		uint tlasNumber = node.tlasNumber;
         vec3 query_origin = load.transformed_origin;
         vec3 query_direction = load.transformed_direction;
@@ -356,12 +390,6 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 				uint cIdx = rayQueryGetIntersectionInstanceCustomIndexEXT(ray_query, true);
 				SceneNode blasChild = nodes[cIdx];
 				triangle_index = blasChild.IndexBuferIndex/3 + rayQueryGetIntersectionPrimitiveIndexEXT(ray_query, true);
-				if(blasChild.Index == 10){
-					debugColor = vec4(1,0,0,1);
-				} else {
-					debugColor = vec4(0,0,1,1);
-				}
-
 
 				tuv.x = t;
 				vec2 uv = rayQueryGetIntersectionBarycentricsEXT(ray_query, true);
@@ -386,13 +414,30 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 		vec3 v0 = vert_v0.position;
 		vec3 v2 = vert_v1.position;
 		vec3 v1 = vert_v2.position;
+
+
 		if(rayTriangleIntersect(rayOrigin, rayDirection, tuv_next, v0, v1, v2) ){
-			if(tuv_next.x < tuv.x) {
-				tuv = tuv_next;
-				triangle_index = i;
+			// for showing triangles we use anyHit and early out
+			if(debug != 0 && displayTriangles != 0){
+				vec2 uv = tuv_next.yz;
+				if(uv.x+uv.y>0.99f || uv.x < 0.01f || uv.y < 0.01f) {
+					return true;
+				}
+			} else {
+				if(tuv_next.x < tuv.x) { // compute closest hit
+					vec3 N;
+					vec4 color;
+					Material material;
+					getHitPayload(i, tuv_next, color, N, material);
+					if(color[3] == 0) // test that the hit is opque, else skip it
+						continue;
+					triangle_index = i;
+					tuv = tuv_next;
+				}
 			}
 		}
 	}
+
 	if(triangle_index == -1){
 		return false;
 	}
@@ -402,8 +447,6 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 vec4 shadeFragment(vec3 P, vec3 V, vec4 color, vec3 N, Material material) {
 	float n = 1; // todo phong exponent
 	// calculate lighting for each light source
-
-	return vec4(0,0,0,1);
 
 	vec3 sum = vec3(0);
 	for(int i = 0;i<numLights;i++){
@@ -420,30 +463,36 @@ vec4 shadeFragment(vec3 P, vec3 V, vec4 color, vec3 N, Material material) {
 		if(l_dst > light.maxDst && (light.type & LIGHT_IGNORE_MAX_DISTANCE) == 0){ // is the light near enough to even matter
 			continue;
 		}
-		float specular;
+		float specular = 0;
 		float diffuse = material.k_d;
 		vec3 R = normalize(reflect(V, N));
-		if((light.type & LIGHT_TYPE_POINT) != 0){ // point light, check if it is visible and then compute KS via L vector
-			vec3 LN = normalize(L);
-			if(ray_trace_loop(P, LN, l_dst,rootSceneNode, tuvShadow, index)){ // is light source visible, shoot ray to lPos?
-				continue;
-			}
-			specular = material.k_s * pow(max(0,dot(R,LN)),n);
-		} else if((light.type & LIGHT_TYPE_DIRECTIONAL) != 0) { // directional light, check if it is visible 
-			if((light.type & LIGHT_USE_MIN_DST) != 0){ // shoot ray over minDst, if nothing is hit lighting is enabled
-				if(ray_trace_loop(P, normalize(-light.direction), light.minDst,rootSceneNode, tuvShadow, index)){ // shoot shadow ray into the light source
+		if(renderShadows != 0){
+			if((light.type & LIGHT_TYPE_POINT) != 0){ // point light, check if it is visible and then compute KS via L vector
+				vec3 LN = normalize(L);
+				if(ray_trace_loop(P, LN, l_dst,rootSceneNode, tuvShadow, index)){ // is light source visible? shoot ray to lPos
 					continue;
 				}
-				specular = material.k_s * pow(max(0,dot(R,-light.direction)),n);
-			} else { // directional light with fixed position, this is probably not correct
-				if(ray_trace_loop(P, normalize(-light.direction), l_dst,rootSceneNode, tuvShadow, index)){
-					continue;
+				specular = material.k_s * pow(max(0,dot(R,LN)),n);
+			} else if((light.type & LIGHT_TYPE_DIRECTIONAL) != 0) { // directional light, check if it is visible 
+				if((light.type & LIGHT_USE_MIN_DST) != 0){ // shoot ray over minDst, if nothing is hit lighting is enabled
+					if(ray_trace_loop(P, normalize(-light.direction), light.minDst,rootSceneNode, tuvShadow, index)){ // shoot shadow ray into the light source
+						continue;
+					}
+					specular = material.k_s * pow(max(0,dot(R,-light.direction)),n);
+				} else { // directional light with fixed position, this is probably not correct
+					if(ray_trace_loop(P, normalize(-light.direction), l_dst,rootSceneNode, tuvShadow, index)){
+						continue;
+					}
+					specular = material.k_s * pow(max(0,dot(R,-light.direction)),n);
 				}
-				specular = material.k_s * pow(max(0,dot(R,-light.direction)),n);
 			}
 		}
+
 		// https://developer.valvesoftware.com/wiki/Constant-Linear-Quadratic_Falloff
+
 		float d = l_dst - light.radius;
+		if(renderDiffuse == 0) diffuse = 0;
+		if(renderSpecular == 0) specular = 0;
 		if(d<0)
 			sum+=vec3(1);
 		else {
@@ -451,7 +500,7 @@ vec4 shadeFragment(vec3 P, vec3 V, vec4 color, vec3 N, Material material) {
 			sum += (specular+diffuse) * l_mult * light.intensity * color.xyz;
 		}
 	}
-	material.k_a = 0;
+	if(renderAmbient == 0) material.k_a = 0;
 	sum += material.k_a * color.xyz;
 	return vec4(sum.xyz, color[3]);
 }
@@ -472,7 +521,6 @@ void generatePixelRay(out vec3 rayOrigin, out vec3 rayDirection){
 	rayOrigin = origin_world_space.xyz;
 	rayDirection = direction_world_space.xyz;
 }
-const int MAX_DEPTH = 5;
 const float MAX_T = 300;
 vec4 rayTrace(vec3 rayOrigin, vec3 rayDirection, out float t) {
 	vec4 color = vec4(0,0,0,1);
@@ -480,7 +528,18 @@ vec4 rayTrace(vec3 rayOrigin, vec3 rayDirection, out float t) {
 	vec3 P = rayOrigin.xyz;
 	vec3 V = rayDirection.xyz;
 	int depth = 0;
-	while(depth < 6){
+
+	if(debug != 0 && displayTriangles != 0) {
+		int triangle = -1;
+		vec3 tuv;
+		if(ray_trace_loop(rayOrigin, rayDirection, MAX_T, rootSceneNode, tuv, triangle))
+			return vec4(1,1,1,1);
+		else
+			return vec4(0,0,0,1);
+	}
+
+
+	while(depth < 800){
 		int triangle = -1;
 		vec3 tuv;
 		vec4 fracColor;
@@ -489,13 +548,20 @@ vec4 rayTrace(vec3 rayOrigin, vec3 rayDirection, out float t) {
 			vec3 N;
 			vec4 fragCol;
 			Material material;
+
+			if(debug != 0 && depth == 0 && (displayTex != 0 || displayUV != 0 
+										|| displayMaterialIdx != 0 || displayTextureIdx != 0)
+										|| displayTriangleIdx != 0 || displayTriangles != 0)
+				debugColor[3] = 0;
 			getHitPayload(triangle, tuv, fragCol, N, material);
+
+			Vertex v0 = vertices[indices[triangle * 3]];
 			fracColor = shadeFragment(P, V, fragCol, N, material);
 			if(depth == 0)
 				t = tuv.x;
-			if(depth>=MAX_DEPTH) 
-				fracColor[3] = 1; // cancel recursion by setting alpha to one
 			depth++;
+			if(depth>=rayMaxDepth) 
+				fracColor[3] = 1; // cancel recursion by setting alpha to one
 			// compute transparent component
 			float alpha = fracColor[3];
 			color += frac*alpha*fracColor;
@@ -522,14 +588,11 @@ void main() {
 
 	float t_hit;
 	outColor = rayTrace(rayOrigin, rayDirection, t_hit);
-	if(displayTriangles != 0) {
-		debugColor = vec4(0,0,0,1);
-	}
 	if(displayIntersectionT != 0) {
-		debugColor = vec4(hsv2rgb(vec3(min(t_hit/50,0.66f),1,1)),1);
+		debugColor = vec4(hsv2rgb(vec3(min(t_hit * 1.f/colorSensitivity,0.66f),1,1)),1);
 	} 
 	if (displayTraversalDepth != 0){
-		debugColor = vec4(hsv2rgb(vec3(0.66f - min(maxDepth * 1.f /colorSensitivity,0.66f),1,1)),1);
+		debugColor = vec4(hsv2rgb(vec3(0.66f - min(traversalDepth * 1.f /colorSensitivity,0.66f),1,1)),1);
 	}
 	if (displayTraversalCount != 0){
 		debugColor = vec4(hsv2rgb(vec3(0.66f - min(numTraversals * 1.f/colorSensitivity,0.66f),1,1)),1);

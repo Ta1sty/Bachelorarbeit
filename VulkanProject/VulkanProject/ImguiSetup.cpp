@@ -204,13 +204,24 @@ void draw_imgui_frame(VkInfo* info, Scene* scene, SceneSelection* scene_selectio
 
 	ImGui::Text("Framerate: %f", info->frameRate);
 	ImGui::SliderFloat("FOV", &scene->camera.settings.fov, 1, 89);
+	ImGui::Checkbox("Textures", (bool*)&scene->camera.settings.textures);
+	ImGui::Checkbox("Ambient", (bool*)&scene->camera.settings.ambient);
+	ImGui::Checkbox("Diffuse", (bool*)&scene->camera.settings.diffuse);
+	ImGui::Checkbox("Specular", (bool*)&scene->camera.settings.specular);
+	ImGui::Checkbox("Shadows", (bool*)&scene->camera.settings.shadows);
+	ImGui::SliderInt("MaxDepth", (int*) &scene->camera.settings.maxDepth, 1, 10);
+
 	if (ImGui::CollapsingHeader("DEBUG")) {
 		ImGui::Checkbox("Enable Debug", (bool*)&scene->camera.settings.debug);
-		ImGui::SliderInt("Color Sensitvity", &scene->camera.settings.colorSensitivity, 5, 30);
+		ImGui::SliderInt("Color Sensitvity", &scene->camera.settings.colorSensitivity, 5, 100);
 		ImGui::BeginDisabled(scene->camera.settings.debug == 0);
 		ImGui::Checkbox("UV", (bool*)&scene->camera.settings.displayUV);
 		ImGui::Checkbox("TEX", (bool*)&scene->camera.settings.displayTex);
 		ImGui::Checkbox("Triangles", (bool*)&scene->camera.settings.displayTriangles);
+		ImGui::Checkbox("TriangleIdx", (bool*)&scene->camera.settings.displayTriangleIdx);
+		ImGui::Checkbox("MaterialIdx", (bool*)&scene->camera.settings.displayMaterialIdx);
+		ImGui::Checkbox("TextureIdx", (bool*)&scene->camera.settings.displayTextureIdx);
+
 		ImGui::Checkbox("Lights", (bool*)&scene->camera.settings.displayLights);
 		ImGui::Checkbox("Intersection T", (bool*)&scene->camera.settings.displayIntersectionT);
 		ImGui::Checkbox("AABBs", (bool*)&scene->camera.settings.displayAABBs);
