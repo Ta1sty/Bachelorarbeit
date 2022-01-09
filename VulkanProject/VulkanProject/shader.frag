@@ -1,5 +1,6 @@
 #version 460
 #extension GL_EXT_nonuniform_qualifier : enable
+#define RAY_TRACE
 #ifdef RAY_TRACE
 #extension GL_EXT_ray_query : require
 #endif		
@@ -106,6 +107,7 @@ layout(binding = 10, set = 3) uniform accelerationStructureEXT[] tlas;
 
 layout(location = 0) in vec3 fragColor;
 vec4 debugColor; // if last is 0 it was never set, in that case use outColor
+bool debugSetEnabled = true;
 layout(location = 0) out vec4 outColor;
 
 //https://gist.github.com/983/e170a24ae8eba2cd174f
@@ -115,6 +117,65 @@ vec3 hsv2rgb(vec3 c)
     vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
     return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
 }
+
+void SetDebugHsv(uint option, float number, float range, bool clampValue){
+	if(option == 0) return;
+	if(!debugSetEnabled) return;
+	float x = number / range;
+	if(clampValue)
+		x = min(x,0.66);
+	debugColor = vec4(hsv2rgb(vec3(x,1,1)),1);
+}
+
+void SetDebugCol(uint option, vec4 color){
+	if(option == 0) return;
+	if(!debugSetEnabled) return;
+	debugColor = color;
+}
+
+void DebugOffIfSet(){
+	if(debugColor[3] == 1)
+		debugSetEnabled = false;
+}
+
+bool intersectAABB(vec3 rayOrigin, vec3 rayDir, SceneNode node) {
+	vec3 boxMin = node.AABB_min.xyz;
+	vec3 boxMax = node.AABB_max.xyz;
+    vec3 tMin = (boxMin - rayOrigin) / rayDir;
+    vec3 tMax = (boxMax - rayOrigin) / rayDir;
+    vec3 t1 = min(tMin, tMax);
+    vec3 t2 = max(tMin, tMax);
+    float tNear = max(max(t1.x, t1.y), t1.z);
+    float tFar = min(min(t2.x, t2.y), t2.z);
+	if(tNear>tFar)
+		return false;
+	if(displayAABBs != 0){
+		vec3 extent = boxMax - boxMin;
+
+		vec3 P1 = rayOrigin + tNear * rayDir;
+		vec3 P2 = rayOrigin + tFar * rayDir;
+
+		float t[2] = {tNear, tFar};
+
+		for(int i = 0;i<2;i++){
+			if(t[i] < 0.001) continue;
+			vec3 P = rayOrigin + t[i] * rayDir;
+			
+			vec3 diffMax = (boxMax - P)/extent; // normalisieren
+
+			int count = 0;
+			if(diffMax.x < 0.01 || diffMax.x > 0.99)
+				count++;
+			if(diffMax.y < 0.01 || diffMax.y > 0.99)
+				count++;
+			if(diffMax.z < 0.01 || diffMax.z > 0.99)
+				count++;
+			if(count >= 2)
+				SetDebugHsv(displayAABBs, node.tlasNumber, colorSensitivity, true);
+		}
+	}
+	return true;
+};
 
 const float t_min = 1.0e-4f;
 const float EPSILON = 0.0000001;
@@ -211,28 +272,18 @@ void getHitPayload(int triangle, vec3 tuv, out vec4 color, out vec3 N, out Mater
 	// debug
 	if(debug == 0 || debugColor[3] != 0) return;
 
-	if(displayUV != 0)
-		debugColor = vec4(u,v,0,1);
+	SetDebugCol(displayUV, vec4(u,v,0,1));
+	SetDebugCol(displayTex, vec4(tex.x,tex.y,0,1));
+	SetDebugHsv(displayTriangleIdx, triangle, colorSensitivity, false);
+	if(v0.material_index >= 0)
+		SetDebugHsv(displayMaterialIdx, v0.material_index, colorSensitivity, true);
+	else 
+		SetDebugCol(displayMaterialIdx, vec4(0.2,0.4,0.8,1));
 
-	if(displayTex != 0)
-		debugColor = vec4(tex.x,tex.y,0,1);
-
-	if(displayTriangleIdx != 0)
-		debugColor = vec4(hsv2rgb(vec3(triangle * 1.f / colorSensitivity,1,1)),1);
-
-	if(displayMaterialIdx != 0)
-		if(v0.material_index >= 0)
-			debugColor = vec4(hsv2rgb(vec3(min(v0.material_index * 1.f / colorSensitivity,0.66f),1,1)),1);
-		else
-			debugColor = vec4(0.2,0.4,0.8,1);
-
-	if(displayTextureIdx != 0)
-		if(material.texture_index >= 0)
-			debugColor = vec4(hsv2rgb(vec3(min(material.texture_index * 1.f / colorSensitivity,0.66f),1,1)),1);
-		else
-			debugColor = vec4(0.2,0.4,0.8,1);
-
-	
+	if(material.texture_index >= 0)
+		SetDebugHsv(displayTextureIdx, material.texture_index, colorSensitivity, true);
+	else 
+		SetDebugCol(displayTextureIdx, vec4(0.2,0.4,0.8,1));
 }
 
 // ONLY modify these when in the instanceShader or the rayTrace Loop
@@ -353,6 +404,8 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
         vec3 query_origin = load.transformed_origin;
         vec3 query_direction = load.transformed_direction;
 
+		if(displayAABBs != 0 && intersectAABB(query_origin, query_direction, node));			
+
 		rayQueryEXT ray_query;
 		rayQueryInitializeEXT(ray_query, tlas[tlasNumber], 0, 0xFF, 
 			query_origin, min_t, 
@@ -417,9 +470,8 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 			// triangle_index = -1;
 		}
 	}
-	if(displayTLASNumber != 0 && debugColor[3] == 0){	// debug
-		debugColor = vec4(hsv2rgb(vec3(min(triangleTLAS * 1f/colorSensitivity,0.66f),1,1)),1);
-	}
+	SetDebugHsv(displayTLASNumber, triangleTLAS, colorSensitivity, true);
+
 	if(triangle_index >= 0) return true;
 	return false;
 #endif
@@ -468,7 +520,6 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 vec4 shadeFragment(vec3 P, vec3 V, vec4 color, vec3 N, Material material) {
 	float n = 1; // todo phong exponent
 	// calculate lighting for each light source
-
 	vec3 sum = vec3(0);
 	for(int i = 0;i<numLights;i++){
 		Light light = lights[i];
@@ -570,11 +621,10 @@ vec4 rayTrace(vec3 rayOrigin, vec3 rayDirection, out float t) {
 			vec4 fragCol;
 			Material material;
 
-			if(debug != 0 && depth == 0 && (displayTex != 0 || displayUV != 0 
-										|| displayMaterialIdx != 0 || displayTextureIdx != 0)
-										|| displayTriangleIdx != 0 || displayTriangles != 0)
-				debugColor[3] = 0;
 			getHitPayload(triangle, tuv, fragCol, N, material);
+			DebugOffIfSet();
+			if(displayAABBs != 0)
+				debugSetEnabled = false;
 
 			Vertex v0 = vertices[indices[triangle * 3]];
 			fracColor = shadeFragment(P, V, fragCol, N, material);

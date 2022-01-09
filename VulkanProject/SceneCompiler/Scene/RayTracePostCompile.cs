@@ -309,7 +309,12 @@ namespace SceneCompiler.Scene
                 min = Min(min, vec);
                 max = Max(max, vec);
             }
-            return (1.001f * min, 1.001f * max);
+            /*var middle = (min + max) / 2;
+            var extent = max - min;
+            min = middle - (extent / 2) * 1.05f;
+            max = middle + (extent / 2) * 1.05f;
+            */
+            return (min, max);
         }
 
         private Vector4 Max(Vector4 a, Vector4 b)
