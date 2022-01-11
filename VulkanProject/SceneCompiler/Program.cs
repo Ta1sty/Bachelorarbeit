@@ -16,6 +16,7 @@ namespace SceneCompiler
     {
         static void Main(string[] args)
         {
+            NativeMethods.AllocConsole();
             foreach (var arg in args)
             {
                 Console.WriteLine(arg);
@@ -58,6 +59,7 @@ namespace SceneCompiler
             rayTraceOptimization.PrintScene();
             var writer = new SceneWriter();
             writer.WriteBuffers(dst, compiler);
+            Console.ReadLine();
         }
     }
 }

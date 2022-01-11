@@ -142,6 +142,7 @@ void create_device(VkInfo* vk_info) // see https://github.com/MomentsInGraphics/
 	VkPhysicalDeviceFeatures enabled_features = {
 		.shaderSampledImageArrayDynamicIndexing = VK_TRUE,
 		.samplerAnisotropy = VK_TRUE,
+		.fragmentStoresAndAtomics = VK_TRUE,
 	};
 	VkPhysicalDeviceAccelerationStructureFeaturesKHR acceleration_structure_features = {
 		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR,

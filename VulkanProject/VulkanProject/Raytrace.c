@@ -8,7 +8,7 @@
 #include "Util.h"
 #include <vulkan/vulkan_core.h>
 // see https://github.com/MomentsInGraphics/vulkan_renderer, this macro creates a function pointer for dynamic function handles of vulkan
-#define VK_LOAD(FUNCTION_NAME) PFN_##FUNCTION_NAME p##FUNCTION_NAME = (PFN_##FUNCTION_NAME) glfwGetInstanceProcAddress(info->instance, #FUNCTION_NAME);
+#define VK_LOAD(FUNCTION_NAME) PFN_##FUNCTION_NAME p##FUNCTION_NAME = (PFN_##FUNCTION_NAME) glfwGetInstanceProcAddress(info->instance, #FUNCTION_NAME)
 
 void prepare_scene(Scene* scene, VkBool32 useMultiLevel)
 {
@@ -110,10 +110,10 @@ void build_node_acceleration_structure(VkInfo* info, Scene* scene, SceneNode* no
 void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 {
 	// credits to christopher
-	VK_LOAD(vkGetAccelerationStructureBuildSizesKHR)
-	VK_LOAD(vkCreateAccelerationStructureKHR)
-	VK_LOAD(vkGetAccelerationStructureDeviceAddressKHR)
-	VK_LOAD(vkCmdBuildAccelerationStructuresKHR)
+	VK_LOAD(vkGetAccelerationStructureBuildSizesKHR);
+	VK_LOAD(vkCreateAccelerationStructureKHR);
+	VK_LOAD(vkGetAccelerationStructureDeviceAddressKHR);
+	VK_LOAD(vkCmdBuildAccelerationStructuresKHR);
 
 	// 2 things to do
 	// if node references geometry calls build BLAS for just the geometry
@@ -208,6 +208,8 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 		memcpy(&staging_data[i], &instance, sizeof(VkAccelerationStructureInstanceKHR));
 	}
 
+	free(children);
+
 	VkAccelerationStructureBuildSizesInfoKHR top_sizes = {
 		.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR,
 	};
@@ -292,6 +294,11 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 
 	endSingleTimeCommands(info, cmd);
 
+	vkDestroyBuffer(info->device, stagingBuffer, NULL);
+	vkDestroyBuffer(info->device, scratchBuffer, NULL);
+	vkFreeMemory(info->device, stagingMemory, NULL);
+	vkFreeMemory(info->device, scratchMemory, NULL);
+
 	AccelerationStructure acceleration_structure = {
 		.structure = structure,
 		.buffer = tlasBuffer,
@@ -313,10 +320,10 @@ void build_blas(VkInfo* info, Scene* scene, SceneNode* node)
 	// and add traversalNodes
 
 	// credits to christopher
-	VK_LOAD(vkGetAccelerationStructureBuildSizesKHR)
-	VK_LOAD(vkCreateAccelerationStructureKHR)
-	VK_LOAD(vkGetAccelerationStructureDeviceAddressKHR)
-	VK_LOAD(vkCmdBuildAccelerationStructuresKHR)
+	VK_LOAD(vkGetAccelerationStructureBuildSizesKHR);
+	VK_LOAD(vkCreateAccelerationStructureKHR);
+	VK_LOAD(vkGetAccelerationStructureDeviceAddressKHR);
+	VK_LOAD(vkCmdBuildAccelerationStructuresKHR);
 
 		uint32_t primitive_count = 0;
 	if (node->NumChildren > 0) primitive_count += node->NumChildren;
@@ -590,9 +597,12 @@ void build_blas(VkInfo* info, Scene* scene, SceneNode* node)
 		vkDestroyBuffer(info->device, vertexStage, NULL);
 		vkDestroyBuffer(info->device, indexStage, NULL);
 		vkDestroyBuffer(info->device, scratchBuffer, NULL);
+		vkDestroyBuffer(info->device, aabbBuffer, NULL);
 		vkFreeMemory(info->device, vertexStageMemeory, NULL);
 		vkFreeMemory(info->device, indexStageMemeory, NULL);
 		vkFreeMemory(info->device, scratchBufferMemeory, NULL);
+		vkFreeMemory(info->device, aabbMemory, NULL);
+
 
 		AccelerationStructure acceleration_structure = {
 			.buffer = blasBuffer,
@@ -602,22 +612,53 @@ void build_blas(VkInfo* info, Scene* scene, SceneNode* node)
 		scene->acceleration_structures[node->Index].blas = acceleration_structure;
 }
 
-void create_ray_descriptors(VkInfo* info, Scene* scene, uint32_t binding)
+void create_ray_descriptors(VkInfo* info, Scene* scene, uint32_t tlassBinding, uint32_t traceBinding)
 {
-	VkDescriptorSetLayoutBinding layout_binding = {
-		.binding = binding,
+	VkDescriptorSetLayoutBinding tlas_binding = {
+		.binding = tlassBinding,
 		.descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR,
 		.descriptorCount = scene->numTLAS,
 		.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
 	};
+	VkDescriptorSetLayoutBinding trace_binding = {
+		.binding = traceBinding,
+		.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+		.descriptorCount = 1,
+		.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
+	};
+
+	VkDescriptorSetLayoutBinding bindings[] = { tlas_binding, trace_binding };
+
 	VkDescriptorSetLayoutCreateInfo layout_create_info = { 0 };
 	layout_create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	layout_create_info.bindingCount = 1;
-	layout_create_info.pBindings = &layout_binding;
+	layout_create_info.bindingCount = 2;
+	layout_create_info.pBindings = bindings;
 
 	check(vkCreateDescriptorSetLayout(info->device, &layout_create_info, NULL, &info->ray_descriptor.set_layout), "");
-	info->ray_descriptor.binding = binding;
+	info->ray_descriptor.tlassBinding = tlassBinding;
+	info->ray_descriptor.traceBinding = traceBinding;
 }
+
+void create_trace_buffer(VkInfo* info, Scene* scene) {
+	createBuffer(info,
+		scene->camera.settings.traceMax * sizeof(QueryTrace),
+		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+		VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
+		&info->ray_descriptor.traceBuffer,
+		&info->ray_descriptor.traceMemory);
+
+	QueryTrace* init = malloc(sizeof(QueryTrace) * scene->camera.settings.traceMax);
+	memset(init, 0, sizeof(QueryTrace) * scene->camera.settings.traceMax);
+	QueryTrace* data;
+	check(vkMapMemory(info->device, info->ray_descriptor.traceMemory,
+		0, sizeof(SceneData), 0, &data), "");
+	memcpy(data, init, sizeof(QueryTrace) * scene->camera.settings.traceMax);
+	vkUnmapMemory(info->device, info->ray_descriptor.traceMemory);
+
+	free(init);
+}
+
 
 void init_ray_descriptors(VkInfo* info, Scene* scene)
 {
@@ -637,11 +678,60 @@ void init_ray_descriptors(VkInfo* info, Scene* scene)
 	};
 	VkWriteDescriptorSet write = {
 		.pNext = &descriptorAS,
-		.dstBinding = info->ray_descriptor.binding,
+		.dstBinding = info->ray_descriptor.tlassBinding,
 		.descriptorCount = scene->numTLAS,
 		.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
 		.dstSet = info->ray_descriptor.descriptor_set,
 		.descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR
 	};
-	vkUpdateDescriptorSets(info->device, 1, &write, 0, NULL);
+
+
+	VkDescriptorBufferInfo bufferInfo = { 0 };
+	bufferInfo.buffer = info->ray_descriptor.traceBuffer;
+	bufferInfo.offset = 0;
+	bufferInfo.range = sizeof(QueryTrace) * scene->camera.settings.traceMax;
+
+	VkWriteDescriptorSet descriptorWrite = { 0 };
+	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrite.dstSet = info->ray_descriptor.descriptor_set;
+	descriptorWrite.dstBinding = info->ray_descriptor.traceBinding;
+	descriptorWrite.dstArrayElement = 0;
+	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+	descriptorWrite.descriptorCount = 1;
+	descriptorWrite.pBufferInfo = &bufferInfo;
+
+	VkWriteDescriptorSet writes[] = { write, descriptorWrite };
+
+
+	vkUpdateDescriptorSets(info->device, 2, writes, 0, NULL);
+
+
+}
+
+void destroyAccelerationStructures(VkInfo* info, Scene* scene) {
+	VK_LOAD(vkDestroyAccelerationStructureKHR);
+
+	for (uint32_t i = 0; i < scene->scene_data.numSceneNodes; i++) {
+		NodeStructures node = scene->acceleration_structures[i];
+		if (node.blas.structure != NULL) {
+			pvkDestroyAccelerationStructureKHR(info->device, node.blas.structure, NULL);
+			vkDestroyBuffer(info->device, node.blas.buffer, NULL);
+			vkFreeMemory(info->device, node.blas.memory, NULL);
+		}
+		if (node.tlas.structure != NULL) {
+			pvkDestroyAccelerationStructureKHR(info->device, node.tlas.structure, NULL);
+			vkDestroyBuffer(info->device, node.tlas.buffer, NULL);
+			vkFreeMemory(info->device, node.tlas.memory, NULL);
+		}
+	}
+	scene->numTLAS = 0;
+	free(scene->acceleration_structures);
+	free(scene->TLASs);
+	scene->TLASs = NULL;
+	scene->acceleration_structures = NULL;
+
+	vkFreeMemory(info->device, info->ray_descriptor.traceMemory, NULL);
+	vkDestroyBuffer(info->device, info->ray_descriptor.traceBuffer, NULL);
+
+	vkDestroyDescriptorSetLayout(info->device, info->ray_descriptor.set_layout, NULL);
 }

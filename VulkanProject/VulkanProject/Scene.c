@@ -23,6 +23,9 @@ void init_scene(Scene* scene)
 	scene->camera.settings.specular = 1;
 	scene->camera.settings.shadows = 1;
 	scene->camera.settings.maxDepth = 5;
+	scene->camera.settings.traceMax = 100;
+	scene->camera.settings.pixelX = WINDOW_WIDTH/2;
+	scene->camera.settings.pixelY = WINDOW_HEIGHT/2;
 }
 
 void load_scene(Scene* scene, char* path)
@@ -91,6 +94,14 @@ void load_scene(Scene* scene, char* path)
 	fclose(file);
 
 	init_scene(scene);
+
+	SceneNode n;
+	for (int i = 0; i < scene->scene_data.numSceneNodes; i++) {
+		n = scene->scene_nodes[i];
+		if (n.Level == 2) {
+			int a = 0;
+		}
+	}
 }
 void flatten_scene(Scene* scene)
 {

@@ -154,7 +154,7 @@ void create_descriptor_containers(VkInfo* info, Scene* scene)
 	// set 3 - ray TLAS
 	if (info->ray_tracing) {
 		build_all_acceleration_structures(info, scene);
-		create_ray_descriptors(info, scene, TLAS_BINDING);
+		create_ray_descriptors(info, scene, TLAS_BINDING, TRACE_BINDING);
 	}
 }
 
@@ -177,6 +177,7 @@ void init_descriptor_containers(VkInfo* info, Scene* scene)
 	create_descriptor_sets(info, &info->per_frame_buffers);
 
 	if (info->ray_tracing) {
+		create_trace_buffer(info, scene);
 		init_ray_descriptors(info, scene);
 	}
 }
@@ -197,4 +198,8 @@ void destroy_shaders(VkInfo* vk, Scene* scene)
 		vkDestroyImage(vk->device, t->texture_image, NULL);
 	}
 	vkDestroySampler(vk->device, scene->sampler, NULL);
+
+	if (vk->ray_tracing) {
+		destroyAccelerationStructures(vk, scene);
+	}
 }
