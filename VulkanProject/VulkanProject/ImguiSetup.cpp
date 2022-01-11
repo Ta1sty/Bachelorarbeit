@@ -229,6 +229,7 @@ void draw_imgui_frame(VkInfo* info, Scene* scene, SceneSelection* scene_selectio
 		ImGui::Checkbox("TraversalDepth", (bool*)&scene->camera.settings.displayTraversalDepth);
 		ImGui::Checkbox("TraversalCount", (bool*)&scene->camera.settings.displayTraversalCount);
 		ImGui::Checkbox("QueryCount", (bool*)&scene->camera.settings.displayQueryCount);
+		ImGui::Checkbox("TLASNumber", (bool*)&scene->camera.settings.displayTLASNumber);
 
 		ImGui::EndDisabled();
 	}

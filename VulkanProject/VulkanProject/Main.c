@@ -158,23 +158,12 @@ int main()
     /*GET_ROOT((&app.scene));
     root->NumChildren = 1;
     root->NumOdd = 1;
-    root->NumEven = 0;
-    GET_CHILD_IDX((&app.scene), root, 2);
+    root->NumEven = 0;*/
+    /*GET_CHILD_IDX((&app.scene), root, 2);
     SceneNode* node = &app.scene.scene_nodes[childIdx];
     app.scene.node_indices[root->ChildrenIndex] = childIdx;
     GET_CHILD((&app.scene), node, 0);
     SceneNode* grandChild = &app.scene.scene_nodes[app.scene.node_indices[child->ChildrenIndex]];*/
-    GET_ROOT((&app.scene));
-    root->NumChildren = 2;
-    root->NumOdd = 2;
-    root->NumEven = 0;
-    GET_CHILD_IDX((&app.scene), root, 2);
-    uint32_t floorIdx = app.scene.node_indices[root->ChildrenIndex];
-    app.scene.node_indices[root->ChildrenIndex] = childIdx;
-    app.scene.node_indices[root->ChildrenIndex+1] = floorIdx;
-
-
-    app.vk_info.ray_tracing = 0;
     if (app.vk_info.ray_tracing) {
         // flatten_scene(&app.scene);
         // prepare_scene(&app.scene, useMutliLevel);

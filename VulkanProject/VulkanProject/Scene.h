@@ -116,6 +116,7 @@ typedef struct renderSettings {
 	uint32_t displayTraversalDepth; // displays the maximum Depth the traversal took
 	uint32_t displayTraversalCount; // displays the amount of times the loop ran and executed a query (skipped due to hight T is not counted)
 	uint32_t displayQueryCount; // displays the total number of rayqueries that were used for this
+	uint32_t displayTLASNumber;
 } RenderSettings;
 
 typedef struct camera
