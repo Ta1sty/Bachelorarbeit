@@ -104,6 +104,7 @@ typedef struct renderSettings {
 	uint32_t maxDepth;
 	uint32_t debug; // if this is disabled the image is rendered normally
 	int32_t colorSensitivity;
+	// GENERAL INFO
 	uint32_t displayUV; // displays the triangle UV coordinates
 	uint32_t displayTex; // displays the triangle Texture Coordinates
 	uint32_t displayTriangles; // displays the Borders of triangles
@@ -112,11 +113,20 @@ typedef struct renderSettings {
 	uint32_t displayTextureIdx; // displays the textureIndex
 	uint32_t displayLights; // displays the light sources as Spheres
 	uint32_t displayIntersectionT; // displays the intersection T with HSV encoding
+
+	// QUERY INFO
 	uint32_t displayAABBs; // displays the AABBs
 	uint32_t displayTraversalDepth; // displays the maximum Depth the traversal took
 	uint32_t displayTraversalCount; // displays the amount of times the loop ran and executed a query (skipped due to hight T is not counted)
 	uint32_t displayQueryCount; // displays the total number of rayqueries that were used for this
 	uint32_t displayTLASNumber;
+
+	// QUERY TRACE
+	uint32_t displayQueryTrace;
+	uint32_t recordQueryTrace;
+	uint32_t pixelX;
+	uint32_t pixelY;
+	uint32_t traceMax;
 } RenderSettings;
 
 typedef struct camera

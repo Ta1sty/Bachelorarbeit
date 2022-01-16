@@ -231,6 +231,8 @@ void draw_imgui_frame(VkInfo* info, Scene* scene, SceneSelection* scene_selectio
 		ImGui::Checkbox("QueryCount", (bool*)&scene->camera.settings.displayQueryCount);
 		ImGui::Checkbox("TLASNumber", (bool*)&scene->camera.settings.displayTLASNumber);
 
+		ImGui::Checkbox("DisplayQueryTrace", (bool*)&scene->camera.settings.displayQueryTrace);
+
 		ImGui::EndDisabled();
 	}
 

@@ -59,7 +59,10 @@ typedef struct rayTracingDescriptor
 {
 	VkDescriptorSetLayout set_layout;
 	VkDescriptorSet descriptor_set;
-	uint32_t binding;
+	uint32_t tlassBinding;
+	uint32_t traceBinding;
+	VkBuffer traceBuffer;
+	VkDeviceMemory traceMemory;
 } RayTracingDescriptor;
 
 typedef struct shader

@@ -59,6 +59,19 @@ void mouse__move_callback (GLFWwindow* window, double x, double y)
 }
 void mouse_button_callback(GLFWwindow* window, int button, int pressed, int idk)
 {
+    if (button == 0) {
+        if (pressed == 1) {
+            if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+                globalApplication->scene.camera.settings.recordQueryTrace = 1;
+                globalApplication->scene.camera.settings.pixelX = mouseX;
+                globalApplication->scene.camera.settings.pixelY = mouseY;
+            }
+        }
+        else {
+            globalApplication->scene.camera.settings.recordQueryTrace = 0;
+        }
+    }
+
     if(button == 1)
     {
         if(pressed == 1)
@@ -147,6 +160,7 @@ int main()
     setExceptionCallback(exception_callback_impl);
     app.vk_info.rasterize = VK_TRUE;
     load_scene(&app.scene, app.sceneSelection.availableScenes[app.sceneSelection.nextScene]);
+
     init_window(&app.window);
     init_vulkan(&app.vk_info, &app.window, &app.scene);
 	glfwSetFramebufferSizeCallback(app.window, resize_callback);
@@ -191,6 +205,8 @@ int main()
             {
                 updatePosition(app.window, &app.scene.camera);
                 drawFrame(&app.vk_info, &app.scene, &app.sceneSelection);
+                if (app.scene.camera.settings.recordQueryTrace == 1) // turn off recording
+                    app.scene.camera.settings.recordQueryTrace = 0;
             }
 		if (resizeW >= 0 || resizeH >= 0)
 		{

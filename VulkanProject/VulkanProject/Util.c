@@ -6,8 +6,8 @@
 
 int SUCCESS = 1;
 int FAILURE = 0;
-int WINDOW_WIDTH = 800;
-int WINDOW_HEIGHT = 600;
+int WINDOW_WIDTH = 1600;
+int WINDOW_HEIGHT = 900;
 ExceptionCallback exception_callback = NULL;
 
 void setExceptionCallback(ExceptionCallback callback)
