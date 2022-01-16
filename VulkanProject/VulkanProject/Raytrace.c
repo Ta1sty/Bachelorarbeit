@@ -735,3 +735,24 @@ void destroyAccelerationStructures(VkInfo* info, Scene* scene) {
 
 	vkDestroyDescriptorSetLayout(info->device, info->ray_descriptor.set_layout, NULL);
 }
+
+void compile_query_trace(VkInfo* info, Scene* scene)
+{
+	if (scene->camera.settings.recordQueryTrace == 0) return;
+
+	QueryTrace* traces;
+	vkMapMemory(info->device, info->ray_descriptor.traceMemory, 0, sizeof(QueryTrace) * scene->camera.settings.traceMax, 0, (void**)&traces);
+
+	for (uint32_t i = 0; i < scene->camera.settings.traceMax; i++)
+	{
+		QueryTrace t = traces[i];
+		SceneNode node = scene->scene_nodes[t.nodeNumber];
+
+
+
+		if (t.isValid == 0)
+			break;
+	}
+	vkUnmapMemory(info->device, info->ray_descriptor.traceMemory);
+	scene->camera.settings.recordQueryTrace == 0;
+}

@@ -205,8 +205,7 @@ int main()
             {
                 updatePosition(app.window, &app.scene.camera);
                 drawFrame(&app.vk_info, &app.scene, &app.sceneSelection);
-                if (app.scene.camera.settings.recordQueryTrace == 1) // turn off recording
-                    app.scene.camera.settings.recordQueryTrace = 0;
+                compile_query_trace(&app.vk_info, &app.scene);
             }
 		if (resizeW >= 0 || resizeH >= 0)
 		{

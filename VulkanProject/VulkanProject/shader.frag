@@ -114,11 +114,11 @@ struct QueryTrace{
 	vec3 start;
 	float pad1;
 	vec3 end;
-	float pad2;
+	uint nodeNumber;
 	uint isValid; // valid if 1, otherwise invalid
-	uint nodeNumber; // the nodeNumber for this
-	float pad3;
-	float pad4;
+	uint tlasNumber; // the nodeNumber for this
+	uint triangleIntersections;
+	uint instanceIntersections;
 };
 
 layout(binding = 10, set = 3) uniform accelerationStructureEXT[] tlas;
@@ -158,21 +158,28 @@ void DebugOffIfSet(){
 		debugSetEnabled = false;
 }
 
-float aabbT = 500;
-bool intersectAABB(vec3 rayOrigin, vec3 rayDir, SceneNode node) {
+
+bool intersectAABB(vec3 rayOrigin, vec3 rayDir, SceneNode node, out float tNear, out float tFar) {
 	vec3 boxMin = node.AABB_min.xyz;
 	vec3 boxMax = node.AABB_max.xyz;
     vec3 tMin = (boxMin - rayOrigin) / rayDir;
     vec3 tMax = (boxMax - rayOrigin) / rayDir;
     vec3 t1 = min(tMin, tMax);
     vec3 t2 = max(tMin, tMax);
-    float tNear = max(max(t1.x, t1.y), t1.z);
-    float tFar = min(min(t2.x, t2.y), t2.z);
+    tNear = max(max(t1.x, t1.y), t1.z);
+    tFar = min(min(t2.x, t2.y), t2.z);
 	if(tNear>tFar)
 		return false;
+	return true;
+}
+float aabbT = 500;
+void debugAABB(vec3 rayOrigin, vec3 rayDir, SceneNode node) {
+	vec3 boxMin = node.AABB_min.xyz;
+	vec3 boxMax = node.AABB_max.xyz;
+	float tNear, tFar;
+	if(!intersectAABB(rayOrigin, rayDir, node, tNear, tFar)) return;
 	if(displayAABBs != 0){
 		vec3 extent = boxMax - boxMin;
-
 		vec3 P1 = rayOrigin + tNear * rayDir;
 		vec3 P2 = rayOrigin + tFar * rayDir;
 
@@ -197,7 +204,6 @@ bool intersectAABB(vec3 rayOrigin, vec3 rayDir, SceneNode node) {
 			}
 		}
 	}
-	return true;
 };
 
 const float t_min = 1.0e-4f;
@@ -266,23 +272,25 @@ void startTraceRecord(){
 		nextRecord = 0;
 	}
 }
-void recordQuery(uint node, vec3 start, vec3 end){ // records the 
+void recordQuery(uint nodeNumber, uint tlasNumber, vec3 start, vec3 end, uint triangleIntersections, uint instanceIntersections){ // records the 
 	if(!recordTrace || nextRecord >= traceMax - 2) return;
 	QueryTrace add;
 	add.start = start;
 	add.end = end;
-	add.nodeNumber = node;
+	add.tlasNumber = tlasNumber;
+	add.nodeNumber = nodeNumber;
 	add.isValid = 1;
+	add.triangleIntersections = triangleIntersections;
+	add.instanceIntersections = instanceIntersections;
 	queryTraces[nextRecord] = add;
 	// add
 
 	nextRecord++;
 }
-void checkQueryTrace(uint node, vec3 origin, vec3 direction){
+void checkQueryTrace(vec3 origin, vec3 direction){
 	if(debug == 0 || displayQueryTrace == 0) return;
 	for(int i = 0;i<traceMax;i++){
 		QueryTrace trace = queryTraces[i];
-		if(node != trace.nodeNumber) continue; // wrong scene node
 		if(trace.isValid != 1) break; // is valid?
 		vec3 E1 = normalize(trace.end - trace.start);
 		vec3 E2 = normalize(direction);
@@ -297,7 +305,8 @@ void checkQueryTrace(uint node, vec3 origin, vec3 direction){
 		vec3 P = trace.start + ts[0] * E1;
 		float dst = length(P-origin);
 		if(dst < 0.005 || dst > 50) continue; // to close to the display or to far away
-		debugColor = vec4(0,0,0,1);
+		SetDebugHsv(displayQueryTrace, trace.tlasNumber, colorSensitivity, false);
+		// debugColor = vec4(hsv2rgb(vec3(0,1,1)),1);
 	}
 }
 void endRecord(){
@@ -382,7 +391,7 @@ TraversalPayload traversalBuffer[BUFFER_SIZE];
 
 // for a given rayQuery this method returns a ray and a tlasNumber
 #ifdef RAY_TRACE
-void instanceHit(rayQueryEXT ray_query, TraversalPayload load, SceneNode node) {
+void instanceHit(rayQueryEXT ray_query, TraversalPayload load, SceneNode node, out float tNear, out float tFar) {
 	float t = rayQueryGetIntersectionTEXT(ray_query, false);
 	//if(t>best_t) return; // we already found a triangle outside this aabb before this was even hit we dont need to add this instance
 	// this can never happen since best_t is our t_max for this query
@@ -406,17 +415,20 @@ void instanceHit(rayQueryEXT ray_query, TraversalPayload load, SceneNode node) {
 
 
 
-
 	// here the shader adds the next payloads
 	TraversalPayload nextLoad;
 	nextLoad.transformed_origin = (next.world_to_object * vec4(origin,1)).xyz;
 	nextLoad.transformed_direction = (next.world_to_object * vec4(direction,0)).xyz;
 	nextLoad.node_idx = next.Index;
-	nextLoad.t = t;
+
+	intersectAABB(origin, direction, next, tNear, tFar);
+
+	nextLoad.t = tNear;
 	traversalBuffer[stackSize] = nextLoad;
 	stackSize++;
 
-	if(displayAABBs != 0 && intersectAABB(origin, direction, next));			
+	if(displayAABBs != 0)
+		debugAABB(origin, direction, next);			
 
 }
 
@@ -462,8 +474,10 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 	start.transformed_origin = rayOrigin;
 	start.transformed_direction = rayDirection;
 	start.node_idx = root;
+	start.t = 0;
 
-	if(displayAABBs != 0 && intersectAABB(rayOrigin, rayDirection, nodes[root]));			
+	if(displayAABBs != 0)
+		debugAABB(rayOrigin, rayDirection, nodes[root]);
 
 	traversalBuffer[0] = start;
 
@@ -486,7 +500,7 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 		if(debug != 0 && displayAABBs != 0){
 			for(int i = 0;i<node.numOdd;i++){
 				SceneNode directChild = nodes[node.childrenIndex + i];
-				intersectAABB(load.transformed_origin, load.transformed_direction, directChild);			
+				debugAABB(load.transformed_origin, load.transformed_direction, directChild);
 			}
 		}
 
@@ -496,12 +510,19 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 			query_direction, best_t);
 		queryCount++;
 		numTraversals++;
+		uint triangleIntersections = 0;
+		uint instanceIntersections = 0;
+
+		float instanceTMin = 100000;
+		float instanceTMax = 0;
+
 		while(rayQueryProceedEXT(ray_query)){
 			uint type = rayQueryGetIntersectionTypeEXT(ray_query, false);
 			switch(type){
 				case gl_RayQueryCandidateIntersectionTriangleEXT:
 					// might want to check for opaque
 					triangleHit(ray_query, node);
+					triangleIntersections++;
 					break;
 				case gl_RayQueryCandidateIntersectionAABBEXT:
 					// we do not want to generate intersections, since AABB hit does not guarantee a hit in the traversal
@@ -511,7 +532,12 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 					// that replaces the node that executed the query, however we still want to do a DFS. Solution for this is:
 					// We reverse the list. Then the closest hit is at the end of the stack, and all added levels are still 
 					// right of this node
-					instanceHit(ray_query, load, node);
+					float tNear, tFar;
+					instanceHit(ray_query, load, node, tNear, tFar);
+					instanceIntersections++;
+					instanceTMin = min(instanceTMin, tNear); 
+					instanceTMax = max(instanceTMax, tFar); 
+
 					break;
 				default: break;
 			}
@@ -552,21 +578,15 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 				triangleTLAS = tlasNumber;
 			}
 			// triangle_index = -1;
+			//recordQuery(node.Index, rayOrigin+load.t * rayDirection, rayOrigin + best_t * rayDirection, triangleIntersections, instanceIntersections);
 		}
-		if(recordTrace){
-			float t = 1;
-			for(int i = start;i<end;i++) {
-				t = traversalBuffer[i].t;
-				// t = max(t, traversalBuffer[i].t);
-			}
-		}
+
+		recordQuery(node.Index, node.tlasNumber, rayOrigin, rayOrigin + best_t * rayDirection, triangleIntersections, instanceIntersections);
 	}
 	SetDebugHsv(displayTLASNumber, triangleTLAS, colorSensitivity, true);
 	if(triangle_index >= 0) {
-		recordQuery(root, rayOrigin, rayOrigin + best_t * rayDirection);
 		return true;
 	}
-	recordQuery(root, rayOrigin, rayOrigin + t_max * rayDirection);
 	return false;
 #endif
 #ifndef RAY_TRACE
@@ -744,7 +764,6 @@ vec4 rayTrace(vec3 rayOrigin, vec3 rayDirection, out float t) {
 }
 
 void main() {
-	startTraceRecord();
 	debugColor = vec4(0,0,0,0);
 	// from https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-generating-camera-rays/generating-camera-rays
 	vec3 rayOrigin, rayDirection;
@@ -753,9 +772,10 @@ void main() {
 	int triangle_index = -1;
 
 	float t_hit;
+	startTraceRecord();
 	outColor = rayTrace(rayOrigin, rayDirection, t_hit);
 	endRecord();
-	checkQueryTrace(rootSceneNode, rayOrigin, rayDirection);
+	checkQueryTrace(rayOrigin, rayDirection);
 
 	if(displayIntersectionT != 0) {
 		debugColor = vec4(hsv2rgb(vec3(min(t_hit * 1.f/colorSensitivity,0.66f),1,1)),1);

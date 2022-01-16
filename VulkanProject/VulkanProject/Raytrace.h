@@ -5,11 +5,11 @@ typedef struct queryTrace {
 	float start[3];
 	float pad1;
 	float end[3];
-	float pad2;
+	uint32_t nodeNumber;
 	uint32_t isValid; // valid if 1, otherwise invalid
-	uint32_t nodeNumber; // the nodeNumber for this
-	float pad3;
-	float pad4;
+	uint32_t tlasNumber; // the nodeNumber for this
+	uint32_t triangleIntersections;
+	uint32_t instanceIntersections;
 } QueryTrace;
 
 void prepare_scene(Scene* scene, VkBool32 useMultiLevel);
@@ -23,5 +23,7 @@ void build_node_acceleration_structure(VkInfo* info, Scene* scene, SceneNode* no
 
 void build_tlas(VkInfo* info, Scene* scene, SceneNode* node);
 void build_blas(VkInfo* info, Scene* scene, SceneNode* node);
+
+void compile_query_trace(VkInfo* info, Scene* scene);
 
 void destroyAccelerationStructures(VkInfo* info, Scene* scene);
