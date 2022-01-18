@@ -123,6 +123,8 @@ typedef struct renderSettings {
 
 	// QUERY TRACE
 	uint32_t displayQueryTrace;
+	uint32_t displayByLevel;
+	int32_t selectedLevel;
 	uint32_t recordQueryTrace;
 	uint32_t pixelX;
 	uint32_t pixelY;

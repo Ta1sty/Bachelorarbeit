@@ -213,7 +213,7 @@ void draw_imgui_frame(VkInfo* info, Scene* scene, SceneSelection* scene_selectio
 
 	if (ImGui::CollapsingHeader("DEBUG")) {
 		ImGui::Checkbox("Enable Debug", (bool*)&scene->camera.settings.debug);
-		ImGui::SliderInt("Color Sensitvity", &scene->camera.settings.colorSensitivity, 5, 100);
+		ImGui::SliderInt("Color Sensitvity", &scene->camera.settings.colorSensitivity, 0, 100);
 		ImGui::BeginDisabled(scene->camera.settings.debug == 0);
 		ImGui::Checkbox("UV", (bool*)&scene->camera.settings.displayUV);
 		ImGui::Checkbox("TEX", (bool*)&scene->camera.settings.displayTex);
@@ -232,7 +232,12 @@ void draw_imgui_frame(VkInfo* info, Scene* scene, SceneSelection* scene_selectio
 		ImGui::Checkbox("TLASNumber", (bool*)&scene->camera.settings.displayTLASNumber);
 
 		ImGui::Checkbox("DisplayQueryTrace", (bool*)&scene->camera.settings.displayQueryTrace);
-
+		ImGui::BeginDisabled(scene->camera.settings.displayQueryTrace == 0);
+		ImGui::Indent(10);
+		ImGui::Checkbox("TraceByLevel", (bool*) &scene->camera.settings.displayByLevel);
+		ImGui::SliderInt("Level", &scene->camera.settings.selectedLevel, 0, 15);
+		ImGui::Unindent(10);
+		ImGui::EndDisabled();
 		ImGui::EndDisabled();
 	}
 

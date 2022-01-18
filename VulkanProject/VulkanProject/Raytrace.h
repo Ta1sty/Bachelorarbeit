@@ -7,7 +7,7 @@ typedef struct queryTrace {
 	float end[3];
 	uint32_t nodeNumber;
 	uint32_t isValid; // valid if 1, otherwise invalid
-	uint32_t tlasNumber; // the nodeNumber for this
+	int32_t nodeLevel; // the nodeNumber for this
 	uint32_t triangleIntersections;
 	uint32_t instanceIntersections;
 } QueryTrace;

@@ -213,9 +213,15 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="buildScene.bat" />
+    <None Include="debug.glsl" />
+    <None Include="intersections.glsl" />
+    <None Include="QueryTraceRecord.glsl" />
+    <None Include="raytrace.glsl" />
     <None Include="shader.frag" />
     <None Include="shader.vert" />
+    <None Include="structs.glsl" />
     <None Include="traversalShader.frag" />
+    <None Include="unused.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="README.txt" />

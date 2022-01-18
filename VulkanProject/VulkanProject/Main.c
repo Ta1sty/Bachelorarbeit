@@ -210,13 +210,17 @@ int main()
 		if (resizeW >= 0 || resizeH >= 0)
 		{
             vkDeviceWaitIdle(app.vk_info.device);
-            destroy_imgui_buffers(&app.vk_info);
 			create_or_resize_swapchain(&app.vk_info, &app.window, resizeW, resizeH, &app.scene);
-            resize_callback_imgui(&app.vk_info, &app.scene, &app.sceneSelection);
+            if (resizeW != 0 && resizeH != 0) {
+                destroy_imgui_buffers(&app.vk_info);
+                resize_callback_imgui(&app.vk_info, &app.scene, &app.sceneSelection);
+            }
+
 			WINDOW_WIDTH = resizeW;
 			WINDOW_HEIGHT = resizeH;
-			resizeW = -1;
-			resizeH = -1;
+
+            resizeW = -1;
+            resizeH = -1;
 		}
         if (app.sceneSelection.currentScene != app.sceneSelection.nextScene)
             changeScene(&app);

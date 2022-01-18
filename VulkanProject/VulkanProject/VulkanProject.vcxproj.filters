@@ -25,6 +25,9 @@
     <Filter Include="Source Files\Core">
       <UniqueIdentifier>{cfff8ef4-cfdc-4a8a-bc01-0fed8d04070a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Shader\GLSL">
+      <UniqueIdentifier>{2a7384b9-598e-4ce4-b7c5-b99d72d4f99a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.c">
@@ -139,17 +142,35 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="traversalShader.frag">
-      <Filter>Source Files\Shader</Filter>
-    </None>
-    <None Include="shader.frag">
-      <Filter>Source Files\Shader</Filter>
-    </None>
-    <None Include="shader.vert">
-      <Filter>Source Files\Shader</Filter>
-    </None>
     <None Include="buildScene.bat">
       <Filter>Source Files</Filter>
+    </None>
+    <None Include="shader.frag">
+      <Filter>Source Files\Shader\GLSL</Filter>
+    </None>
+    <None Include="shader.vert">
+      <Filter>Source Files\Shader\GLSL</Filter>
+    </None>
+    <None Include="traversalShader.frag">
+      <Filter>Source Files\Shader\GLSL</Filter>
+    </None>
+    <None Include="intersections.glsl">
+      <Filter>Source Files\Shader\GLSL</Filter>
+    </None>
+    <None Include="debug.glsl">
+      <Filter>Source Files\Shader\GLSL</Filter>
+    </None>
+    <None Include="structs.glsl">
+      <Filter>Source Files\Shader\GLSL</Filter>
+    </None>
+    <None Include="QueryTraceRecord.glsl">
+      <Filter>Source Files\Shader\GLSL</Filter>
+    </None>
+    <None Include="unused.glsl">
+      <Filter>Source Files\Shader\GLSL</Filter>
+    </None>
+    <None Include="raytrace.glsl">
+      <Filter>Source Files\Shader\GLSL</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
