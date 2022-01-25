@@ -10,15 +10,8 @@ namespace SceneCompiler.Scene.SceneTypes
         public List<SceneNode> Children = new();
         public List<SceneNode> Parents = new();
         public SceneNode Brother = null; // this node is practically identical to this one, project others onto this one#
-        public Node Source;
 
-        private string _name;
-
-        public string Name
-        {
-            set => _name = value;
-            get => Source?.Name ?? _name;
-        }
+        public string Name { get; set; }
 
 
         public Matrix4x4 ObjectToWorld = Matrix4x4.Identity;

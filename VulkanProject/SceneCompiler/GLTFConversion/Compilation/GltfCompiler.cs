@@ -151,7 +151,7 @@ namespace SceneCompiler.GLTFConversion.Compilation
                 var res2 = Vector4.Transform(v, scNode.WorldToObject * scNode.ObjectToWorld);
                 */
 
-                scNode.Source = node;
+                scNode.Name = node.Name;
                 nodes.Add(scNode);
             }
             var end = new SceneNode
@@ -182,7 +182,7 @@ namespace SceneCompiler.GLTFConversion.Compilation
 
             nodes = nodes.Where(x => x.Brother == null).ToList();
             end.Children = end.Children.Select(x => x.ThisOrBrother()).ToList();
-            if (end.Children.Count(x => x.Source.Mesh >= 0) == 1) // scene consists of only one mesh with a scene node
+            if (end.Children.Count(x => x.NumTriangles >= 0) == 1) // scene consists of only one mesh with a scene node
             {
 
             }
@@ -191,7 +191,7 @@ namespace SceneCompiler.GLTFConversion.Compilation
                 end.Children = end.Children
                     .Where(x =>
                     {
-                        if (x.Source.Mesh < 0) return true;
+                        if (x.NumTriangles <= 0) return true;
                         if (x.Children.Count > 0) return true;
                         if (x.ObjectToWorld.M41 != 0) return true;
                         if (x.ObjectToWorld.M42 != 0) return true;

@@ -180,7 +180,7 @@ namespace SceneCompiler.Scene
 
                 if (node.Index < 0)
                     throw new Exception("Index was not set");
-                if (node.Index != _buffers.Nodes.IndexOf(node))
+                if (_buffers.Nodes[node.Index] != node)
                     throw new Exception("Index doesn't match actual index");
                 if (node.Level % 2 == 0 && node.NumTriangles > 0)
                     throw new Exception("Even node references Geometry");
@@ -197,8 +197,6 @@ namespace SceneCompiler.Scene
 
         public void PrintScene()
         {
-            if(_buffers.Nodes.Count > 500)
-                Console.WriteLine("Scene to large to print");
             foreach (var node in _buffers.Nodes)
             {
                 Console.WriteLine(node);
