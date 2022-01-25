@@ -404,7 +404,7 @@ vec4 shadeFragment(vec3 P, vec3 V, vec3 N, vec4 color, Material material) {
 	return vec4(sum.xyz, color[3]);
 }
 
-const float MAX_T = 300;
+const float MAX_T = 100000;
 vec4 rayTrace(vec3 rayOrigin, vec3 rayDirection, out float t) {
 	vec4 color = vec4(0, 0, 0, 1);
 	float frac = 1;

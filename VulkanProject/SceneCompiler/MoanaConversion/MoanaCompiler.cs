@@ -21,7 +21,7 @@ namespace SceneCompiler.MoanaConversion
             var moana = new Moana();
             foreach (var folder in folders)
             {   
-                if(!Path.GetFileName(folder).Contains("isBayCedar"))
+                if(!Path.GetFileName(folder).Contains("isKava"))
                     continue;
 
                 moana.Sections.Add(ReadFolder(folder));

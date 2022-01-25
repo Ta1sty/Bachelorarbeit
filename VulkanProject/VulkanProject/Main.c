@@ -100,6 +100,13 @@ void updatePosition(GLFWwindow* window, Camera* camera)
     float up = 0;
 
     float spd = 1;
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+        spd *= 10;
+    }
+    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
+        spd *= 100;
+    }
+
     float dst = spd * (float)diff;
     straight += (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) * dst;
     straight -= (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) * dst;
