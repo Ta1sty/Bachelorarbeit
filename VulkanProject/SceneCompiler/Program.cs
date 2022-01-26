@@ -34,14 +34,12 @@ namespace SceneCompiler
 
             var location = Assembly.GetExecutingAssembly().Location;
 
-            if (true)
+            if (false)
             {
                 path = regex.Replace(location,
                     @"island\pbrt");
                 compiler = ConvertMoana(path);
-            }
-
-            if (false)
+            } else
             {
                 path = ChooseFile();
                 compiler = ConvertGLTF(path);

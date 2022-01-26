@@ -178,6 +178,42 @@ namespace SceneCompiler.Scene
                         throw new Exception("Num odd and num even don't add up to numChildren");
                 }
 
+                if (node.IsInstanceList)
+                {
+                    if (node.Level % 2 == 0)
+                        throw new Exception("instance List must have odd level");
+                    if (node.NumTriangles > 0)
+                        throw new Exception("instance List can not contain geometry");
+
+                    if (node.Children.Count != 1)
+                        throw new Exception("instance List must have exactly one child (DummyTLAS)");
+
+                    var dummyTLAS = node.Children[0];
+
+                    if (dummyTLAS.Name != "DummyTLAS")
+                        throw new Exception("child of instancle List is not a dummyTLAS");
+
+                    foreach(var child in dummyTLAS.Children)
+                    {
+                        if (child.Level % 2 == 0)
+                            throw new Exception("Instance list elements must have an odd level");
+                        if (child.NumChildren != 1)
+                            throw new Exception("Instance list elements must reference exactly one child");
+                        if (child.NumTriangles > 0)
+                            throw new Exception("Instance list elements can not reference triangles");
+                        foreach(var parent in child.Parents)
+                        {
+                            if (parent.Name != "DummyTLAS")
+                                throw new Exception("Parent of instance list element must be dummyTLAS");
+                            foreach(var grandParent in parent.Parents)
+                            {
+                                if (!grandParent.IsInstanceList)
+                                    throw new Exception("Grandparent of instance list element must be instance list");
+                            }
+                        }
+                    }
+                }
+
                 if (node.Index < 0)
                     throw new Exception("Index was not set");
                 if (_buffers.Nodes[node.Index] != node)
@@ -210,19 +246,33 @@ namespace SceneCompiler.Scene
             foreach (var t in _buffers.Nodes)
             {
                 t.Index = -1;
+                t.Parents.Clear();
             }
             root.Index = 0;
             BuildListRecursive(root, 1);
 
-            var arr = new SceneNode[_buffers.Nodes.Count];
+            var arr = new SceneNode[_buffers.Nodes.Count(x=>x.Index != -1)];
             foreach (var node in _buffers.Nodes)
             {
+                if(node.Index == -1)
+                {
+                    Console.WriteLine("Unused Node " + node.Name);
+                    continue;
+                }
                 arr[node.Index] = node;
             }
 
             _buffers.RootNode = 0;
             _buffers.Nodes.Clear();
             _buffers.Nodes.AddRange(arr);
+
+            foreach(var node in _buffers.Nodes)
+            {
+                foreach(var child in node.Children)
+                {
+                    child.Parents.Add(node);
+                }
+            }
         }
         // use DFS Layout since this also the way traversal is done, should improve caching
         private int BuildListRecursive(SceneNode node, int indexOffset)
@@ -256,7 +306,18 @@ namespace SceneCompiler.Scene
         {
             foreach (var child in node.Children)
             {
-                child.Level = Math.Max(node.Level + 1, child.Level);
+                if (node.IsInstanceList)
+                {
+
+                }
+                if (node.Level >= child.Level)
+                {
+                    child.Level = node.Level + 1;
+                    if (child.ForceOdd && child.Level % 2 == 0)
+                        child.Level++;
+                    if (child.ForceEven && child.Level % 2 == 1)
+                        child.Level++;
+                }
                 DepthRecursion(child);
             }
         }

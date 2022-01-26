@@ -6,16 +6,16 @@
 #endif		
 #define PI 3.1415926538
 
-#include "intersections.glsl"
+#include "intersections.frag"
 
 #define STRUCTS
-#include "structs.glsl"
+#include "structs.frag"
 
 #define DEBUG
-#include "debug.glsl"
+#include "debug.frag"
 
 #define RAYTRACE
-#include "raytrace.glsl"
+#include "raytrace.frag"
 
 layout(location = 0) in vec3 fragColor;
 layout(location = 0) out vec4 outColor;
@@ -34,17 +34,17 @@ void main() {
 	endRecord();
 	checkQueryTrace(rayOrigin, rayDirection);
 
-	if(displayIntersectionT != 0) {
+	if(displayIntersectionT) {
 		debugColor = vec4(hsv2rgb(vec3(min(t_hit * 1.f/colorSensitivity,0.66f),1,1)),1);
 	} 
-	if (displayTraversalDepth != 0){
+	if (displayTraversalDepth){
 		debugColor = vec4(hsv2rgb(vec3(0.66f - min(traversalDepth * 1.f /colorSensitivity,0.66f),1,1)),1);
 	}
-	if (displayTraversalCount != 0){
+	if (displayTraversalCount){
 		debugColor = vec4(hsv2rgb(vec3(0.66f - min(numTraversals * 1.f/colorSensitivity,0.66f),1,1)),1);
 	}
 
-	if(displayLights != 0) {
+	if(displayLights) {
 		int closestLight = -1;
 		float light_t = t_hit;
 		for(int i = 0;i<numLights;i++){
@@ -70,8 +70,8 @@ void main() {
 
 		}
 	}
-	if(displayQueryCount != 0 && queryCount > 1){
+	if(displayQueryCount && queryCount > 1){
 		debugColor = vec4(hsv2rgb(vec3(0.66f - min(queryCount * 1.f /colorSensitivity,0.66f),1,1)),1);
 	}
-	if(debug != 0 && debugColor[3] == 1) outColor = debugColor;
+	if(debug && debugColor[3] == 1) outColor = debugColor;
 }

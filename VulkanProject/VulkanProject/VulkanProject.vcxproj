@@ -213,15 +213,15 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="buildScene.bat" />
-    <None Include="debug.glsl" />
-    <None Include="intersections.glsl" />
-    <None Include="QueryTraceRecord.glsl" />
-    <None Include="raytrace.glsl" />
+    <None Include="debug.frag" />
+    <None Include="intersections.frag" />
+    <None Include="QueryTraceRecord.frag" />
+    <None Include="raytrace.frag" />
     <None Include="shader.frag" />
     <None Include="shader.vert" />
-    <None Include="structs.glsl" />
+    <None Include="structs.frag" />
     <None Include="traversalShader.frag" />
-    <None Include="unused.glsl" />
+    <None Include="unused.frag" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="README.txt" />

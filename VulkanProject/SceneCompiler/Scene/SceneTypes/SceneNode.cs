@@ -27,10 +27,12 @@ namespace SceneCompiler.Scene.SceneTypes
         public uint NumEven = 0;
         public uint NumOdd = 0;
         public int TlasNumber = -1;
-        public float pad1 = -1;
-        public float pad2 = -1;
+        public bool IsInstanceList = false;
+        public bool IsLodSelector = false;
         public float pad3 = -1;
 
+        public bool ForceOdd = false;
+        public bool ForceEven = false;
         public SceneNode ThisOrBrother()
         {
             return Brother ?? this;
@@ -120,8 +122,8 @@ namespace SceneCompiler.Scene.SceneTypes
             BitConverter.GetBytes(NumEven).CopyTo(nodeBuffer.AsSpan(pos += 4));
             BitConverter.GetBytes(NumOdd).CopyTo(nodeBuffer.AsSpan(pos += 4));
             BitConverter.GetBytes(TlasNumber).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(pad1).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(pad2).CopyTo(nodeBuffer.AsSpan(pos += 4));
+            BitConverter.GetBytes((uint) (IsInstanceList ? 1 : 0)).CopyTo(nodeBuffer.AsSpan(pos += 4));
+            BitConverter.GetBytes((uint) (IsLodSelector ? 1: 0)).CopyTo(nodeBuffer.AsSpan(pos += 4));
             BitConverter.GetBytes(pad3).CopyTo(nodeBuffer.AsSpan(pos += 4));
             return pos;
         }
@@ -154,6 +156,9 @@ namespace SceneCompiler.Scene.SceneTypes
 
             if (Name != null)
                 ret += Name + " ";
+
+            if (IsInstanceList)
+                ret += "InstanceList: " + Children[0].Children.Count;
 
             return ret;
         }

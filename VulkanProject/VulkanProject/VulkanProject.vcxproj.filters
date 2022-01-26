@@ -154,22 +154,22 @@
     <None Include="traversalShader.frag">
       <Filter>Source Files\Shader\GLSL</Filter>
     </None>
-    <None Include="intersections.glsl">
+    <None Include="intersections.frag">
       <Filter>Source Files\Shader\GLSL</Filter>
     </None>
-    <None Include="debug.glsl">
+    <None Include="debug.frag">
       <Filter>Source Files\Shader\GLSL</Filter>
     </None>
-    <None Include="structs.glsl">
+    <None Include="structs.frag">
       <Filter>Source Files\Shader\GLSL</Filter>
     </None>
-    <None Include="QueryTraceRecord.glsl">
+    <None Include="QueryTraceRecord.frag">
       <Filter>Source Files\Shader\GLSL</Filter>
     </None>
-    <None Include="unused.glsl">
+    <None Include="unused.frag">
       <Filter>Source Files\Shader\GLSL</Filter>
     </None>
-    <None Include="raytrace.glsl">
+    <None Include="raytrace.frag">
       <Filter>Source Files\Shader\GLSL</Filter>
     </None>
   </ItemGroup>

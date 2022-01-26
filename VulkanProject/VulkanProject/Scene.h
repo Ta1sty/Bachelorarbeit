@@ -47,8 +47,8 @@ typedef struct sceneNode { // 16 byte alignment (4 floats)
 	uint32_t NumEven;				// 12	188
 	uint32_t NumOdd;				// 0	192
 	int32_t TlasNumber;				// 4	196
-	float pad1;						// 8	200	// worst case is that we need 2 dummies, for the case that node is even, 
-	float pad2;						// 12	204	// references even children and geometry
+	VkBool32 IsInstanceList;		// 8	200	// worst case is that we need 2 dummies, for the case that node is even, 
+	VkBool32 IsLodSelector;			// 12	204	// references even children and geometry
 	float pad3;						// 0	208
 } SceneNode;
 
@@ -96,36 +96,36 @@ typedef struct sceneData
 
 typedef struct renderSettings {
 	float fov; // Field of view [0,90)
-	uint32_t textures;
-	uint32_t ambient;
-	uint32_t diffuse;
-	uint32_t specular;
-	uint32_t shadows;
+	VkBool32 textures;
+	VkBool32 ambient;
+	VkBool32 diffuse;
+	VkBool32 specular;
+	VkBool32 shadows;
 	uint32_t maxDepth;
-	uint32_t debug; // if this is disabled the image is rendered normally
+	VkBool32 debug; // if this is disabled the image is rendered normally
 	int32_t colorSensitivity;
 	// GENERAL INFO
-	uint32_t displayUV; // displays the triangle UV coordinates
-	uint32_t displayTex; // displays the triangle Texture Coordinates
-	uint32_t displayTriangles; // displays the Borders of triangles
-	uint32_t displayTriangleIdx; // displays the triangleIndex
-	uint32_t displayMaterialIdx; // displays the materialIndex
-	uint32_t displayTextureIdx; // displays the textureIndex
-	uint32_t displayLights; // displays the light sources as Spheres
-	uint32_t displayIntersectionT; // displays the intersection T with HSV encoding
+	VkBool32 displayUV; // displays the triangle UV coordinates
+	VkBool32 displayTex; // displays the triangle Texture Coordinates
+	VkBool32 displayTriangles; // displays the Borders of triangles
+	VkBool32 displayTriangleIdx; // displays the triangleIndex
+	VkBool32 displayMaterialIdx; // displays the materialIndex
+	VkBool32 displayTextureIdx; // displays the textureIndex
+	VkBool32 displayLights; // displays the light sources as Spheres
+	VkBool32 displayIntersectionT; // displays the intersection T with HSV encoding
 
 	// QUERY INFO
-	uint32_t displayAABBs; // displays the AABBs
-	uint32_t displayTraversalDepth; // displays the maximum Depth the traversal took
-	uint32_t displayTraversalCount; // displays the amount of times the loop ran and executed a query (skipped due to hight T is not counted)
-	uint32_t displayQueryCount; // displays the total number of rayqueries that were used for this
-	uint32_t displayTLASNumber;
+	VkBool32 displayAABBs; // displays the AABBs
+	VkBool32 displayTraversalDepth; // displays the maximum Depth the traversal took
+	VkBool32 displayTraversalCount; // displays the amount of times the loop ran and executed a query (skipped due to hight T is not counted)
+	VkBool32 displayQueryCount; // displays the total number of rayqueries that were used for this
+	VkBool32 displayTLASNumber;
 
 	// QUERY TRACE
-	uint32_t displayQueryTrace;
-	uint32_t displayByLevel;
+	VkBool32 displayQueryTrace;
+	VkBool32 displayByLevel;
 	int32_t selectedLevel;
-	uint32_t recordQueryTrace;
+	VkBool32 recordQueryTrace;
 	uint32_t pixelX;
 	uint32_t pixelY;
 	uint32_t traceMax;
