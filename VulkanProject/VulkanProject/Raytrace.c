@@ -118,7 +118,8 @@ void build_node_instance_list(VkInfo* info, Scene* scene, SceneNode* list)
 	for (int i = 0; i < node->NumChildren; i++)
 	{
 		GET_CHILD(scene, node, i);
-		build_node_acceleration_structure(info, scene, child);
+		SceneNode* grandChild = &scene->scene_nodes[scene->node_indices[child->ChildrenIndex]];
+		build_node_acceleration_structure(info, scene, grandChild);
 	}
 	if (0) {
 		build_tlas(info, scene, node);
@@ -126,7 +127,7 @@ void build_node_instance_list(VkInfo* info, Scene* scene, SceneNode* list)
 		list->IsInstanceList = 0;
 		return;
 	}
-
+	printf("Build LIST\tI:%d\tL:%d\tC:%d\tT:%d\n", node->Index, node->Level, node->NumChildren, node->NumTriangles);
 	// credits to christopher
 	VK_LOAD(vkGetAccelerationStructureBuildSizesKHR);
 	VK_LOAD(vkCreateAccelerationStructureKHR);
@@ -269,6 +270,7 @@ void build_node_instance_list(VkInfo* info, Scene* scene, SceneNode* list)
 // see https://github.com/MomentsInGraphics/vulkan_renderer
 void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 {
+	printf("Build TLAS\tI:%d\tL:%d\tC:%d\tT:%d\n", node->Index, node->Level, node->NumChildren, node->NumTriangles);
 	// credits to christopher
 	VK_LOAD(vkGetAccelerationStructureBuildSizesKHR);
 	VK_LOAD(vkCreateAccelerationStructureKHR);
@@ -474,6 +476,7 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 // see https://github.com/MomentsInGraphics/vulkan_renderer
 void build_blas(VkInfo* info, Scene* scene, SceneNode* node)
 {
+	printf("Build BLAS\tI:%d\tL:%d\tC:%d\tT:%d\n", node->Index, node->Level, node->NumChildren, node->NumTriangles);
 	// 2 things to do
 	// if node references geometry add relevant geometry
 	// if node references children recursively create new TLAS

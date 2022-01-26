@@ -76,7 +76,7 @@ struct TraversalPayload {
 #ifdef RAY_QUERIES
 // use a stack because:
 // keep the list as short as possible, I.E. use a depth first search
-const int BUFFER_SIZE = 14;
+const int BUFFER_SIZE = 50;
 int stackSize = 0;
 TraversalPayload traversalBuffer[BUFFER_SIZE];
 
@@ -94,7 +94,6 @@ uint queryCount = 0;
 // for a given rayQuery this method returns a ray and a tlasNumber
 void instanceHit(rayQueryEXT ray_query, TraversalPayload load, SceneNode node, out float tNear, out float tFar) {
 	float t = rayQueryGetIntersectionTEXT(ray_query, false);
-	//if(t>best_t) return; // we already found a triangle outside this aabb before this was even hit we dont need to add this instance
 	// this can never happen since best_t is our t_max for this query
 	uint iIdx = rayQueryGetIntersectionInstanceIdEXT(ray_query, false);
 	uint cIdx = rayQueryGetIntersectionInstanceCustomIndexEXT(ray_query, false);
@@ -131,6 +130,8 @@ void instanceHit(rayQueryEXT ray_query, TraversalPayload load, SceneNode node, o
 	intersectAABB(origin, direction, next.AABB_min.xyz, next.AABB_max.xyz, tNear, tFar);
 
 	nextLoad.t = tNear;
+	if(stackSize>=BUFFER_SIZE)
+		return;
 	traversalBuffer[stackSize] = nextLoad;
 	stackSize++;
 
@@ -197,7 +198,7 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 		SceneNode node = nodes[load.node_idx]; // retrieve scene Node
 		traversalDepth = max(node.level, traversalDepth); // not 100% correct but it gives a vague idea
 
-		recordQuery(node.Index, node.level, load.t, rayOrigin, rayOrigin, 0, 0);
+		// recordQuery(node.Index, node.level, load.t, rayOrigin, rayOrigin, 0, 0);
 
 		uint tlasNumber = node.tlasNumber;
 		vec3 query_origin = load.transformed_origin;
@@ -295,7 +296,7 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 	}
 	SetDebugHsv(displayTLASNumber, triangleTLAS, colorSensitivity, true);
 	if (triangle_index >= 0) {
-		recordQuery(999, 999, best_t, rayOrigin, rayOrigin + best_t * rayDirection, 999, 999);
+		// recordQuery(999, 999, best_t, rayOrigin, rayOrigin + best_t * rayDirection, 999, 999);
 		return true;
 	}
 	return false;

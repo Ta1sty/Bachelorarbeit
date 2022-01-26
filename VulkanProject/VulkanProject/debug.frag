@@ -49,7 +49,7 @@ void debugAABB(vec3 rayOrigin, vec3 rayDir, SceneNode node) {
 		float t[2] = { tNear, tFar };
 
 		for (int i = 0; i < 2; i++) {
-			if (t[i] < 0.001 || t[i] > aabbT) continue;
+			if (t[i] < 0.001 || t[i] > 100000) continue;
 			vec3 P = rayOrigin + t[i] * rayDir;
 
 			vec3 diffMax = (boxMax - P) / extent; // normalisieren

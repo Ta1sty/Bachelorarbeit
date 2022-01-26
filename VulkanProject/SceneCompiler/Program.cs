@@ -34,7 +34,7 @@ namespace SceneCompiler
 
             var location = Assembly.GetExecutingAssembly().Location;
 
-            if (false)
+            if (true)
             {
                 path = regex.Replace(location,
                     @"island\pbrt");

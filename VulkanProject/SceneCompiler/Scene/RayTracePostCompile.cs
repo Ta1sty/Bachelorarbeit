@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Threading.Tasks;
 using SceneCompiler.Scene.SceneTypes;
 
 namespace SceneCompiler.Scene
@@ -26,130 +28,29 @@ namespace SceneCompiler.Scene
 
         private void MultiLevel()
         {
+            Console.WriteLine("Adjusting Scene Graph");
             var buffer = _buffers.Nodes;
             SceneNode root = buffer[_buffers.RootNode];
             root.Level = 0;
             DepthRecursion(root);
 
-            List<SceneNode> evenChildren = new();
-            List<SceneNode> oddChildren = new();
-            List<SceneNode> blasAdd = new();
-            List<SceneNode> tlasAdd = new();
-            foreach (var node in buffer)
+            ConcurrentBag<SceneNode> blasAdd = new();
+            ConcurrentBag<SceneNode> tlasAdd = new();
+
+            var evenTask = Task.Run(() =>
             {
-                foreach (var child in node.Children)
-                {
-                    if (child.Level % 2 == 0)
-                    {
-                        evenChildren.Add(child);
-                    }
-                    else
-                    {
-                        oddChildren.Add(child);
-                    }
-                }
+                foreach (var node in buffer.Where(x => x.Level % 2 == 0))
+                    AdjustEvenNode(node, blasAdd);
+            });
 
-                if (node.Level % 2 == 0) // TLAS Node - we dont want geometry and even-children
-                {
-                    if (node.NumTriangles > 0 || evenChildren.Count > 0)
-                    {
-                        var dummy = new SceneNode
-                        {
-                            // set new Level and index
-                            Level = node.Level+1,
-                            Name = "DummyBLAS",
-                            // add the geometry
-                            IndexBufferIndex = node.IndexBufferIndex,
-                            NumTriangles = node.NumTriangles,
-                            // add the even children
-                            NumChildren = evenChildren.Count,
-                            NumEven = (uint)evenChildren.Count,
-                            Children = new List<SceneNode>(evenChildren),
-                            // set transforms to identity
-                            ObjectToWorld = Matrix4x4.Identity,
-                            WorldToObject = Matrix4x4.Identity,
-                        };
-                        // add odd dummy to buffer and to children of the even node
-                        blasAdd.Add(dummy);
-                        oddChildren.Add(dummy);
-                        // removed geometry
-                        node.IndexBufferIndex = -1;
-                        node.NumTriangles = 0;
+            var oddTask = Task.Run(() =>
+            {
+                foreach (var node in buffer.Where(x => x.Level % 2 == 1))
+                    AdjustOddNode(node, tlasAdd);
+            });
 
-                        // add only the odd children
-                        node.NumOdd = (uint) oddChildren.Count;
-                        node.Children.Clear();
-                        node.Children.AddRange(oddChildren);
-                        node.NumChildren = oddChildren.Count;
-                    }
-                    else // only odd geometry
-                    {
-                        // leave everything, set only the odd count, since even is 0
-                        node.NumOdd = (uint)oddChildren.Count;
-                    }
-                }
-                else // BLAS Node we dont want Odd Children 
-                {
-                    if (oddChildren.Count > 0)
-                    {
-                        // we solve this by building a new tlas for this reference
-                        // but this can happen multiple times for the same blas
-                        // so if possible we want to reuse the tlas
-                        var dummy = tlasAdd.Where(x =>
-                        {
-                            foreach (var child in node.Children)
-                            {
-                                if (!x.Children.Contains(child))
-                                    return false;
-                            }
-                            return true;
-                        }).FirstOrDefault();
-
-                        if (dummy == null)
-                        {
-                            dummy = new SceneNode
-                            {
-                                // set new Level and index
-                                Level = node.Level + 1,
-                                Name = "DummyTLAS",
-                                // add the odd children
-                                NumChildren = oddChildren.Count,
-                                NumOdd = (uint)oddChildren.Count,
-                                Children = new List<SceneNode>(oddChildren),
-                                // set transforms to identity
-                                ObjectToWorld = Matrix4x4.Identity,
-                                WorldToObject = Matrix4x4.Identity,
-                            };
-                            tlasAdd.Add(dummy);
-                        }
-
-                        // add even dummy to buffer and children of the odd node
-                        evenChildren.Add(dummy);
-
-                        // add only the even children
-                        node.NumEven = (uint)evenChildren.Count;
-                        node.Children.Clear();
-                        node.Children.AddRange(evenChildren);
-                        node.NumChildren = evenChildren.Count;
-                    }
-                    else
-                    {
-                        // we only want and only have even children, therefore set numEven
-                        node.NumEven = (uint) evenChildren.Count;
-                    }
-                }
-                evenChildren.Clear();
-                oddChildren.Clear();
-                /*
-                node.NumEven = (uint) evenChildren.Count;
-                node.NumOdd = (uint) oddChildren.Count;
-                node.Children = new List<SceneNode>();
-                node.Children.AddRange(evenChildren);
-                node.Children.AddRange(oddChildren);
-                evenChildren.Clear();
-                oddChildren.Clear();
-                */
-            }
+            evenTask.Wait();
+            oddTask.Wait();
 
             buffer.AddRange(tlasAdd);
             buffer.AddRange(blasAdd);
@@ -162,80 +63,210 @@ namespace SceneCompiler.Scene
             ComputeAABBs(root);
         }
 
+        public void AdjustEvenNode(SceneNode node, ConcurrentBag<SceneNode> blasAdd)
+        {
+            List<SceneNode> evenChildren = new();
+            List<SceneNode> oddChildren = new();
+            foreach (var child in node.Children)
+            {
+                if (child.Level % 2 == 0)
+                {
+                    evenChildren.Add(child);
+                }
+                else
+                {
+                    oddChildren.Add(child);
+                }
+            }
+
+            if (node.NumTriangles > 0 || evenChildren.Count > 0)
+            {
+                var dummy = new SceneNode
+                {
+                    // set new Level and index
+                    Level = node.Level + 1,
+                    Name = "DummyBLAS",
+                    // add the geometry
+                    IndexBufferIndex = node.IndexBufferIndex,
+                    NumTriangles = node.NumTriangles,
+                    // add the even children
+                    NumChildren = evenChildren.Count,
+                    NumEven = (uint)evenChildren.Count,
+                    Children = new List<SceneNode>(evenChildren),
+                    // set transforms to identity
+                    ObjectToWorld = Matrix4x4.Identity,
+                    WorldToObject = Matrix4x4.Identity,
+                };
+                // add odd dummy to buffer and to children of the even node
+                blasAdd.Add(dummy);
+                oddChildren.Add(dummy);
+                // removed geometry
+                node.IndexBufferIndex = -1;
+                node.NumTriangles = 0;
+
+                // add only the odd children
+                node.NumOdd = (uint)oddChildren.Count;
+                node.Children.Clear();
+                node.Children.AddRange(oddChildren);
+                node.NumChildren = oddChildren.Count;
+            }
+            else // only odd geometry
+            {
+                // leave everything, set only the odd count, since even is 0
+                node.NumOdd = (uint)oddChildren.Count;
+            }
+        }
+
+        public void AdjustOddNode(SceneNode node, ConcurrentBag<SceneNode> tlasAdd)
+        {
+            List<SceneNode> evenChildren = new();
+            List<SceneNode> oddChildren = new();
+            foreach (var child in node.Children)
+            {
+                if (child.Level % 2 == 0)
+                {
+                    evenChildren.Add(child);
+                }
+                else
+                {
+                    oddChildren.Add(child);
+                }
+            }
+
+            if (oddChildren.Count > 0)
+            {
+                // we solve this by building a new tlas for this reference
+                // but this can happen multiple times for the same blas
+                // so if possible we want to reuse the tlas
+                var dummy = tlasAdd.Where(x =>
+                {
+                    if (x.Children.Count != oddChildren.Count)
+                        return false;
+                    foreach (var child in node.Children)
+                    {
+                        if (!x.Children.Contains(child))
+                            return false;
+                    }
+                    foreach(var child in x.Children)
+                    {
+                        if(!oddChildren.Contains(child))
+                            return false;
+                    }
+
+                    return true;
+                }).FirstOrDefault();
+
+                if (dummy == null)
+                {
+                    dummy = new SceneNode
+                    {
+                        // set new Level and index
+                        Level = node.Level + 1,
+                        Name = "DummyTLAS",
+                        // add the odd children
+                        NumChildren = oddChildren.Count,
+                        NumOdd = (uint)oddChildren.Count,
+                        Children = new List<SceneNode>(oddChildren),
+                        // set transforms to identity
+                        ObjectToWorld = Matrix4x4.Identity,
+                        WorldToObject = Matrix4x4.Identity,
+                    };
+                    tlasAdd.Add(dummy);
+                }
+
+                // add even dummy to buffer and children of the odd node
+                evenChildren.Add(dummy);
+
+                // add only the even children
+                node.NumEven = (uint)evenChildren.Count;
+                node.Children.Clear();
+                node.Children.AddRange(evenChildren);
+                node.NumChildren = evenChildren.Count;
+            }
+            else
+            {
+                // we only want and only have even children, therefore set numEven
+                node.NumEven = (uint)evenChildren.Count;
+            }
+        }
+
         public void Validate()
         {
-            foreach (var node in _buffers.Nodes)
-            {
-                if (node.Level < 0)
-                    throw new Exception("Level was not set");
-                foreach (var child in node.Children)
-                {
-                    if (child.Level <= node.Level)
-                        throw new Exception("Child level must always be at least one higher than parent");
-                    if (child.Level + node.Level % 2 == 0)
-                        throw new Exception("Either two odd levels or two even levels are parent and child");
-                    if (child.NumChildren != child.NumEven + child.NumOdd)
-                        throw new Exception("Num odd and num even don't add up to numChildren");
-                }
+            Console.WriteLine("Validating SceneGraph");
+            Parallel.ForEach(_buffers.Nodes, node =>
+           {
+               if (node.Level < 0)
+                   throw new Exception("Level was not set");
+               foreach (var child in node.Children)
+               {
+                   if (child.Level <= node.Level)
+                       throw new Exception("Child level must always be at least one higher than parent");
+                   if (child.Level + node.Level % 2 == 0)
+                       throw new Exception("Either two odd levels or two even levels are parent and child");
+                   if (child.NumChildren != child.NumEven + child.NumOdd)
+                       throw new Exception("Num odd and num even don't add up to numChildren");
+               }
 
-                if (node.IsInstanceList)
-                {
-                    if (node.Level % 2 == 0)
-                        throw new Exception("instance List must have odd level");
-                    if (node.NumTriangles > 0)
-                        throw new Exception("instance List can not contain geometry");
+               if (node.IsInstanceList)
+               {
+                   if (node.Level % 2 == 0)
+                       throw new Exception("instance List must have odd level");
+                   if (node.NumTriangles > 0)
+                       throw new Exception("instance List can not contain geometry");
 
-                    if (node.Children.Count != 1)
-                        throw new Exception("instance List must have exactly one child (DummyTLAS)");
+                   if (node.Children.Count != 1)
+                       throw new Exception("instance List must have exactly one child (DummyTLAS)");
 
-                    var dummyTLAS = node.Children[0];
+                   var dummyTLAS = node.Children[0];
 
-                    if (dummyTLAS.Name != "DummyTLAS")
-                        throw new Exception("child of instancle List is not a dummyTLAS");
+                   if (dummyTLAS.Name != "DummyTLAS")
+                       throw new Exception("child of instancle List is not a dummyTLAS");
 
-                    foreach(var child in dummyTLAS.Children)
-                    {
-                        if (child.Level % 2 == 0)
-                            throw new Exception("Instance list elements must have an odd level");
-                        if (child.NumChildren != 1)
-                            throw new Exception("Instance list elements must reference exactly one child");
-                        if (child.NumTriangles > 0)
-                            throw new Exception("Instance list elements can not reference triangles");
-                        foreach(var parent in child.Parents)
-                        {
-                            if (parent.Name != "DummyTLAS")
-                                throw new Exception("Parent of instance list element must be dummyTLAS");
-                            foreach(var grandParent in parent.Parents)
-                            {
-                                if (!grandParent.IsInstanceList)
-                                    throw new Exception("Grandparent of instance list element must be instance list");
-                            }
-                        }
-                    }
-                }
+                   foreach (var child in dummyTLAS.Children)
+                   {
+                       if (child.Level % 2 == 0)
+                           throw new Exception("Instance list elements must have an odd level");
+                       if (child.NumChildren != 1)
+                           throw new Exception("Instance list elements must reference exactly one child");
+                       if (child.NumTriangles > 0)
+                           throw new Exception("Instance list elements can not reference triangles");
+                       foreach (var parent in child.Parents)
+                       {
+                           if (parent.Name != "DummyTLAS")
+                               throw new Exception("Parent of instance list element must be dummyTLAS");
+                           foreach (var grandParent in parent.Parents)
+                           {
+                               if (!grandParent.IsInstanceList)
+                                   throw new Exception("Grandparent of instance list element must be instance list");
+                           }
+                       }
+                   }
+               }
 
-                if (node.Index < 0)
-                    throw new Exception("Index was not set");
-                if (_buffers.Nodes[node.Index] != node)
-                    throw new Exception("Index doesn't match actual index");
-                if (node.Level % 2 == 0 && node.NumTriangles > 0)
-                    throw new Exception("Even node references Geometry");
-                if (node.NumChildren == 0 && node.NumTriangles == 0)
-                    throw new Exception("Node doesn't reference anything");
-                if (node.Children.Count != node.NumChildren)
-                    throw new Exception("Node NumChildren count differs from actual count");
-                if (node.NumTriangles > 0 && node.IndexBufferIndex < 0)
-                    throw new Exception("Node says it contains geometry but index buffer pointer is not set");
-                if (node.Brother != null)
-                    throw new Exception("An identical brother exists, this node was supposed to be removed");
-            }
+               if (node.Index < 0)
+                   throw new Exception("Index was not set");
+               if (_buffers.Nodes[node.Index] != node)
+                   throw new Exception("Index doesn't match actual index");
+               if (node.Level % 2 == 0 && node.NumTriangles > 0)
+                   throw new Exception("Even node references Geometry");
+               if (node.NumChildren == 0 && node.NumTriangles == 0)
+                   throw new Exception("Node doesn't reference anything");
+               if (node.Children.Count != node.NumChildren)
+                   throw new Exception("Node NumChildren count differs from actual count");
+               if (node.NumTriangles > 0 && node.IndexBufferIndex < 0)
+                   throw new Exception("Node says it contains geometry but index buffer pointer is not set");
+               if (node.Brother != null)
+                   throw new Exception("An identical brother exists, this node was supposed to be removed");
+           });
         }
 
         public void PrintScene()
         {
             foreach (var node in _buffers.Nodes)
             {
-                Console.WriteLine(node);
+                var str = node.ToString();
+                if (!str.Contains("Inst") && !str.Contains("Mesh"))
+                    Console.WriteLine(str);
             }
         }
 
@@ -243,32 +274,35 @@ namespace SceneCompiler.Scene
         {
 
             var root = _buffers.Nodes[_buffers.RootNode];
-            foreach (var t in _buffers.Nodes)
+            Parallel.ForEach(_buffers.Nodes, t =>
             {
                 t.Index = -1;
                 t.Parents.Clear();
-            }
+            });
             root.Index = 0;
             BuildListRecursive(root, 1);
 
             var arr = new SceneNode[_buffers.Nodes.Count(x=>x.Index != -1)];
+            var unused = 0;
             foreach (var node in _buffers.Nodes)
             {
                 if(node.Index == -1)
                 {
-                    Console.WriteLine("Unused Node " + node.Name);
+                    unused++;
                     continue;
                 }
                 arr[node.Index] = node;
             }
 
+            Console.WriteLine("Removed " + unused + " unused Nodes");
+
             _buffers.RootNode = 0;
             _buffers.Nodes.Clear();
             _buffers.Nodes.AddRange(arr);
 
-            foreach(var node in _buffers.Nodes)
+            foreach (var node in _buffers.Nodes)
             {
-                foreach(var child in node.Children)
+                foreach (var child in node.Children)
                 {
                     child.Parents.Add(node);
                 }
@@ -292,9 +326,11 @@ namespace SceneCompiler.Scene
             }
 
             if (start == indexOffset) return indexOffset; // all were already added
-            // call for all children
-            // TODO might want to avoid calling twice for a node
-            foreach (var child in node.Children) 
+                                                          // call for all children
+                                                          // TODO might want to avoid calling twice for a node
+
+
+            foreach (var child in node.Children)
             {
                 indexOffset = BuildListRecursive(child, indexOffset);
             }
@@ -324,9 +360,18 @@ namespace SceneCompiler.Scene
 
         public void ComputeAABBs(SceneNode node)
         {
+            if(node.Children.Count > 50000)
+            {
+                Parallel.ForEach(node.Children, child => ComputeAABBs(child));
+            }
+            else
+            {
+                foreach (var child in node.Children)
+                    ComputeAABBs(child);
+            }
+
             foreach (var child in node.Children) // children
             {
-                ComputeAABBs(child);
                 var (min, max) = TransformAABB(node.ObjectToWorld, child.AABB_min, child.AABB_max);
                 node.AABB_min = Min(node.AABB_min, min);
                 node.AABB_max = Max(node.AABB_max, max);
