@@ -15,13 +15,13 @@
 void compile_shaders(VkBool32 ray_trace)
 {
 	printf("compiling shaders\n");
-	int vert = system("%VK_SDK_PATH%/Bin/glslc.exe shader.vert -o shader.vert.spv --target-env=vulkan1.2");
+	int vert = system("%VK_SDK_PATH%/Bin/glslc.exe shaders/shader.vert -o shader.vert.spv --target-env=vulkan1.2");
 	int frag;
 	if (ray_trace) {
-		frag = system("%VK_SDK_PATH%/Bin/glslc.exe shader.frag -o shader.frag.spv --target-env=vulkan1.2 -DRAY_QUERIES");
+		frag = system("%VK_SDK_PATH%/Bin/glslc.exe shaders/shader.frag -o shader.frag.spv --target-env=vulkan1.2 -DRAY_QUERIES");
 	}
 	else {
-		frag = system("%VK_SDK_PATH%/Bin/glslc.exe shader.frag -o shader.frag.spv --target-env=vulkan1.2");
+		frag = system("%VK_SDK_PATH%/Bin/glslc.exe shaders/shader.frag -o shader.frag.spv --target-env=vulkan1.2");
 	}
 	
 	if (vert || frag)

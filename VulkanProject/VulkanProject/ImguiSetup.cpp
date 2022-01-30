@@ -292,6 +292,7 @@ void get_available_scenes(SceneSelection* scene_selection)
 
 	if (INVALID_HANDLE_VALUE == hFind)
 	{
+		_tprintf(TEXT("\nInvalid Handle\n\n"));
 		return;
 	}
 

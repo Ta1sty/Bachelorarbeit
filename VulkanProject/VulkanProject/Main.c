@@ -161,6 +161,9 @@ int main()
     App app = {0};
 
     get_available_scenes(&app.sceneSelection);
+    if (app.sceneSelection.numScenes == 0) {
+        error("no scenes found");
+    }
 
     App* appPtr = &app;
     globalApplication = appPtr;
