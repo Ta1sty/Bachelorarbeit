@@ -145,15 +145,6 @@
     <None Include="buildScene.bat">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="debug.frag" />
-    <None Include="intersections.frag" />
-    <None Include="QueryTraceRecord.frag" />
-    <None Include="raytrace.frag" />
-    <None Include="shader.frag" />
-    <None Include="shader.vert" />
-    <None Include="structs.frag" />
-    <None Include="traversalShader.frag" />
-    <None Include="unused.frag" />
     <None Include="shaders\vert.spv">
       <Filter>Source Files\Shader\glsl</Filter>
     </None>

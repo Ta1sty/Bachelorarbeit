@@ -217,8 +217,13 @@ int main()
                 drawFrame(&app.vk_info, &app.scene, &app.sceneSelection);
                 compile_query_trace(&app.vk_info, &app.scene);
             }
-		if (resizeW >= 0 || resizeH >= 0)
+		if (resizeW >= 0 || resizeH >= 0 || app.vk_info.reloadShader != 0)
 		{
+            if (resizeW == -1 || resizeH == -1) {
+                resizeH = WINDOW_HEIGHT;
+                resizeW = WINDOW_WIDTH;
+            }
+
             vkDeviceWaitIdle(app.vk_info.device);
 			create_or_resize_swapchain(&app.vk_info, &app.window, resizeW, resizeH, &app.scene);
             if (resizeW != 0 && resizeH != 0) {
@@ -231,6 +236,7 @@ int main()
 
             resizeW = -1;
             resizeH = -1;
+            app.vk_info.reloadShader = 0;
 		}
         if (app.sceneSelection.currentScene != app.sceneSelection.nextScene)
             changeScene(&app);

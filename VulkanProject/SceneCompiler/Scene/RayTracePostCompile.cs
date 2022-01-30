@@ -32,11 +32,14 @@ namespace SceneCompiler.Scene
             var buffer = _buffers.Nodes;
             SceneNode root = buffer[_buffers.RootNode];
             root.Level = 0;
+            Console.WriteLine("Writing Levels");
             DepthRecursion(root);
+            Console.WriteLine("Removing empty children");
+            Parallel.ForEach(buffer, x => x.Children = x.Children.Where(x => x.TotalPrimitiveCount > 0).ToList());
 
             ConcurrentBag<SceneNode> blasAdd = new();
             ConcurrentBag<SceneNode> tlasAdd = new();
-
+            Console.WriteLine("inserting dummys");
             var evenTask = Task.Run(() =>
             {
                 foreach (var node in buffer.Where(x => x.Level % 2 == 0))
@@ -54,12 +57,12 @@ namespace SceneCompiler.Scene
 
             buffer.AddRange(tlasAdd);
             buffer.AddRange(blasAdd);
-
+            Console.WriteLine("added " + (tlasAdd.Count +blasAdd.Count) + " dummies to the scenegraph");
             for (var i = 0; i < buffer.Count; i++)
             {
                 buffer[i].Index = i;
             }
-
+            Console.WriteLine("computing AABBs");
             ComputeAABBs(root);
         }
 
@@ -265,14 +268,17 @@ namespace SceneCompiler.Scene
             foreach (var node in _buffers.Nodes)
             {
                 var str = node.ToString();
-                if (!str.Contains("Inst") && !str.Contains("Mesh"))
-                    Console.WriteLine(str);
+                if (str.Contains("Mesh"))
+                    continue;
+                if (str.Contains("Inst") && !str.Contains("List"))
+                    continue;
+                Console.WriteLine(str);
             }
         }
 
         public void RebuildNodeBufferFromRoot()
         {
-
+            Console.WriteLine("Rebuilding the buffer from the root");
             var root = _buffers.Nodes[_buffers.RootNode];
             Parallel.ForEach(_buffers.Nodes, t =>
             {
@@ -342,10 +348,6 @@ namespace SceneCompiler.Scene
         {
             foreach (var child in node.Children)
             {
-                if (node.IsInstanceList)
-                {
-
-                }
                 if (node.Level >= child.Level)
                 {
                     child.Level = node.Level + 1;
@@ -356,11 +358,14 @@ namespace SceneCompiler.Scene
                 }
                 DepthRecursion(child);
             }
+            node.TotalPrimitiveCount = node.NumTriangles + node.Children.Sum(x => x.TotalPrimitiveCount);
         }
 
         public void ComputeAABBs(SceneNode node)
         {
-            if(node.Children.Count > 50000)
+            if (node.isAABBComputed)
+                return;
+            if(node.Children.Count > 10000)
             {
                 Parallel.ForEach(node.Children, child => ComputeAABBs(child));
             }
@@ -389,6 +394,7 @@ namespace SceneCompiler.Scene
                     node.AABB_max = Max(node.AABB_max, posTr);
                 }
             }
+            node.isAABBComputed = true;
         }
 
         private (Vector4 min, Vector4 max) TransformAABB(Matrix4x4 transform, Vector4 min, Vector4 max)

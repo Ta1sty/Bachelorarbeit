@@ -33,6 +33,8 @@ namespace SceneCompiler.Scene.SceneTypes
 
         public bool ForceOdd = false;
         public bool ForceEven = false;
+        public long TotalPrimitiveCount = 0;
+        public bool isAABBComputed = false;
         public SceneNode ThisOrBrother()
         {
             return Brother ?? this;

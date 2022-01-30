@@ -64,19 +64,17 @@ void getHitPayload(int triangle, vec3 tuv, out vec4 color, out vec3 N, out Mater
 
 // ONLY modify these when in the instanceShader or the rayTrace Loop
 struct TraversalPayload {
-	mat4 world_to_object;
-	vec3 transformed_origin; // ray origin in object space
+	mat4x3 world_to_object;
 	float t; // the t for which this aabb was intersected
-	vec3 transformed_direction; // the ray origin in object space
-	uint node_idx; // the SceneNode to which this traversalNode belongs
-	vec3 transformed_x;
-	float pad;
+	uint node_idx; // the SceneNode to which this traversalNode
+	uint cIdx;
+	uint pIdx;
 };
 
 #ifdef RAY_QUERIES
 // use a stack because:
 // keep the list as short as possible, I.E. use a depth first search
-const int BUFFER_SIZE = 50;
+const int BUFFER_SIZE = 100;
 int stackSize = 0;
 TraversalPayload traversalBuffer[BUFFER_SIZE];
 
@@ -84,58 +82,42 @@ int traversalDepth = 0;
 uint numTraversals = 0;
 uint queryCount = 0;
 
-// Problem, want to reconstruct the tranform path for the Normal and potentially other applications
-// Idea, have 2 arrays int[MAX_DEPTH] commited, candidate
-// if triangle is accepted by traversal, copy contents of candidate to commited. This array then contains the levels used.
-// in case there is a skip from exapmle level 3->6, we set 4,5 to -1 so we know to ignore them
-// for traversal proceed as follows. once node is popped write node.index to candidate[node.level]
-// if a path fails without any 
+void instanceHitCompute(int index, vec3 origin, vec3 direction){	
+	TraversalPayload nextLoad = traversalBuffer[index];
 
-// for a given rayQuery this method returns a ray and a tlasNumber
-void instanceHit(rayQueryEXT ray_query, TraversalPayload load, SceneNode node, out float tNear, out float tFar) {
-	float t = rayQueryGetIntersectionTEXT(ray_query, false);
-	// this can never happen since best_t is our t_max for this query
-	uint iIdx = rayQueryGetIntersectionInstanceIdEXT(ray_query, false);
-	uint cIdx = rayQueryGetIntersectionInstanceCustomIndexEXT(ray_query, false);
-	uint pIdx = rayQueryGetIntersectionPrimitiveIndexEXT(ray_query, false);
-	SceneNode directChild = nodes[cIdx]; // use the custom index to take a shortcut
+	SceneNode directChild = nodes[nextLoad.cIdx]; // use the custom index to take a shortcut
 	mat4 world_to_object;
-	vec3 origin, direction, x;
 
 	// we can now do LOD or whatever we feel like doing
 	SceneNode next;
 	if(directChild.IsInstanceList) {
 		SceneNode dummy = nodes[childIndices[directChild.childrenIndex]]; // this is the inserted dummy - even
-		SceneNode instance = nodes[childIndices[dummy.childrenIndex + pIdx]]; // this is the instance 
+		SceneNode instance = nodes[childIndices[dummy.childrenIndex + nextLoad.pIdx]]; // this is the instance 
 																			  // - odd (absorbed as AABB in directChild)
 		next = nodes[childIndices[instance.childrenIndex]]; // instance is only allowed to reference one child, therefore this is the next
 		world_to_object = instance.world_to_object * directChild.world_to_object;
 	} else {
-		next = nodes[childIndices[directChild.childrenIndex + pIdx]];
+		next = nodes[childIndices[directChild.childrenIndex + nextLoad.pIdx]];
 		world_to_object = directChild.world_to_object;
 	}
 
-	origin = (world_to_object * vec4(load.transformed_origin, 1)).xyz;
-	direction = (world_to_object * vec4(load.transformed_direction, 0)).xyz;
-	x = (world_to_object * vec4(load.transformed_x, 0)).xyz;
 
 	// here the shader adds the next payloads
-	TraversalPayload nextLoad;
-	nextLoad.transformed_origin = (next.world_to_object * vec4(origin, 1)).xyz;
-	nextLoad.transformed_direction = (next.world_to_object * vec4(direction, 0)).xyz;
-	nextLoad.transformed_x = (next.world_to_object * vec4(x, 0)).xyz;
-	nextLoad.node_idx = next.Index;
-	nextLoad.world_to_object = next.world_to_object * world_to_object * load.world_to_object;
 
+	origin = (world_to_object * vec4(nextLoad.world_to_object * vec4(origin,1),1)).xyz;
+	direction = (world_to_object * vec4(nextLoad.world_to_object * vec4(direction,0),0)).xyz;
+
+	float tNear, tFar;
 	intersectAABB(origin, direction, next.AABB_min.xyz, next.AABB_max.xyz, tNear, tFar);
 
-	nextLoad.t = tNear;
-	if(stackSize>=BUFFER_SIZE)
-		return;
-	traversalBuffer[stackSize] = nextLoad;
-	stackSize++;
+	world_to_object = next.world_to_object * world_to_object;
 
-	if (displayAABBs)
+	nextLoad.node_idx = next.Index;
+	nextLoad.world_to_object = mat4x3(world_to_object * mat4(nextLoad.world_to_object));
+	nextLoad.t = tNear;
+	traversalBuffer[index] = nextLoad;
+
+	if (debug && displayAABBs)
 		debugAABB(origin, direction, next);
 }
 
@@ -172,10 +154,7 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 	float best_t = t_max;
 
 	TraversalPayload start; // start at root node
-	start.world_to_object = mat4(1);
-	start.transformed_origin = rayOrigin;
-	start.transformed_direction = rayDirection;
-	start.transformed_x = vec3(1, 0, 0);
+	start.world_to_object = mat4x3(1);
 	start.node_idx = root;
 	start.t = 0;
 
@@ -189,8 +168,8 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 
 	uint triangleTLAS = -1;
 	while (stackSize > 0) {
-		TraversalPayload load = traversalBuffer[stackSize - 1];
 		stackSize--; // remove last element
+		TraversalPayload load = traversalBuffer[stackSize];
 		if (load.t > best_t) continue;// there was already a closer hit, we can skip this one
 
 
@@ -198,16 +177,14 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 		SceneNode node = nodes[load.node_idx]; // retrieve scene Node
 		traversalDepth = max(node.level, traversalDepth); // not 100% correct but it gives a vague idea
 
-		// recordQuery(node.Index, node.level, load.t, rayOrigin, rayOrigin, 0, 0);
-
 		uint tlasNumber = node.tlasNumber;
-		vec3 query_origin = load.transformed_origin;
-		vec3 query_direction = load.transformed_direction;
+		vec3 query_origin = (load.world_to_object * vec4(rayOrigin,1)).xyz;
+		vec3 query_direction = (load.world_to_object * vec4(rayDirection,0)).xyz;
 
 		if (debug && displayAABBs) {
 			for (int i = 0; i < node.numOdd; i++) {
 				SceneNode directChild = nodes[node.childrenIndex + i];
-				debugAABB(load.transformed_origin, load.transformed_direction, directChild);
+				debugAABB(query_origin, query_direction, directChild);
 			}
 		}
 		rayQueryEXT ray_query;
@@ -219,15 +196,13 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 		uint triangleIntersections = 0;
 		uint instanceIntersections = 0;
 
-		float instanceTMin = 100000;
-		float instanceTMax = 0;
-
 		while (rayQueryProceedEXT(ray_query)) {
 			uint type = rayQueryGetIntersectionTypeEXT(ray_query, false);
 			switch (type) {
 			case gl_RayQueryCandidateIntersectionTriangleEXT:
 				// might want to check for opaque
-				triangleHit(ray_query, node);
+				// triangleHit(ray_query, node);
+				rayQueryConfirmIntersectionEXT(ray_query);
 				triangleIntersections++;
 				break;
 			case gl_RayQueryCandidateIntersectionAABBEXT:
@@ -238,12 +213,14 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 				// that replaces the node that executed the query, however we still want to do a DFS. Solution for this is:
 				// We reverse the list. Then the closest hit is at the end of the stack, and all added levels are still 
 				// right of this node
-				float tNear, tFar;
-				instanceHit(ray_query, load, node, tNear, tFar);
-				instanceIntersections++;
-				instanceTMin = min(instanceTMin, tNear);
-				instanceTMax = max(instanceTMax, tFar);
+				if(stackSize>=BUFFER_SIZE)
+					break;
 
+				traversalBuffer[stackSize] = load;
+				traversalBuffer[stackSize].cIdx = rayQueryGetIntersectionInstanceCustomIndexEXT(ray_query, false);
+				traversalBuffer[stackSize].pIdx = rayQueryGetIntersectionPrimitiveIndexEXT(ray_query, false);
+				stackSize++;
+				instanceIntersections++;
 				break;
 			default: break;
 			}
@@ -251,10 +228,16 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 		int end = stackSize;
 		int added = end - start;
 		for (int i = 0; i < added / 2; i++) {
-			TraversalPayload tmp1 = traversalBuffer[start + i];
-			TraversalPayload tmp2 = traversalBuffer[end - 1 - i];
-			traversalBuffer[start + i] = tmp2;
-			traversalBuffer[end - 1 - i] = tmp1;
+			int i1 = start + i;
+			int i2 = end - 1 - i;
+			TraversalPayload tmp1 = traversalBuffer[i1];
+			TraversalPayload tmp2 = traversalBuffer[i2];
+			traversalBuffer[i1] = tmp2;
+			traversalBuffer[i2] = tmp1;
+		}
+
+		for(int i = start;i < end;i++) {
+			instanceHitCompute(i, rayOrigin, rayDirection);
 		}
 
 		uint commitedType = rayQueryGetIntersectionTypeEXT(ray_query, true);
@@ -283,20 +266,17 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 				tuv.z = uv.x;
 
 				mat4 world_to_object = mat4(rayQueryGetIntersectionWorldToObjectEXT(ray_query, true));
-				resultPayload.transformed_origin = (world_to_object * vec4(load.transformed_origin, 1)).xyz;
-				resultPayload.transformed_direction = (world_to_object * vec4(load.transformed_direction, 0)).xyz;
-				resultPayload.transformed_x = (world_to_object * vec4(load.transformed_x, 0)).xyz;
 				resultPayload.node_idx = blasChild.Index;
-				resultPayload.world_to_object = world_to_object * load.world_to_object;
+				resultPayload.world_to_object = mat4x3(world_to_object * mat4(load.world_to_object));
 				resultPayload.t = best_t;
 
 				triangleTLAS = tlasNumber;
 			}
 		}
+		recordQuery(node.Index, node.level, load.t, rayOrigin, rayOrigin + best_t * rayDirection, triangleIntersections ,instanceIntersections);
 	}
 	SetDebugHsv(displayTLASNumber, triangleTLAS, colorSensitivity, true);
 	if (triangle_index >= 0) {
-		// recordQuery(999, 999, best_t, rayOrigin, rayOrigin + best_t * rayDirection, 999, 999);
 		return true;
 	}
 	return false;

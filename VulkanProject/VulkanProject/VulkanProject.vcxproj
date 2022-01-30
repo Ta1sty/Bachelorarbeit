@@ -213,12 +213,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="buildScene.bat" />
-    <None Include="debug.frag" />
-    <None Include="intersections.frag" />
-    <None Include="QueryTraceRecord.frag" />
-    <None Include="raytrace.frag" />
-    <None Include="shader.frag" />
-    <None Include="shader.vert" />
     <None Include="shaders\debug.frag" />
     <None Include="shaders\glslangValidator.exe" />
     <None Include="shaders\intersections.frag" />
@@ -230,9 +224,6 @@
     <None Include="shaders\traversalShader.frag" />
     <None Include="shaders\unused.frag" />
     <None Include="shaders\vert.spv" />
-    <None Include="structs.frag" />
-    <None Include="traversalShader.frag" />
-    <None Include="unused.frag" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="README.txt" />

@@ -148,6 +148,8 @@ typedef struct vkInfo {
 	size_t currentFrame;
 	double lastFrame;
 	double frameRate;
+	uint32_t reloadButton;
+	uint32_t reloadShader;
 } VkInfo;
 
 typedef void (*ChangeSceneCallback)(void);
