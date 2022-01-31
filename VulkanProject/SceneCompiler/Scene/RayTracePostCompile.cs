@@ -32,8 +32,10 @@ namespace SceneCompiler.Scene
             var buffer = _buffers.Nodes;
             SceneNode root = buffer[_buffers.RootNode];
             root.Level = 0;
+
             Console.WriteLine("Writing Levels");
             DepthRecursion(root);
+            Console.WriteLine("Number of Triangles: " + root.TotalPrimitiveCount);
             Console.WriteLine("Removing empty children");
             Parallel.ForEach(buffer, x => x.Children = x.Children.Where(x => x.TotalPrimitiveCount > 0).ToList());
 
@@ -58,6 +60,7 @@ namespace SceneCompiler.Scene
             buffer.AddRange(tlasAdd);
             buffer.AddRange(blasAdd);
             Console.WriteLine("added " + (tlasAdd.Count +blasAdd.Count) + " dummies to the scenegraph");
+
             for (var i = 0; i < buffer.Count; i++)
             {
                 buffer[i].Index = i;
@@ -212,31 +215,29 @@ namespace SceneCompiler.Scene
 
                if (node.IsInstanceList)
                {
-                   if (node.Level % 2 == 0)
-                       throw new Exception("instance List must have odd level");
+                   if (node.Level % 2 == 1)
+                       throw new Exception("instance List must have even level");
                    if (node.NumTriangles > 0)
                        throw new Exception("instance List can not contain geometry");
 
                    if (node.Children.Count != 1)
-                       throw new Exception("instance List must have exactly one child (DummyTLAS)");
+                       throw new Exception("instance List must have exactly one child (DummyBLAS)");
 
-                   var dummyTLAS = node.Children[0];
+                   var dummyBLAS = node.Children[0];
 
-                   if (dummyTLAS.Name != "DummyTLAS")
+                   if (dummyBLAS.Name != "DummyBLAS")
                        throw new Exception("child of instancle List is not a dummyTLAS");
 
-                   foreach (var child in dummyTLAS.Children)
+                   foreach (var child in dummyBLAS.Children)
                    {
-                       if (child.Level % 2 == 0)
-                           throw new Exception("Instance list elements must have an odd level");
-                       if (child.NumChildren != 1)
-                           throw new Exception("Instance list elements must reference exactly one child");
+                       if (child.Level % 2 == 1)
+                           throw new Exception("Instance list elements must have an even level");
                        if (child.NumTriangles > 0)
                            throw new Exception("Instance list elements can not reference triangles");
                        foreach (var parent in child.Parents)
                        {
-                           if (parent.Name != "DummyTLAS")
-                               throw new Exception("Parent of instance list element must be dummyTLAS");
+                           if (parent.Name != "DummyBLAS")
+                               throw new Exception("Parent of instance list element must be DummyBLAS");
                            foreach (var grandParent in parent.Parents)
                            {
                                if (!grandParent.IsInstanceList)
@@ -267,6 +268,8 @@ namespace SceneCompiler.Scene
         {
             foreach (var node in _buffers.Nodes)
             {
+                if (node.Name.Contains("Dummy") && node.Parents[0].IsInstanceList)
+                    continue;
                 var str = node.ToString();
                 if (str.Contains("Mesh"))
                     continue;

@@ -8,6 +8,7 @@
 
 // gets a pointer to the i-th child of this node
 #define GET_CHILD(scene, node, i) SceneNode* child = &##scene->scene_nodes[##scene->node_indices[##node->ChildrenIndex + ##i]]
+#define GET_GRANDCHILD(scene, child, i) SceneNode* grandChild = &##scene->scene_nodes[##scene->node_indices[##child->ChildrenIndex + ##i]]
 
 // gets the root node of the scene
 #define GET_ROOT(scene) SceneNode* root = &##scene->scene_nodes[##scene->scene_data.rootSceneNode]

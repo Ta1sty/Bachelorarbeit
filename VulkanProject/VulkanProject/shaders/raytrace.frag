@@ -66,9 +66,9 @@ void getHitPayload(int triangle, vec3 tuv, out vec4 color, out vec3 N, out Mater
 struct TraversalPayload {
 	mat4x3 world_to_object;
 	float t; // the t for which this aabb was intersected
-	uint node_idx; // the SceneNode to which this traversalNode
-	uint cIdx;
+	uint nIdx; // node index, or custom index(aka, direct child) before compute
 	uint pIdx;
+	uint sIdx; // shader offset (dont use it), we use it instead to get the grandchild when using instance Lists
 };
 
 #ifdef RAY_QUERIES
@@ -82,20 +82,18 @@ int traversalDepth = 0;
 uint numTraversals = 0;
 uint queryCount = 0;
 
-void instanceHitCompute(int index, vec3 origin, vec3 direction){	
+void instanceHitCompute(int index, vec3 origin, vec3 direction, bool IsInstanceList){	
 	TraversalPayload nextLoad = traversalBuffer[index];
-
-	SceneNode directChild = nodes[nextLoad.cIdx]; // use the custom index to take a shortcut
+	SceneNode directChild = nodes[nextLoad.nIdx]; // use the custom index to take a shortcut
 	mat4 world_to_object;
 
 	// we can now do LOD or whatever we feel like doing
 	SceneNode next;
-	if(directChild.IsInstanceList) {
-		SceneNode dummy = nodes[childIndices[directChild.childrenIndex]]; // this is the inserted dummy - even
-		SceneNode instance = nodes[childIndices[dummy.childrenIndex + nextLoad.pIdx]]; // this is the instance 
+	if(IsInstanceList) {
+		SceneNode instancedChild = nodes[nextLoad.sIdx];
+		next = nodes[childIndices[instancedChild.childrenIndex + nextLoad.pIdx]]; // this is the instance 
 																			  // - odd (absorbed as AABB in directChild)
-		next = nodes[childIndices[instance.childrenIndex]]; // instance is only allowed to reference one child, therefore this is the next
-		world_to_object = instance.world_to_object * directChild.world_to_object;
+		world_to_object = instancedChild.world_to_object * directChild.world_to_object;
 	} else {
 		next = nodes[childIndices[directChild.childrenIndex + nextLoad.pIdx]];
 		world_to_object = directChild.world_to_object;
@@ -112,7 +110,7 @@ void instanceHitCompute(int index, vec3 origin, vec3 direction){
 
 	world_to_object = next.world_to_object * world_to_object;
 
-	nextLoad.node_idx = next.Index;
+	nextLoad.nIdx = next.Index;
 	nextLoad.world_to_object = mat4x3(world_to_object * mat4(nextLoad.world_to_object));
 	nextLoad.t = tNear;
 	traversalBuffer[index] = nextLoad;
@@ -155,7 +153,7 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 
 	TraversalPayload start; // start at root node
 	start.world_to_object = mat4x3(1);
-	start.node_idx = root;
+	start.nIdx = root;
 	start.t = 0;
 
 	if (displayAABBs)
@@ -174,7 +172,7 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 
 
 		int start = stackSize;
-		SceneNode node = nodes[load.node_idx]; // retrieve scene Node
+		SceneNode node = nodes[load.nIdx]; // retrieve scene Node
 		traversalDepth = max(node.level, traversalDepth); // not 100% correct but it gives a vague idea
 
 		uint tlasNumber = node.tlasNumber;
@@ -217,8 +215,9 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 					break;
 
 				traversalBuffer[stackSize] = load;
-				traversalBuffer[stackSize].cIdx = rayQueryGetIntersectionInstanceCustomIndexEXT(ray_query, false);
+				traversalBuffer[stackSize].nIdx = rayQueryGetIntersectionInstanceCustomIndexEXT(ray_query, false);
 				traversalBuffer[stackSize].pIdx = rayQueryGetIntersectionPrimitiveIndexEXT(ray_query, false);
+				traversalBuffer[stackSize].sIdx = rayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetEXT(ray_query, false);
 				stackSize++;
 				instanceIntersections++;
 				break;
@@ -237,7 +236,7 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 		}
 
 		for(int i = start;i < end;i++) {
-			instanceHitCompute(i, rayOrigin, rayDirection);
+			instanceHitCompute(i, rayOrigin, rayDirection, node.IsInstanceList);
 		}
 
 		uint commitedType = rayQueryGetIntersectionTypeEXT(ray_query, true);
@@ -266,7 +265,7 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 				tuv.z = uv.x;
 
 				mat4 world_to_object = mat4(rayQueryGetIntersectionWorldToObjectEXT(ray_query, true));
-				resultPayload.node_idx = blasChild.Index;
+				resultPayload.nIdx = blasChild.Index;
 				resultPayload.world_to_object = mat4x3(world_to_object * mat4(load.world_to_object));
 				resultPayload.t = best_t;
 

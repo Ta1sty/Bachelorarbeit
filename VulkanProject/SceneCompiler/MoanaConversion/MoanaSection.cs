@@ -125,7 +125,7 @@ namespace SceneCompiler.MoanaConversion
 
             Node = new SceneNode();
             Node.Name = "List " + Name;
-            Node.ForceOdd = true;
+            Node.ForceEven = true;
             Node.IsInstanceList = true;
             Node.Children.AddRange(Instances.Select(x=>x.GetSceneNode(buffers)));
 #if CLEANUP
@@ -194,7 +194,7 @@ namespace SceneCompiler.MoanaConversion
                 WorldToObject = worldToObject,
                 ObjectToWorld = objectToWorld,
                 Name = "Inst " + ObjectName,
-                ForceOdd = true
+                ForceEven = true
             };
 
             Node.Children.AddRange(Children.Select(name=> InstanceList.InstancedGeometry.Section.InstancedGeometries
