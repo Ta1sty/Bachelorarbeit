@@ -25,8 +25,8 @@
     <Filter Include="Source Files\Core">
       <UniqueIdentifier>{cfff8ef4-cfdc-4a8a-bc01-0fed8d04070a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Shader\GLSL">
-      <UniqueIdentifier>{2a7384b9-598e-4ce4-b7c5-b99d72d4f99a}</UniqueIdentifier>
+    <Filter Include="Source Files\Shader\glsl">
+      <UniqueIdentifier>{02a9a830-05a2-45de-b022-835389c2bc5d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -145,32 +145,38 @@
     <None Include="buildScene.bat">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="shader.frag">
-      <Filter>Source Files\Shader\GLSL</Filter>
+    <None Include="shaders\vert.spv">
+      <Filter>Source Files\Shader\glsl</Filter>
     </None>
-    <None Include="shader.vert">
-      <Filter>Source Files\Shader\GLSL</Filter>
+    <None Include="shaders\unused.frag">
+      <Filter>Source Files\Shader\glsl</Filter>
     </None>
-    <None Include="traversalShader.frag">
-      <Filter>Source Files\Shader\GLSL</Filter>
+    <None Include="shaders\traversalShader.frag">
+      <Filter>Source Files\Shader\glsl</Filter>
     </None>
-    <None Include="intersections.glsl">
-      <Filter>Source Files\Shader\GLSL</Filter>
+    <None Include="shaders\structs.frag">
+      <Filter>Source Files\Shader\glsl</Filter>
     </None>
-    <None Include="debug.glsl">
-      <Filter>Source Files\Shader\GLSL</Filter>
+    <None Include="shaders\shader.vert">
+      <Filter>Source Files\Shader\glsl</Filter>
     </None>
-    <None Include="structs.glsl">
-      <Filter>Source Files\Shader\GLSL</Filter>
+    <None Include="shaders\shader.frag">
+      <Filter>Source Files\Shader\glsl</Filter>
     </None>
-    <None Include="QueryTraceRecord.glsl">
-      <Filter>Source Files\Shader\GLSL</Filter>
+    <None Include="shaders\raytrace.frag">
+      <Filter>Source Files\Shader\glsl</Filter>
     </None>
-    <None Include="unused.glsl">
-      <Filter>Source Files\Shader\GLSL</Filter>
+    <None Include="shaders\QueryTraceRecord.frag">
+      <Filter>Source Files\Shader\glsl</Filter>
     </None>
-    <None Include="raytrace.glsl">
-      <Filter>Source Files\Shader\GLSL</Filter>
+    <None Include="shaders\intersections.frag">
+      <Filter>Source Files\Shader\glsl</Filter>
+    </None>
+    <None Include="shaders\debug.frag">
+      <Filter>Source Files\Shader\glsl</Filter>
+    </None>
+    <None Include="shaders\glslangValidator.exe">
+      <Filter>Source Files\Shader\glsl</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

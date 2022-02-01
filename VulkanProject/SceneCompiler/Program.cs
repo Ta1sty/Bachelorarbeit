@@ -32,19 +32,19 @@ namespace SceneCompiler
             var path = "";
             ASceneCompiler compiler = null;
 
+            var location = Assembly.GetExecutingAssembly().Location;
+
             if (true)
             {
-                path = @"F:\Moana Island\island-pbrt-v1.1\island\pbrt";
+                path = regex.Replace(location,
+                    @"island\pbrt");
                 compiler = ConvertMoana(path);
-            }
-
-            if (false)
+            } else
             {
                 path = ChooseFile();
                 compiler = ConvertGLTF(path);
             }
 
-            var location = Assembly.GetExecutingAssembly().Location;
             var dst = regex.Replace(location,
                 @"VulkanProject\Scenes\"
                 + Path.GetFileNameWithoutExtension(path) + ".vksc");

@@ -100,6 +100,13 @@ void updatePosition(GLFWwindow* window, Camera* camera)
     float up = 0;
 
     float spd = 1;
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+        spd *= 10;
+    }
+    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
+        spd *= 100;
+    }
+
     float dst = spd * (float)diff;
     straight += (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) * dst;
     straight -= (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) * dst;
@@ -154,6 +161,9 @@ int main()
     App app = {0};
 
     get_available_scenes(&app.sceneSelection);
+    if (app.sceneSelection.numScenes == 0) {
+        error("no scenes found");
+    }
 
     App* appPtr = &app;
     globalApplication = appPtr;
@@ -207,8 +217,13 @@ int main()
                 drawFrame(&app.vk_info, &app.scene, &app.sceneSelection);
                 compile_query_trace(&app.vk_info, &app.scene);
             }
-		if (resizeW >= 0 || resizeH >= 0)
+		if (resizeW >= 0 || resizeH >= 0 || app.vk_info.reloadShader != 0)
 		{
+            if (resizeW == -1 || resizeH == -1) {
+                resizeH = WINDOW_HEIGHT;
+                resizeW = WINDOW_WIDTH;
+            }
+
             vkDeviceWaitIdle(app.vk_info.device);
 			create_or_resize_swapchain(&app.vk_info, &app.window, resizeW, resizeH, &app.scene);
             if (resizeW != 0 && resizeH != 0) {
@@ -221,6 +236,7 @@ int main()
 
             resizeW = -1;
             resizeH = -1;
+            app.vk_info.reloadShader = 0;
 		}
         if (app.sceneSelection.currentScene != app.sceneSelection.nextScene)
             changeScene(&app);

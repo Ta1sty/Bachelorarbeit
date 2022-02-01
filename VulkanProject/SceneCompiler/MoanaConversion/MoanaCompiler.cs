@@ -21,7 +21,7 @@ namespace SceneCompiler.MoanaConversion
             var moana = new Moana();
             foreach (var folder in folders)
             {   
-                if(!Path.GetFileName(folder).Contains("isBayCedar"))
+                if(!Path.GetFileName(folder).Contains("isCoral"))
                     continue;
 
                 moana.Sections.Add(ReadFolder(folder));
@@ -31,9 +31,10 @@ namespace SceneCompiler.MoanaConversion
             }
             ValidateMoana(moana);
             moana.SetReference();
+            Console.WriteLine("Creating Scenegraph");
             var root = moana.GetSceneNode(Buffers);
 
-
+            Console.WriteLine("Setting Parents and indices");
             for (var i = 0; i < Buffers.Nodes.Count; i++)
             {
                 Buffers.Nodes[i].Index = i;

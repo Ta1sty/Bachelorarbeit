@@ -125,6 +125,8 @@ namespace SceneCompiler.MoanaConversion
 
             Node = new SceneNode();
             Node.Name = "List " + Name;
+            Node.ForceEven = true;
+            Node.IsInstanceList = true;
             Node.Children.AddRange(Instances.Select(x=>x.GetSceneNode(buffers)));
 #if CLEANUP
             Instances.Clear();
@@ -191,7 +193,8 @@ namespace SceneCompiler.MoanaConversion
             {
                 WorldToObject = worldToObject,
                 ObjectToWorld = objectToWorld,
-                Name = "Inst " + ObjectName
+                Name = "Inst " + ObjectName,
+                ForceEven = true
             };
 
             Node.Children.AddRange(Children.Select(name=> InstanceList.InstancedGeometry.Section.InstancedGeometries
@@ -227,10 +230,22 @@ namespace SceneCompiler.MoanaConversion
 
             Node = new SceneNode();
             Node.Name = "Geom " + Name;
+            Node.ForceEven = true;
             Node.Children.AddRange(Meshes.Select(x=>x.GetSceneNode(buffers)));
 #if CLEANUP
             Meshes.Clear();
 #endif
+            bool merge = true;
+            if (merge) // merges the meshes of the children all into one big mesh
+            {
+                Node.NumTriangles = Node.Children.Sum(x => x.NumTriangles);
+                Node.IndexBufferIndex = Node.Children.Min(x => x.IndexBufferIndex);
+                Node.ForceOdd = true;
+                Node.ForceEven = false;
+                Node.Children.Clear();
+            }
+
+
             buffers.Nodes.Add(Node);
             return Node;
         }
@@ -260,8 +275,9 @@ namespace SceneCompiler.MoanaConversion
             Node = new SceneNode
             {
                 IndexBufferIndex = buffers.IndexBuffer.Count,
-                NumTriangles = Shape.Indices.Count/3,
-                Name = "Mesh " + Name
+                NumTriangles = Shape.Indices.Count / 3,
+                Name = "Mesh " + Name,
+                ForceOdd = true
             };
             buffers.IndexBuffer.AddRange(Shape.Indices.Select(x=>(uint) (x+start)));
 

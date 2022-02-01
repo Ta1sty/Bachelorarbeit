@@ -201,7 +201,7 @@ void draw_imgui_frame(VkInfo* info, Scene* scene, SceneSelection* scene_selectio
 
 	bool enable = true;
 	//ImGui::ShowDemoWindow(&enable);
-
+	ImGui::Combo("combo", &scene_selection->nextScene, scene_selection->availableScenes, scene_selection->numScenes);
 	ImGui::Text("Framerate: %f", info->frameRate);
 	ImGui::SliderFloat("FOV", &scene->camera.settings.fov, 1, 89);
 	ImGui::Checkbox("Textures", (bool*)&scene->camera.settings.textures);
@@ -210,6 +210,13 @@ void draw_imgui_frame(VkInfo* info, Scene* scene, SceneSelection* scene_selectio
 	ImGui::Checkbox("Specular", (bool*)&scene->camera.settings.specular);
 	ImGui::Checkbox("Shadows", (bool*)&scene->camera.settings.shadows);
 	ImGui::SliderInt("MaxDepth", (int*) &scene->camera.settings.maxDepth, 1, 10);
+
+	bool reload = ImGui::Button("Reload Shader");
+	if (info->reloadButton == 0 && reload == 1) {
+		info->reloadShader = 1;
+		printf("Reload\n");
+	}
+	info->reloadButton = reload;
 
 	if (ImGui::CollapsingHeader("DEBUG")) {
 		ImGui::Checkbox("Enable Debug", (bool*)&scene->camera.settings.debug);
@@ -240,8 +247,6 @@ void draw_imgui_frame(VkInfo* info, Scene* scene, SceneSelection* scene_selectio
 		ImGui::EndDisabled();
 		ImGui::EndDisabled();
 	}
-
-	ImGui::Combo("combo", &scene_selection->nextScene, scene_selection->availableScenes, scene_selection->numScenes);
 
 	ImGui::End();
 	ImGui::Render();
@@ -292,6 +297,7 @@ void get_available_scenes(SceneSelection* scene_selection)
 
 	if (INVALID_HANDLE_VALUE == hFind)
 	{
+		_tprintf(TEXT("\nInvalid Handle\n\n"));
 		return;
 	}
 

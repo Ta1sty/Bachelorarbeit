@@ -57,18 +57,36 @@ namespace SceneCompiler.Scene
             {
                 var size = 208; // see C project SceneNode
                 var nodeBuffer = new byte[4 + 4 + nodes.Count * size];
-                var pos = -4;
-                BitConverter.GetBytes((uint)nodes.Count).CopyTo(nodeBuffer.AsSpan(pos += 4));
-                BitConverter.GetBytes((uint)rootNodeIndex).CopyTo(nodeBuffer.AsSpan(pos += 4));
 
-                foreach (var node in nodes)
+                var index = 0;
+
+                while (index < nodes.Count)
                 {
-                    node.ChildrenIndex = node.NumChildren > 0 ? indices.Count : -1;
-                    pos = node.WriteToByteArray(nodeBuffer, pos);
-                    indices.AddRange(node.Children.Select(x => x.Index));
-                }
+                    var pos = -4;
+                    int batchSize = (int) Math.Min(nodes.Count - index, 1024);
+                    int batchByteSize = batchSize * size;
+                    if(index == 0)
+                    {
+                        batchByteSize += 4 + 4;
+                    }
+                    nodeBuffer = new byte[batchByteSize];
+                    if(index == 0)
+                    {
+                        BitConverter.GetBytes((uint)nodes.Count).CopyTo(nodeBuffer.AsSpan(pos += 4));
+                        BitConverter.GetBytes((uint)rootNodeIndex).CopyTo(nodeBuffer.AsSpan(pos += 4));
+                    }
 
-                str.Write(nodeBuffer);
+                    for (var i = index;i<index+batchSize;i++)
+                    {
+                        nodes[i].ChildrenIndex = nodes[i].NumChildren > 0 ? indices.Count : -1;
+                        pos = nodes[i].WriteToByteArray(nodeBuffer, pos);
+                        indices.AddRange(nodes[i].Children.Select(x => x.Index));
+                    }
+                    str.Write(nodeBuffer);
+                    index += batchSize;
+                }
+                if (index != nodes.Count)
+                    throw new Exception("Index after write is not nodes.count");
             }
             // write index array
             {
