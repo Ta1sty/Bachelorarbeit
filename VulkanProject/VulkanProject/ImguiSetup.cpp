@@ -211,9 +211,11 @@ void draw_imgui_frame(VkInfo* info, Scene* scene, SceneSelection* scene_selectio
 	ImGui::Checkbox("Shadows", (bool*)&scene->camera.settings.shadows);
 	ImGui::SliderInt("MaxDepth", (int*) &scene->camera.settings.maxDepth, 1, 10);
 
-	bool reload = ImGui::Button("Reload Shader");
+	ImGui::Text("Rendersettings");
+	ImGui::Checkbox("Vsync", (bool*)&info->vsync);
+	bool reload = ImGui::Button("Reload shader");
 	if (info->reloadButton == 0 && reload == 1) {
-		info->reloadShader = 1;
+		info->reload = 1;
 		printf("Reload\n");
 	}
 	info->reloadButton = reload;

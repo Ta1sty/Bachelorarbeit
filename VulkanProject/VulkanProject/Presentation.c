@@ -116,6 +116,56 @@ void set_frame_buffers(VkInfo* vk, Scene* scene, uint32_t image_index) {
 
 void drawFrame(VkInfo* info, Scene* scene, SceneSelection* scene_selection) // see https://vulkan-tutorial.com/
 {
+	/*
+	uint32_t imageIndex;
+	vkAcquireNextImageKHR(info->device, info->swapchain.vk_swapchain, UINT64_MAX, 
+		info->imageAvailableSemaphore[0], VK_NULL_HANDLE, &imageIndex);
+
+	update_imgui_commandBuffer(info, scene, scene_selection, imageIndex);
+	set_frame_buffers(info, scene, imageIndex);
+
+	VkSubmitInfo submitInfo = {0};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+	VkCommandBuffer buffers[] = { info->command_buffers[imageIndex] , info->imgui_command_buffers[imageIndex] };
+
+	VkSemaphore waitSemaphores[] = { info->imageAvailableSemaphore[0] };
+	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+	submitInfo.waitSemaphoreCount = 1;
+	submitInfo.pWaitSemaphores = waitSemaphores;
+	submitInfo.pWaitDstStageMask = waitStages;
+	submitInfo.commandBufferCount = 2;
+	submitInfo.pCommandBuffers = &buffers;
+
+	VkSemaphore signalSemaphores[] = { info->renderFinishedSemaphore[0] };
+	submitInfo.signalSemaphoreCount = 1;
+	submitInfo.pSignalSemaphores = signalSemaphores;
+
+	check(vkQueueSubmit(info->graphics_queue, 1, &submitInfo, VK_NULL_HANDLE), " failed to submit draw");
+
+	VkPresentInfoKHR presentInfo = {0};
+	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+	presentInfo.waitSemaphoreCount = 1;
+	presentInfo.pWaitSemaphores = signalSemaphores;
+
+	VkSwapchainKHR swapChains[] = { info->swapchain.vk_swapchain };
+	presentInfo.swapchainCount = 1;
+	presentInfo.pSwapchains = swapChains;
+	presentInfo.pImageIndices = &imageIndex;
+
+	vkQueuePresentKHR(info->present_queue, &presentInfo);
+
+	double now = glfwGetTime();
+	double diff = now - info->lastFrame;
+	info->lastFrame = now;
+	info->frameRate = 1 / diff;
+
+	vkDeviceWaitIdle(info->device);
+
+	return;*/
+
+	
 	size_t currentFrame = info->currentFrame;
 	vkWaitForFences(info->device, 1, &info->inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 

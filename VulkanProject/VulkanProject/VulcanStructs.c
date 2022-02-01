@@ -237,7 +237,11 @@ void create_swapchain(VkInfo* vk_info, GLFWwindow** window, uint32_t width, uint
 		}
 	}
 	// TODO select present mode
-	VkPresentModeKHR present_mode = VK_PRESENT_MODE_FIFO_KHR;
+	VkPresentModeKHR present_mode;
+	if(vk_info->vsync==0) 
+		present_mode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+	else
+		present_mode = VK_PRESENT_MODE_FIFO_KHR;
 	VkExtent2D extent = {
 		.height = height,
 		.width = width
