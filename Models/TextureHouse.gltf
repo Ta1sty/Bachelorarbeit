@@ -24,18 +24,7 @@
     "nodes" : [
         {
             "mesh" : 0,
-            "name" : "Floor",
-            "rotation" : [
-                -1,
-                0,
-                0,
-                4.331257628109597e-07
-            ],
-            "scale" : [
-                1,
-                -1,
-                1
-            ]
+            "name" : "Floor"
         },
         {
             "children" : [
@@ -143,18 +132,7 @@
         },
         {
             "mesh" : 3,
-            "name" : "Roof",
-            "rotation" : [
-                -1,
-                0,
-                0,
-                4.331257628109597e-07
-            ],
-            "scale" : [
-                1,
-                -1,
-                1
-            ]
+            "name" : "Roof"
         },
         {
             "children" : [
@@ -169,18 +147,7 @@
         },
         {
             "mesh" : 0,
-            "name" : "Floor",
-            "rotation" : [
-                -1,
-                0,
-                0,
-                4.331257628109597e-07
-            ],
-            "scale" : [
-                1,
-                -1,
-                1
-            ]
+            "name" : "Floor"
         },
         {
             "mesh" : 2,
@@ -202,18 +169,7 @@
         },
         {
             "mesh" : 3,
-            "name" : "Roof",
-            "rotation" : [
-                -1,
-                0,
-                0,
-                4.331257628109597e-07
-            ],
-            "scale" : [
-                1,
-                -1,
-                1
-            ]
+            "name" : "Roof"
         }
     ],
     "materials" : [
