@@ -217,7 +217,7 @@ int main()
                 drawFrame(&app.vk_info, &app.scene, &app.sceneSelection);
                 compile_query_trace(&app.vk_info, &app.scene);
             }
-		if (resizeW >= 0 || resizeH >= 0 || app.vk_info.reloadShader != 0)
+		if (resizeW >= 0 || resizeH >= 0 || app.vk_info.reload != 0)
 		{
             if (resizeW == -1 || resizeH == -1) {
                 resizeH = WINDOW_HEIGHT;
@@ -236,7 +236,7 @@ int main()
 
             resizeW = -1;
             resizeH = -1;
-            app.vk_info.reloadShader = 0;
+            app.vk_info.reload = 0;
 		}
         if (app.sceneSelection.currentScene != app.sceneSelection.nextScene)
             changeScene(&app);
