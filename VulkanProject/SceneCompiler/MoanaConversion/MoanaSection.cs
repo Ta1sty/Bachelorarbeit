@@ -235,7 +235,8 @@ namespace SceneCompiler.MoanaConversion
 #if CLEANUP
             Meshes.Clear();
 #endif
-            bool merge = true;
+            bool merge = true; // we need to do this, else programm will construct a blas for
+                               // every single mesh and we exceed vkDeviceMaxAllocations (4096)
             if (merge) // merges the meshes of the children all into one big mesh
             {
                 Node.NumTriangles = Node.Children.Sum(x => x.NumTriangles);

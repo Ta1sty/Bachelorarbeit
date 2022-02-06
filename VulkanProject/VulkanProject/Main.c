@@ -140,7 +140,7 @@ void changeScene(App* app)
     VkBool32 useMutliLevel = VK_TRUE;
     if (app->vk_info.ray_tracing) {
         // flatten_scene(&app->scene);
-        prepare_scene(&app->scene, useMutliLevel);
+        // prepare_scene(&app->scene, useMutliLevel);
     }
     else {
         flatten_scene(&app->scene);
@@ -169,6 +169,7 @@ int main()
     globalApplication = appPtr;
     setExceptionCallback(exception_callback_impl);
     app.vk_info.rasterize = VK_TRUE;
+    app.vk_info.vsync = 1;
     load_scene(&app.scene, app.sceneSelection.availableScenes[app.sceneSelection.nextScene]);
 
     init_window(&app.window);
@@ -195,6 +196,7 @@ int main()
     else {
         flatten_scene(&app.scene);
     }
+
 
     // everything else needs to be build before creating the swapchain
     create_or_resize_swapchain(&app.vk_info, &app.window, WINDOW_WIDTH, WINDOW_HEIGHT, &app.scene);

@@ -74,7 +74,7 @@ struct TraversalPayload {
 #ifdef RAY_QUERIES
 // use a stack because:
 // keep the list as short as possible, I.E. use a depth first search
-const int BUFFER_SIZE = 100;
+const int BUFFER_SIZE = 30;
 int stackSize = 0;
 TraversalPayload traversalBuffer[BUFFER_SIZE];
 
@@ -82,12 +82,12 @@ int traversalDepth = 0;
 uint numTraversals = 0;
 uint queryCount = 0;
 
-void instanceHitCompute(int index, vec3 origin, vec3 direction, bool IsInstanceList){	
+void instanceHitCompute(int index, vec3 rayOrigin, vec3 rayDirection, bool IsInstanceList){	
 	TraversalPayload nextLoad = traversalBuffer[index];
 	SceneNode directChild = nodes[nextLoad.nIdx]; // use the custom index to take a shortcut
 	mat4 world_to_object;
 
-	// we can now do LOD or whatever we feel like doing
+	// we can now do LOD or whatever we feel like doing - currently InstanceList Implementation
 	SceneNode next;
 	if(IsInstanceList) {
 		SceneNode instancedChild = nodes[nextLoad.sIdx];
@@ -102,8 +102,8 @@ void instanceHitCompute(int index, vec3 origin, vec3 direction, bool IsInstanceL
 
 	// here the shader adds the next payloads
 
-	origin = (world_to_object * vec4(nextLoad.world_to_object * vec4(origin,1),1)).xyz;
-	direction = (world_to_object * vec4(nextLoad.world_to_object * vec4(direction,0),0)).xyz;
+	vec3 origin = (world_to_object * vec4(nextLoad.world_to_object * vec4(rayOrigin,1),1)).xyz;
+	vec3 direction = (world_to_object * vec4(nextLoad.world_to_object * vec4(rayDirection,0),0)).xyz;
 
 	float tNear, tFar;
 	intersectAABB(origin, direction, next.AABB_min.xyz, next.AABB_max.xyz, tNear, tFar);
@@ -114,9 +114,19 @@ void instanceHitCompute(int index, vec3 origin, vec3 direction, bool IsInstanceL
 	nextLoad.world_to_object = mat4x3(world_to_object * mat4(nextLoad.world_to_object));
 	nextLoad.t = tNear;
 	traversalBuffer[index] = nextLoad;
-
-	if (debug && displayAABBs)
+	
+	if (debug && displayAABBs) {
 		debugAABB(origin, direction, next);
+		/*vec3 query_origin = (nextLoad.world_to_object * vec4(rayOrigin,1)).xyz;
+		vec3 query_direction = (nextLoad.world_to_object * vec4(rayDirection,0)).xyz;
+		
+ else {
+			for (int i = 0; i < next.NumChildren; i++) {
+				SceneNode child = nodes[childIndices[next.childrenIndex + i]];
+				//debugAABB(query_origin, query_direction, child);
+			}
+		}*/
+	}
 }
 
 
@@ -156,8 +166,24 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 	start.nIdx = root;
 	start.t = 0;
 
-	if (displayAABBs)
-		debugAABB(rayOrigin, rayDirection, nodes[root]);
+	if (debug && displayAABBs) {
+		SceneNode root = nodes[root];
+		debugAABB(rayOrigin, rayDirection, root);
+		vec3 query_origin = (start.world_to_object * vec4(rayOrigin,1)).xyz;
+		vec3 query_direction = (start.world_to_object * vec4(rayDirection,0)).xyz;
+		if(root.IsInstanceList){
+			SceneNode list = nodes[childIndices[root.childrenIndex]];
+			for (int i = 0; i < list.NumChildren; i++) {
+				SceneNode child = nodes[list.childrenIndex + i];
+				//debugAABB(query_origin, query_direction, child);
+			}
+		} else {
+			for (int i = 0; i < root.NumChildren; i++) {
+				SceneNode child = nodes[childIndices[root.childrenIndex + i]];
+				// debugAABB(query_origin, query_direction, child);
+			}
+		}
+	}
 
 	traversalBuffer[0] = start;
 
@@ -170,7 +196,6 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 		TraversalPayload load = traversalBuffer[stackSize];
 		if (load.t > best_t) continue;// there was already a closer hit, we can skip this one
 
-
 		int start = stackSize;
 		SceneNode node = nodes[load.nIdx]; // retrieve scene Node
 		traversalDepth = max(node.level, traversalDepth); // not 100% correct but it gives a vague idea
@@ -180,11 +205,21 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 		vec3 query_direction = (load.world_to_object * vec4(rayDirection,0)).xyz;
 
 		if (debug && displayAABBs) {
-			for (int i = 0; i < node.numOdd; i++) {
-				SceneNode directChild = nodes[node.childrenIndex + i];
+			for (int i = 0; i < node.NumChildren; i++) {
+				SceneNode directChild = nodes[childIndices[node.childrenIndex + i]];
 				debugAABB(query_origin, query_direction, directChild);
 			}
+			if(node.IsInstanceList){
+				if(displayListAABBs){
+					SceneNode list = nodes[childIndices[node.childrenIndex]];
+					for (int i = 0; i < min(50,list.NumChildren); i++) {
+						SceneNode child = nodes[childIndices[list.childrenIndex + i]];
+						debugAABB(query_origin, query_direction, child);
+					}
+				}
+			}
 		}
+
 		rayQueryEXT ray_query;
 		rayQueryInitializeEXT(ray_query, tlas[tlasNumber], 0, 0xFF,
 			query_origin, min_t,

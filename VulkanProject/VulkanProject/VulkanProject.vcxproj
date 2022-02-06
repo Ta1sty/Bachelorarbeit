@@ -222,7 +222,7 @@
     <None Include="shaders\shader.vert" />
     <None Include="shaders\structs.frag" />
     <None Include="shaders\traversalShader.frag" />
-    <None Include="shaders\unused.frag" />
+    <None Include="shaders\math.frag" />
     <None Include="shaders\vert.spv" />
   </ItemGroup>
   <ItemGroup>

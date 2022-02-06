@@ -148,7 +148,7 @@
     <None Include="shaders\vert.spv">
       <Filter>Source Files\Shader\glsl</Filter>
     </None>
-    <None Include="shaders\unused.frag">
+    <None Include="shaders\math.frag">
       <Filter>Source Files\Shader\glsl</Filter>
     </None>
     <None Include="shaders\traversalShader.frag">

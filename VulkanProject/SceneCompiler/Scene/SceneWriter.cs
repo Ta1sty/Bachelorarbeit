@@ -30,15 +30,34 @@ namespace SceneCompiler.Scene
 
         public void WriteVertices(List<Vertex> vertexBuffer)
         {
-            var vertices = new byte[48 * vertexBuffer.Count + 4]; // first 4 bytes is uint32 numVertices
-            var pos = -4;
-            BitConverter.GetBytes((uint)vertexBuffer.Count).CopyTo(vertices.AsSpan(pos += 4));
-            foreach (var vertex in vertexBuffer)
+            var size = 48; // see C project Vertex
+
+            var index = 0;
+            while (index < vertexBuffer.Count)
             {
-                pos = vertex.WriteToByteArray(vertices, pos);
+                var pos = -4;
+                int batchSize = (int)Math.Min(vertexBuffer.Count - index, 1024);
+                int batchByteSize = batchSize * size;
+                if (index == 0)
+                {
+                    batchByteSize += 4;
+                }
+                var vertices = new byte[batchByteSize];
+                if (index == 0)
+                {
+                    BitConverter.GetBytes((uint)vertexBuffer.Count).CopyTo(vertices.AsSpan(pos += 4));
+                }
+
+                for (var i = index; i < index + batchSize; i++)
+                {
+                    pos = vertexBuffer[i].WriteToByteArray(vertices, pos);
+                }
+                str.Write(vertices);
+                index += batchSize;
             }
-            str.Write(vertices);
-        }
+            if (index != vertexBuffer.Count)
+                throw new Exception("Index after write is not vertex.count");
+       }
         public void WriteIndices(List<uint> indexBuffer)
         {
             var triangles = new byte[4 * indexBuffer.Count + 4]; // first 4 bytes is uint32 for numIndices
@@ -56,8 +75,6 @@ namespace SceneCompiler.Scene
             // write sceneNodes
             {
                 var size = 208; // see C project SceneNode
-                var nodeBuffer = new byte[4 + 4 + nodes.Count * size];
-
                 var index = 0;
 
                 while (index < nodes.Count)
@@ -69,7 +86,7 @@ namespace SceneCompiler.Scene
                     {
                         batchByteSize += 4 + 4;
                     }
-                    nodeBuffer = new byte[batchByteSize];
+                    var nodeBuffer = new byte[batchByteSize];
                     if(index == 0)
                     {
                         BitConverter.GetBytes((uint)nodes.Count).CopyTo(nodeBuffer.AsSpan(pos += 4));

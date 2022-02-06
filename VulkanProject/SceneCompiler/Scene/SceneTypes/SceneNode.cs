@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Threading.Tasks;
 using SceneCompiler.GLTFConversion.GltfFileTypes;
 
 namespace SceneCompiler.Scene.SceneTypes
@@ -38,6 +39,12 @@ namespace SceneCompiler.Scene.SceneTypes
         public SceneNode ThisOrBrother()
         {
             return Brother ?? this;
+        }
+        public void ResetAABB()
+        {
+            isAABBComputed = false;
+            AABB_min = new(float.MaxValue, float.MaxValue, float.MaxValue, 1);
+            AABB_max = new(-float.MaxValue, -float.MaxValue, -float.MaxValue, 1);
         }
 
         public bool Simmilar(SceneNode node)
@@ -163,6 +170,89 @@ namespace SceneCompiler.Scene.SceneTypes
                 ret += "InstanceList: " + Children[0].Children.Count;
 
             return ret;
+        }
+
+        public void ComputeAABBs(SceneBuffers buffers)
+        {
+            if (isAABBComputed)
+                return;
+            if (Children.Count > 10000)
+            {
+                Parallel.ForEach(Children, child => child.ComputeAABBs(buffers));
+            }
+            else
+            {
+                foreach (var child in Children)
+                    child.ComputeAABBs(buffers);
+            }
+
+            foreach (var child in Children) // children
+            {
+                var (min, max) = TransformAABB(ObjectToWorld, child.AABB_min, child.AABB_max);
+                AABB_min = Min(AABB_min, min);
+                AABB_max = Max(AABB_max, max);
+            }
+
+            for (var i = 0; i < NumTriangles; i++)
+            {
+                var index = IndexBufferIndex + i * 3;
+                for (var j = 0; j < 3; j++)
+                {
+                    var v = buffers.VertexBuffer[(int)buffers.IndexBuffer[index + j]];
+                    var pos = new Vector4(v.Position[0], v.Position[1], v.Position[2], 1);
+                    var posTr = Vector4.Transform(pos, ObjectToWorld);
+                    AABB_min = Min(AABB_min, posTr);
+                    AABB_max = Max(AABB_max, posTr);
+                }
+            }
+            isAABBComputed = true;
+        }
+
+        private (Vector4 min, Vector4 max) TransformAABB(Matrix4x4 transform, Vector4 min, Vector4 max)
+        {
+            Vector4[] aabbVertices ={
+                new (min.X,min.Y,min.Z,1),
+                new (min.X,min.Y,max.Z,1),
+                new (min.X,max.Y,min.Z,1),
+                new (min.X,max.Y,max.Z,1),
+                new (max.X,min.Y,min.Z,1),
+                new (max.X,min.Y,max.Z,1),
+                new (max.X,max.Y,min.Z,1),
+                new (max.X,max.Y,max.Z,1)
+            };
+
+            min = new(float.MaxValue, float.MaxValue, float.MaxValue, 1);
+            max = new(-float.MaxValue, -float.MaxValue, -float.MaxValue, 1);
+
+            foreach (var vert in aabbVertices)
+            {
+                var vec = Vector4.Transform(vert, transform);
+                min = Min(min, vec);
+                max = Max(max, vec);
+            }
+            /*var middle = (min + max) / 2;
+            var extent = max - min;
+            min = middle - (extent / 2) * 1.05f;
+            max = middle + (extent / 2) * 1.05f;
+            */
+            return (min, max);
+        }
+
+        private Vector4 Max(Vector4 a, Vector4 b)
+        {
+            return new Vector4(
+                Math.Max(a.X, b.X),
+                Math.Max(a.Y, b.Y),
+                Math.Max(a.Z, b.Z),
+                1);
+        }
+        private Vector4 Min(Vector4 a, Vector4 b)
+        {
+            return new Vector4(
+                Math.Min(a.X, b.X),
+                Math.Min(a.Y, b.Y),
+                Math.Min(a.Z, b.Z),
+                1);
         }
     }
 }

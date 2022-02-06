@@ -49,6 +49,10 @@ namespace SceneCompiler
                 @"VulkanProject\Scenes\"
                 + Path.GetFileNameWithoutExtension(path) + ".vksc");
 
+            InstancePostCompile instancePostCompile = new InstancePostCompile(compiler.Buffers);
+            //instancePostCompile.InstanceMultiple(32, 32);
+            //instancePostCompile.InstanceMultiple(32, 32);
+
 
             RayTracePostCompile rayTraceOptimization = new RayTracePostCompile(compiler.Buffers, true);
             rayTraceOptimization.PostCompile();
@@ -57,6 +61,7 @@ namespace SceneCompiler
             rayTraceOptimization.PrintScene();
             var writer = new SceneWriter();
             writer.WriteBuffers(dst, compiler);
+            Console.WriteLine("Total Number of Triangles: " + compiler.Buffers.Nodes[compiler.Buffers.RootNode].TotalPrimitiveCount);
             Console.WriteLine("PARSE FINISHED, PRESS ENTER");
             Console.ReadLine();
         }

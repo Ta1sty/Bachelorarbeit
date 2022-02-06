@@ -39,8 +39,8 @@ namespace SceneCompiler.Scene
             Console.WriteLine("Removing empty children");
             Parallel.ForEach(buffer, x => x.Children = x.Children.Where(x => x.TotalPrimitiveCount > 0).ToList());
 
-            ConcurrentBag<SceneNode> blasAdd = new();
-            ConcurrentBag<SceneNode> tlasAdd = new();
+            List<SceneNode> blasAdd = new();
+            List<SceneNode> tlasAdd = new();
             Console.WriteLine("inserting dummys");
             var evenTask = Task.Run(() =>
             {
@@ -66,10 +66,10 @@ namespace SceneCompiler.Scene
                 buffer[i].Index = i;
             }
             Console.WriteLine("computing AABBs");
-            ComputeAABBs(root);
+            root.ComputeAABBs(_buffers);
         }
 
-        public void AdjustEvenNode(SceneNode node, ConcurrentBag<SceneNode> blasAdd)
+        public void AdjustEvenNode(SceneNode node, List<SceneNode> blasAdd)
         {
             List<SceneNode> evenChildren = new();
             List<SceneNode> oddChildren = new();
@@ -87,24 +87,49 @@ namespace SceneCompiler.Scene
 
             if (node.NumTriangles > 0 || evenChildren.Count > 0)
             {
-                var dummy = new SceneNode
+                bool selector(SceneNode x)
                 {
-                    // set new Level and index
-                    Level = node.Level + 1,
-                    Name = "DummyBLAS",
-                    // add the geometry
-                    IndexBufferIndex = node.IndexBufferIndex,
-                    NumTriangles = node.NumTriangles,
-                    // add the even children
-                    NumChildren = evenChildren.Count,
-                    NumEven = (uint)evenChildren.Count,
-                    Children = new List<SceneNode>(evenChildren),
-                    // set transforms to identity
-                    ObjectToWorld = Matrix4x4.Identity,
-                    WorldToObject = Matrix4x4.Identity,
-                };
+                    if (x.Children.Count != evenChildren.Count)
+                        return false;
+                    foreach (var child in evenChildren)
+                    {
+                        if (!x.Children.Contains(child))
+                            return false;
+                    }
+                    foreach (var child in x.Children)
+                    {
+                        if (!evenChildren.Contains(child))
+                            return false;
+                    }
+                    if (x.IndexBufferIndex != node.IndexBufferIndex)
+                        return false;
+                    if (x.NumTriangles != node.NumTriangles)
+                        return false;
+
+                    return true;
+                }
+                var dummy = blasAdd.Where(selector).SingleOrDefault();
+                if(dummy == null)
+                {
+                    dummy = new SceneNode
+                    {
+                        // set new Level and index
+                        Level = node.Level + 1,
+                        Name = "DummyBLAS",
+                        // add the geometry
+                        IndexBufferIndex = node.IndexBufferIndex,
+                        NumTriangles = node.NumTriangles,
+                        // add the even children
+                        NumChildren = evenChildren.Count,
+                        NumEven = (uint)evenChildren.Count,
+                        Children = new List<SceneNode>(evenChildren),
+                        // set transforms to identity
+                        ObjectToWorld = Matrix4x4.Identity,
+                        WorldToObject = Matrix4x4.Identity,
+                    };
+                    blasAdd.Add(dummy);
+                }
                 // add odd dummy to buffer and to children of the even node
-                blasAdd.Add(dummy);
                 oddChildren.Add(dummy);
                 // removed geometry
                 node.IndexBufferIndex = -1;
@@ -123,7 +148,7 @@ namespace SceneCompiler.Scene
             }
         }
 
-        public void AdjustOddNode(SceneNode node, ConcurrentBag<SceneNode> tlasAdd)
+        public void AdjustOddNode(SceneNode node, List<SceneNode> tlasAdd)
         {
             List<SceneNode> evenChildren = new();
             List<SceneNode> oddChildren = new();
@@ -148,7 +173,7 @@ namespace SceneCompiler.Scene
                 {
                     if (x.Children.Count != oddChildren.Count)
                         return false;
-                    foreach (var child in node.Children)
+                    foreach (var child in oddChildren)
                     {
                         if (!x.Children.Contains(child))
                             return false;
@@ -160,7 +185,7 @@ namespace SceneCompiler.Scene
                     }
 
                     return true;
-                }).FirstOrDefault();
+                }).SingleOrDefault();
 
                 if (dummy == null)
                 {
@@ -325,6 +350,15 @@ namespace SceneCompiler.Scene
 
             int start = indexOffset;
 
+            if (node.IsInstanceList)
+            {
+                if (node.Children[0].Index < 0)
+                {
+                    node.Children[0].Index = indexOffset;
+                    indexOffset++;
+                    node = node.Children[0];
+                }
+            }
             foreach (var child in node.Children)
             {
                 if (child.Index < 0)
@@ -358,95 +392,11 @@ namespace SceneCompiler.Scene
                         child.Level++;
                     if (child.ForceEven && child.Level % 2 == 1)
                         child.Level++;
+                    DepthRecursion(child);
                 }
-                DepthRecursion(child);
             }
             node.TotalPrimitiveCount = node.NumTriangles + node.Children.Sum(x => x.TotalPrimitiveCount);
         }
-
-        public void ComputeAABBs(SceneNode node)
-        {
-            if (node.isAABBComputed)
-                return;
-            if(node.Children.Count > 10000)
-            {
-                Parallel.ForEach(node.Children, child => ComputeAABBs(child));
-            }
-            else
-            {
-                foreach (var child in node.Children)
-                    ComputeAABBs(child);
-            }
-
-            foreach (var child in node.Children) // children
-            {
-                var (min, max) = TransformAABB(node.ObjectToWorld, child.AABB_min, child.AABB_max);
-                node.AABB_min = Min(node.AABB_min, min);
-                node.AABB_max = Max(node.AABB_max, max);
-            }
-
-            for (var i = 0; i < node.NumTriangles; i++)
-            {
-                var index = node.IndexBufferIndex + i * 3;
-                for (var j = 0; j < 3; j++)
-                {
-                    var v = _buffers.VertexBuffer[(int)_buffers.IndexBuffer[index + j]];
-                    var pos = new Vector4(v.Position[0], v.Position[1], v.Position[2], 1);
-                    var posTr = Vector4.Transform(pos, node.ObjectToWorld);
-                    node.AABB_min = Min(node.AABB_min, posTr);
-                    node.AABB_max = Max(node.AABB_max, posTr);
-                }
-            }
-            node.isAABBComputed = true;
-        }
-
-        private (Vector4 min, Vector4 max) TransformAABB(Matrix4x4 transform, Vector4 min, Vector4 max)
-        {
-            Vector4[] aabbVertices ={
-                new (min.X,min.Y,min.Z,1),
-                new (min.X,min.Y,max.Z,1),
-                new (min.X,max.Y,min.Z,1),
-                new (min.X,max.Y,max.Z,1),
-                new (max.X,min.Y,min.Z,1),
-                new (max.X,min.Y,max.Z,1),
-                new (max.X,max.Y,min.Z,1),
-                new (max.X,max.Y,max.Z,1)
-            };
-
-            min = new(float.MaxValue, float.MaxValue, float.MaxValue, 1);
-            max = new(-float.MaxValue, -float.MaxValue, -float.MaxValue, 1);
-
-            foreach (var vert in aabbVertices)
-            {
-                var vec = Vector4.Transform(vert, transform);
-                min = Min(min, vec);
-                max = Max(max, vec);
-            }
-            /*var middle = (min + max) / 2;
-            var extent = max - min;
-            min = middle - (extent / 2) * 1.05f;
-            max = middle + (extent / 2) * 1.05f;
-            */
-            return (min, max);
-        }
-
-        private Vector4 Max(Vector4 a, Vector4 b)
-        {
-            return new Vector4(
-                Math.Max(a.X, b.X),
-                Math.Max(a.Y, b.Y),
-                Math.Max(a.Z, b.Z),
-                1);
-        }
-        private Vector4 Min(Vector4 a, Vector4 b)
-        {
-            return new Vector4(
-                Math.Min(a.X, b.X),
-                Math.Min(a.Y, b.Y),
-                Math.Min(a.Z, b.Z),
-                1);
-        }
-
 
         private void SingleLevel()
         {

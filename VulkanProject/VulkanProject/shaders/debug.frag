@@ -62,7 +62,7 @@ void debugAABB(vec3 rayOrigin, vec3 rayDir, SceneNode node) {
 			if (diffMax.z < 0.01 || diffMax.z > 0.99)
 				count++;
 			if (count >= 2) {
-				SetDebugHsv(displayAABBs, node.tlasNumber, colorSensitivity, true);
+				SetDebugHsv(displayAABBs, node.Index, colorSensitivity, false);
 				aabbT = t[i];
 			}
 		}

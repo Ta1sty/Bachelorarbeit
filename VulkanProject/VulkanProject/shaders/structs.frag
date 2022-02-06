@@ -100,6 +100,7 @@ layout(binding = FRAME_DATA_BINDING, set = 2) uniform FrameData{
 	bool displayLights; // displays the light sources as Spheres
 	bool displayIntersectionT; // displays the intersection T with HSV encoding
 	bool displayAABBs; // displays the AABBs
+	bool displayListAABBs; // displays the AABBs of Instance Lists (Huge FPS drops)
 	bool displayTraversalDepth; // displays the maximum Depth the traversal took
 	bool displayTraversalCount; // displays the amount of times the loop ran and executed a query (skipped due to hight T is not counted)
 	bool displayQueryCount; // displays the total number of rayqueries that were used for this

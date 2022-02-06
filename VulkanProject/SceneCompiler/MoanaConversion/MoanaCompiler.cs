@@ -20,10 +20,11 @@ namespace SceneCompiler.MoanaConversion
 
             var moana = new Moana();
             foreach (var folder in folders)
-            {   
-                if(!Path.GetFileName(folder).Contains("isCoral"))
+            {
+                if (!Path.GetFileName(folder).Contains("isKava"))
+                //if (!Path.GetFileName(folder).Contains("isIronwoodA1"))
+                //if (!Path.GetFileName(folder).Contains("isBayCedar"))
                     continue;
-
                 moana.Sections.Add(ReadFolder(folder));
 
                 //if(Environment.WorkingSet > 1L * 512 * 1024 * 1024)
@@ -237,7 +238,7 @@ namespace SceneCompiler.MoanaConversion
 
                     if (mesh.Shape != null)
                     {
-                        if (line.Contains("\"point P\""))
+                        if (line.Contains("\"point P\"") || line.Contains("\"point3 P\""))
                         {
                             line = stream.ReadLine()!.Trim();
                             do
