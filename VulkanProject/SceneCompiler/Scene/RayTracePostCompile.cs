@@ -398,6 +398,15 @@ namespace SceneCompiler.Scene
             node.TotalPrimitiveCount = node.NumTriangles + node.Children.Sum(x => x.TotalPrimitiveCount);
         }
 
+        public void CalculateQuaternionsAndTranslations()
+        {
+            foreach(var node in _buffers.Nodes)
+            {
+                node.Translation = new Vector4(node.ObjectToWorld.M41, node.ObjectToWorld.M42, node.ObjectToWorld.M43, 1);
+                node.Quaternion = Quaternion.CreateFromRotationMatrix(node.ObjectToWorld);
+            }
+        }
+
         private void SingleLevel()
         {
             // collapse parent nodes

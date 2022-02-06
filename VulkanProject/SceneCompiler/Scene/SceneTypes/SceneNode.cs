@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
-using SceneCompiler.GLTFConversion.GltfFileTypes;
 
 namespace SceneCompiler.Scene.SceneTypes
 {
     public class SceneNode
     {
+        public static readonly int Size = 240;
         public List<SceneNode> Children = new();
         public List<SceneNode> Parents = new();
         public SceneNode Brother = null; // this node is practically identical to this one, project others onto this one#
@@ -17,6 +17,8 @@ namespace SceneCompiler.Scene.SceneTypes
 
         public Matrix4x4 ObjectToWorld = Matrix4x4.Identity;
         public Matrix4x4 WorldToObject = Matrix4x4.Identity;
+        public Quaternion Quaternion = Quaternion.Identity;
+        public Vector4 Translation = Vector4.Zero;
         public Vector4 AABB_min = new(float.MaxValue, float.MaxValue, float.MaxValue, 1); 
         public Vector4 AABB_max = new(-float.MaxValue, -float.MaxValue, -float.MaxValue, 1);
         public int IndexBufferIndex = -1;
@@ -108,6 +110,19 @@ namespace SceneCompiler.Scene.SceneTypes
             BitConverter.GetBytes(WorldToObject.M24).CopyTo(nodeBuffer.AsSpan(pos += 4));
             BitConverter.GetBytes(WorldToObject.M34).CopyTo(nodeBuffer.AsSpan(pos += 4));
             BitConverter.GetBytes(WorldToObject.M44).CopyTo(nodeBuffer.AsSpan(pos += 4));
+
+
+            // Vec4 Quaternion
+            BitConverter.GetBytes(Quaternion.X).CopyTo(nodeBuffer.AsSpan(pos += 4));
+            BitConverter.GetBytes(Quaternion.Y).CopyTo(nodeBuffer.AsSpan(pos += 4));
+            BitConverter.GetBytes(Quaternion.Z).CopyTo(nodeBuffer.AsSpan(pos += 4));
+            BitConverter.GetBytes(Quaternion.W).CopyTo(nodeBuffer.AsSpan(pos += 4));
+
+            // Vec4 Translation
+            BitConverter.GetBytes(Translation.X).CopyTo(nodeBuffer.AsSpan(pos += 4));
+            BitConverter.GetBytes(Translation.Y).CopyTo(nodeBuffer.AsSpan(pos += 4));
+            BitConverter.GetBytes(Translation.Z).CopyTo(nodeBuffer.AsSpan(pos += 4));
+            BitConverter.GetBytes(Translation.W).CopyTo(nodeBuffer.AsSpan(pos += 4));
 
             // Vec4 AABB Max, align 16 bytes
             BitConverter.GetBytes(AABB_min.X).CopyTo(nodeBuffer.AsSpan(pos += 4));

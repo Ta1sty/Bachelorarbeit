@@ -3,10 +3,15 @@
 #include "structs.frag"
 #endif
 
+#ifndef MATH
+#include "math.frag"
+#endif
+
 #ifdef RAY_QUERIES
 #include "QueryTraceRecord.frag"
 layout(binding = TLAS_BINDING, set = 3) uniform accelerationStructureEXT[] tlas;
 #endif
+
 
 void getHitPayload(int triangle, vec3 tuv, out vec4 color, out vec3 N, out Material material) {
 	Vertex v0 = vertices[indices[triangle * 3]];
@@ -117,15 +122,6 @@ void instanceHitCompute(int index, vec3 rayOrigin, vec3 rayDirection, bool IsIns
 	
 	if (debug && displayAABBs) {
 		debugAABB(origin, direction, next);
-		/*vec3 query_origin = (nextLoad.world_to_object * vec4(rayOrigin,1)).xyz;
-		vec3 query_direction = (nextLoad.world_to_object * vec4(rayDirection,0)).xyz;
-		
- else {
-			for (int i = 0; i < next.NumChildren; i++) {
-				SceneNode child = nodes[childIndices[next.childrenIndex + i]];
-				//debugAABB(query_origin, query_direction, child);
-			}
-		}*/
 	}
 }
 
@@ -169,20 +165,6 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 	if (debug && displayAABBs) {
 		SceneNode root = nodes[root];
 		debugAABB(rayOrigin, rayDirection, root);
-		vec3 query_origin = (start.world_to_object * vec4(rayOrigin,1)).xyz;
-		vec3 query_direction = (start.world_to_object * vec4(rayDirection,0)).xyz;
-		if(root.IsInstanceList){
-			SceneNode list = nodes[childIndices[root.childrenIndex]];
-			for (int i = 0; i < list.NumChildren; i++) {
-				SceneNode child = nodes[list.childrenIndex + i];
-				//debugAABB(query_origin, query_direction, child);
-			}
-		} else {
-			for (int i = 0; i < root.NumChildren; i++) {
-				SceneNode child = nodes[childIndices[root.childrenIndex + i]];
-				// debugAABB(query_origin, query_direction, child);
-			}
-		}
 	}
 
 	traversalBuffer[0] = start;
@@ -307,7 +289,7 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 				triangleTLAS = tlasNumber;
 			}
 		}
-		recordQuery(node.Index, node.level, load.t, rayOrigin, rayOrigin + best_t * rayDirection, triangleIntersections ,instanceIntersections);
+		// recordQuery(node.Index, node.level, load.t, rayOrigin, rayOrigin + best_t * rayDirection, triangleIntersections ,instanceIntersections);
 	}
 	SetDebugHsv(displayTLASNumber, triangleTLAS, colorSensitivity, true);
 	if (triangle_index >= 0) {

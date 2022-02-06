@@ -11,12 +11,34 @@ vec3 rotateByQuaternion(vec4 q, vec3 v) {
 	return v + 2.0*cross(cross(v, q.xyz ) + q.w*v, q.xyz);
 }
 
-vec4 getTranslation(mat4 tr){
-
+vec4 getInverseQuaternion(vec4 q){
+	return vec4(-q.xyz, q.w)/dot(q,q);
 }
 
-vec4 getQuaternion(mat4 tr){
-	
+mat4 getInverseTransform(vec4 q, vec3 t){
+	t = -rotateByQuaternion(q, t);
+	q = vec4(-q.xyz, q.w)/dot(q,q);
+
+	mat4 mat;
+     
+    mat[0][0] = 2 * (q.w * q.w + q.x * q.x) - 1;
+	mat[0][1] = 2 * (q.x * q.y + q.w * q.z);
+	mat[0][2] = 2 * (q.x * q.z - q.w * q.y);
+
+    mat[1][0] = 2 * (q.x * q.y - q.w * q.z);
+	mat[1][1] = 2 * (q.w * q.w + q.y * q.y) - 1;
+	mat[1][2] = 2 * (q.y * q.z + q.w * q.x);
+
+    mat[2][0] = 2 * (q.x * q.z + q.w * q.y);
+    mat[2][1] = 2 * (q.y * q.z - q.w * q.x);
+    mat[2][2] = 2 * (q.w * q.w + q.z * q.z) - 1;
+
+	mat[3][0] = t.x;
+	mat[3][1] = t.y;
+	mat[3][2] = t.z;
+
+	mat[3][3] = 1;
+	return mat;
 }
 
 mat4 getTransform(vec4 q, vec3 t){
