@@ -53,7 +53,6 @@ namespace SceneCompiler.Scene
                     var add = new SceneNode
                     {
                         ObjectToWorld = Matrix4x4.CreateTranslation(xTranslation, 0, zTranslation),
-                        WorldToObject = Matrix4x4.CreateTranslation(-xTranslation, 0, -zTranslation),
                         Name = "Inst ROOT",
                         ForceEven = true,
                         NumChildren = 1

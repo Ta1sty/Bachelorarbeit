@@ -1,6 +1,8 @@
 struct Vertex {
 	vec3 position; // 0 - 16
+	float pad1;
 	vec3 normal;   // 16 - 16
+	float pad2;
 	vec2 tex_coord;// 32 - 8
 	int material_index;   // 40 - 4 - the index of the material to use
 };
@@ -11,22 +13,19 @@ struct Material {
 	int texture_index;
 };
 struct SceneNode {
-	mat4 object_to_world;		// 0
-	mat4 world_to_object;		// 0
-	vec4 AABB_min;				// 0
-	vec4 AABB_max;				// 0
-	int IndexBuferIndex;		// 4
-	int NumTriangles;			// 8
+	mat4x3 object_to_world;		// 0
+	vec3 AABB_min;				// 12
+	int Index;					// 0
+	vec3 AABB_max;				// 12
+	int Level;					// 0
+	int NumTriangles;			// 4
+	int IndexBuferIndex;		// 8
 	int NumChildren;			// 12
-	int childrenIndex;			// 0
-	int Index;					// 4
-	int level;					// 8
-	uint numEven;				// 12
-	uint numOdd;				// 0
-	int tlasNumber;				// 4
+	int ChildrenIndex;			// 0
+	int TlasNumber;				// 4
 	bool IsInstanceList;		// 8
 	bool IsLodSelector;			// 12
-	float pad5;					// 0
+	float pad;					// 0
 };
 
 #define LIGHT_ON 1

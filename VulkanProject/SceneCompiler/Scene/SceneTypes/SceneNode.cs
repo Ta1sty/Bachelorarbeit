@@ -8,6 +8,7 @@ namespace SceneCompiler.Scene.SceneTypes
 {
     public class SceneNode
     {
+        public static readonly int Size = 112;
         public List<SceneNode> Children = new();
         public List<SceneNode> Parents = new();
         public SceneNode Brother = null; // this node is practically identical to this one, project others onto this one#
@@ -16,17 +17,14 @@ namespace SceneCompiler.Scene.SceneTypes
 
 
         public Matrix4x4 ObjectToWorld = Matrix4x4.Identity;
-        public Matrix4x4 WorldToObject = Matrix4x4.Identity;
-        public Vector4 AABB_min = new(float.MaxValue, float.MaxValue, float.MaxValue, 1); 
-        public Vector4 AABB_max = new(-float.MaxValue, -float.MaxValue, -float.MaxValue, 1);
-        public int IndexBufferIndex = -1;
+        public Vector3 AABB_min = new(float.MaxValue, float.MaxValue, float.MaxValue);
+        public int Index = -1;
+        public Vector3 AABB_max = new(-float.MaxValue, -float.MaxValue, -float.MaxValue);
+        public int Level = -1;
         public int NumTriangles = 0;
+        public int IndexBufferIndex = -1;
         public int NumChildren = 0;
         public int ChildrenIndex = -1;
-        public int Index = -1;
-        public int Level = -1;
-        public uint NumEven = 0;
-        public uint NumOdd = 0;
         public int TlasNumber = -1;
         public bool IsInstanceList = false;
         public bool IsLodSelector = false;
@@ -43,8 +41,8 @@ namespace SceneCompiler.Scene.SceneTypes
         public void ResetAABB()
         {
             isAABBComputed = false;
-            AABB_min = new(float.MaxValue, float.MaxValue, float.MaxValue, 1);
-            AABB_max = new(-float.MaxValue, -float.MaxValue, -float.MaxValue, 1);
+            AABB_min = new(float.MaxValue, float.MaxValue, float.MaxValue);
+            AABB_max = new(-float.MaxValue, -float.MaxValue, -float.MaxValue);
         }
 
         public bool Simmilar(SceneNode node)
@@ -83,53 +81,27 @@ namespace SceneCompiler.Scene.SceneTypes
             BitConverter.GetBytes(ObjectToWorld.M33).CopyTo(nodeBuffer.AsSpan(pos += 4));
             BitConverter.GetBytes(ObjectToWorld.M43).CopyTo(nodeBuffer.AsSpan(pos += 4));
 
-            BitConverter.GetBytes(ObjectToWorld.M14).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(ObjectToWorld.M24).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(ObjectToWorld.M34).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(ObjectToWorld.M44).CopyTo(nodeBuffer.AsSpan(pos += 4));
-
-            // WORLD TO OBJECT
-            BitConverter.GetBytes(WorldToObject.M11).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(WorldToObject.M21).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(WorldToObject.M31).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(WorldToObject.M41).CopyTo(nodeBuffer.AsSpan(pos += 4));
-
-            BitConverter.GetBytes(WorldToObject.M12).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(WorldToObject.M22).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(WorldToObject.M32).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(WorldToObject.M42).CopyTo(nodeBuffer.AsSpan(pos += 4));
-
-            BitConverter.GetBytes(WorldToObject.M13).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(WorldToObject.M23).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(WorldToObject.M33).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(WorldToObject.M43).CopyTo(nodeBuffer.AsSpan(pos += 4));
-
-            BitConverter.GetBytes(WorldToObject.M14).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(WorldToObject.M24).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(WorldToObject.M34).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(WorldToObject.M44).CopyTo(nodeBuffer.AsSpan(pos += 4));
-
             // Vec4 AABB Max, align 16 bytes
             BitConverter.GetBytes(AABB_min.X).CopyTo(nodeBuffer.AsSpan(pos += 4));
             BitConverter.GetBytes(AABB_min.Y).CopyTo(nodeBuffer.AsSpan(pos += 4));
             BitConverter.GetBytes(AABB_min.Z).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(AABB_min.W).CopyTo(nodeBuffer.AsSpan(pos += 4));
+
+            BitConverter.GetBytes(Index).CopyTo(nodeBuffer.AsSpan(pos += 4));
 
             // Vec4 AABB Max
             BitConverter.GetBytes(AABB_max.X).CopyTo(nodeBuffer.AsSpan(pos += 4));
             BitConverter.GetBytes(AABB_max.Y).CopyTo(nodeBuffer.AsSpan(pos += 4));
             BitConverter.GetBytes(AABB_max.Z).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(AABB_max.W).CopyTo(nodeBuffer.AsSpan(pos += 4));
+
+            BitConverter.GetBytes(Level).CopyTo(nodeBuffer.AsSpan(pos += 4));
 
             // THE REST
-            BitConverter.GetBytes(IndexBufferIndex).CopyTo(nodeBuffer.AsSpan(pos += 4));
             BitConverter.GetBytes(NumTriangles).CopyTo(nodeBuffer.AsSpan(pos += 4));
+            BitConverter.GetBytes(IndexBufferIndex).CopyTo(nodeBuffer.AsSpan(pos += 4));
+            
             BitConverter.GetBytes(NumChildren).CopyTo(nodeBuffer.AsSpan(pos += 4));
             BitConverter.GetBytes(ChildrenIndex).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(Index).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(Level).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(NumEven).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(NumOdd).CopyTo(nodeBuffer.AsSpan(pos += 4));
+            
             BitConverter.GetBytes(TlasNumber).CopyTo(nodeBuffer.AsSpan(pos += 4));
             BitConverter.GetBytes((uint) (IsInstanceList ? 1 : 0)).CopyTo(nodeBuffer.AsSpan(pos += 4));
             BitConverter.GetBytes((uint) (IsLodSelector ? 1: 0)).CopyTo(nodeBuffer.AsSpan(pos += 4));
@@ -199,8 +171,8 @@ namespace SceneCompiler.Scene.SceneTypes
                 for (var j = 0; j < 3; j++)
                 {
                     var v = buffers.VertexBuffer[(int)buffers.IndexBuffer[index + j]];
-                    var pos = new Vector4(v.Position[0], v.Position[1], v.Position[2], 1);
-                    var posTr = Vector4.Transform(pos, ObjectToWorld);
+                    var pos = new Vector3(v.Position[0], v.Position[1], v.Position[2]);
+                    var posTr = Vector3.Transform(pos, ObjectToWorld);
                     AABB_min = Min(AABB_min, posTr);
                     AABB_max = Max(AABB_max, posTr);
                 }
@@ -208,25 +180,25 @@ namespace SceneCompiler.Scene.SceneTypes
             isAABBComputed = true;
         }
 
-        private (Vector4 min, Vector4 max) TransformAABB(Matrix4x4 transform, Vector4 min, Vector4 max)
+        private (Vector3 min, Vector3 max) TransformAABB(Matrix4x4 transform, Vector3 min, Vector3 max)
         {
-            Vector4[] aabbVertices ={
-                new (min.X,min.Y,min.Z,1),
-                new (min.X,min.Y,max.Z,1),
-                new (min.X,max.Y,min.Z,1),
-                new (min.X,max.Y,max.Z,1),
-                new (max.X,min.Y,min.Z,1),
-                new (max.X,min.Y,max.Z,1),
-                new (max.X,max.Y,min.Z,1),
-                new (max.X,max.Y,max.Z,1)
+            Vector3[] aabbVertices ={
+                new (min.X,min.Y,min.Z),
+                new (min.X,min.Y,max.Z),
+                new (min.X,max.Y,min.Z),
+                new (min.X,max.Y,max.Z),
+                new (max.X,min.Y,min.Z),
+                new (max.X,min.Y,max.Z),
+                new (max.X,max.Y,min.Z),
+                new (max.X,max.Y,max.Z)
             };
 
-            min = new(float.MaxValue, float.MaxValue, float.MaxValue, 1);
-            max = new(-float.MaxValue, -float.MaxValue, -float.MaxValue, 1);
+            min = new(float.MaxValue, float.MaxValue, float.MaxValue);
+            max = new(-float.MaxValue, -float.MaxValue, -float.MaxValue);
 
             foreach (var vert in aabbVertices)
             {
-                var vec = Vector4.Transform(vert, transform);
+                var vec = Vector3.Transform(vert, transform);
                 min = Min(min, vec);
                 max = Max(max, vec);
             }
@@ -238,21 +210,21 @@ namespace SceneCompiler.Scene.SceneTypes
             return (min, max);
         }
 
-        private Vector4 Max(Vector4 a, Vector4 b)
+        private Vector3 Max(Vector3 a, Vector3 b)
         {
-            return new Vector4(
+            return new Vector3(
                 Math.Max(a.X, b.X),
                 Math.Max(a.Y, b.Y),
-                Math.Max(a.Z, b.Z),
-                1);
+                Math.Max(a.Z, b.Z)
+                );
         }
-        private Vector4 Min(Vector4 a, Vector4 b)
+        private Vector3 Min(Vector3 a, Vector3 b)
         {
-            return new Vector4(
+            return new Vector3(
                 Math.Min(a.X, b.X),
                 Math.Min(a.Y, b.Y),
-                Math.Min(a.Z, b.Z),
-                1);
+                Math.Min(a.Z, b.Z)
+                );
         }
     }
 }

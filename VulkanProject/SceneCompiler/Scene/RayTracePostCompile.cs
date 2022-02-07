@@ -32,6 +32,8 @@ namespace SceneCompiler.Scene
             var buffer = _buffers.Nodes;
             SceneNode root = buffer[_buffers.RootNode];
             root.Level = 0;
+            Console.WriteLine("Ensure Device Limitations");
+            CapInstanceLists();
 
             Console.WriteLine("Writing Levels");
             DepthRecursion(root);
@@ -59,6 +61,8 @@ namespace SceneCompiler.Scene
 
             buffer.AddRange(tlasAdd);
             buffer.AddRange(blasAdd);
+
+
             Console.WriteLine("added " + (tlasAdd.Count +blasAdd.Count) + " dummies to the scenegraph");
 
             for (var i = 0; i < buffer.Count; i++)
@@ -121,11 +125,9 @@ namespace SceneCompiler.Scene
                         NumTriangles = node.NumTriangles,
                         // add the even children
                         NumChildren = evenChildren.Count,
-                        NumEven = (uint)evenChildren.Count,
                         Children = new List<SceneNode>(evenChildren),
                         // set transforms to identity
                         ObjectToWorld = Matrix4x4.Identity,
-                        WorldToObject = Matrix4x4.Identity,
                     };
                     blasAdd.Add(dummy);
                 }
@@ -136,15 +138,9 @@ namespace SceneCompiler.Scene
                 node.NumTriangles = 0;
 
                 // add only the odd children
-                node.NumOdd = (uint)oddChildren.Count;
                 node.Children.Clear();
                 node.Children.AddRange(oddChildren);
                 node.NumChildren = oddChildren.Count;
-            }
-            else // only odd geometry
-            {
-                // leave everything, set only the odd count, since even is 0
-                node.NumOdd = (uint)oddChildren.Count;
             }
         }
 
@@ -196,11 +192,9 @@ namespace SceneCompiler.Scene
                         Name = "DummyTLAS",
                         // add the odd children
                         NumChildren = oddChildren.Count,
-                        NumOdd = (uint)oddChildren.Count,
                         Children = new List<SceneNode>(oddChildren),
                         // set transforms to identity
                         ObjectToWorld = Matrix4x4.Identity,
-                        WorldToObject = Matrix4x4.Identity,
                     };
                     tlasAdd.Add(dummy);
                 }
@@ -209,7 +203,6 @@ namespace SceneCompiler.Scene
                 evenChildren.Add(dummy);
 
                 // add only the even children
-                node.NumEven = (uint)evenChildren.Count;
                 node.Children.Clear();
                 node.Children.AddRange(evenChildren);
                 node.NumChildren = evenChildren.Count;
@@ -217,7 +210,6 @@ namespace SceneCompiler.Scene
             else
             {
                 // we only want and only have even children, therefore set numEven
-                node.NumEven = (uint)evenChildren.Count;
             }
         }
 
@@ -234,8 +226,6 @@ namespace SceneCompiler.Scene
                        throw new Exception("Child level must always be at least one higher than parent");
                    if (child.Level + node.Level % 2 == 0)
                        throw new Exception("Either two odd levels or two even levels are parent and child");
-                   if (child.NumChildren != child.NumEven + child.NumOdd)
-                       throw new Exception("Num odd and num even don't add up to numChildren");
                }
 
                if (node.IsInstanceList)
@@ -401,6 +391,50 @@ namespace SceneCompiler.Scene
         private void SingleLevel()
         {
             // collapse parent nodes
+        }
+
+        public void CapInstanceLists()
+        {
+            var add = new List<SceneNode>();
+            foreach(var node in _buffers.Nodes)
+            {
+                if (node.IsInstanceList)
+                {
+                    var max = 1 << 23; // 23
+                    var children = node.Children.AsEnumerable().Skip(max);
+                    while (children.Count() > 0)
+                    {
+                        var take = children.Take(max);
+                        children = children.Skip(max);
+
+                        var part = new SceneNode
+                        {
+                            ForceEven = node.ForceEven,
+                            ForceOdd = node.ForceOdd,
+                            IsLodSelector = node.IsLodSelector,
+                            IsInstanceList = node.IsInstanceList,
+                            Parents = node.Parents,
+                            Children = take.ToList(),
+                            ObjectToWorld = node.ObjectToWorld,
+                            Name = " | Part " + node.Name
+                        };
+                        foreach(var parent in part.Parents)
+                        {
+                            parent.Children.Add(part);
+                        }
+                        foreach(var child in part.Children)
+                        {
+                            child.Parents.Remove(node);
+                            child.Parents.Add(part);
+                        }
+                        part.NumChildren = part.Children.Count;
+                        add.Add(part);
+                    }
+                    node.Children = node.Children.Take(max).ToList();
+                    node.NumChildren = node.Children.Count;
+                }
+            }
+            _buffers.Nodes.AddRange(add);
         }
     }
 }

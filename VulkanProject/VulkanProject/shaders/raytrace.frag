@@ -8,6 +8,10 @@
 layout(binding = TLAS_BINDING, set = 3) uniform accelerationStructureEXT[] tlas;
 #endif
 
+#ifndef MATH
+#include "math.frag"
+#endif
+
 void getHitPayload(int triangle, vec3 tuv, out vec4 color, out vec3 N, out Material material) {
 	Vertex v0 = vertices[indices[triangle * 3]];
 	Vertex v1 = vertices[indices[triangle * 3 + 1]];
@@ -85,33 +89,33 @@ uint queryCount = 0;
 void instanceHitCompute(int index, vec3 rayOrigin, vec3 rayDirection, bool IsInstanceList){	
 	TraversalPayload nextLoad = traversalBuffer[index];
 	SceneNode directChild = nodes[nextLoad.nIdx]; // use the custom index to take a shortcut
-	mat4 world_to_object;
+	mat4x3 world_to_object;
 
 	// we can now do LOD or whatever we feel like doing - currently InstanceList Implementation
 	SceneNode next;
 	if(IsInstanceList) {
 		SceneNode instancedChild = nodes[nextLoad.sIdx];
-		next = nodes[childIndices[instancedChild.childrenIndex + nextLoad.pIdx]]; // this is the instance 
+		next = nodes[childIndices[instancedChild.ChildrenIndex + nextLoad.pIdx]]; // this is the instance 
 																			  // - odd (absorbed as AABB in directChild)
-		world_to_object = instancedChild.world_to_object * directChild.world_to_object;
+		world_to_object = mat4x3(mat4(inv(instancedChild.object_to_world)) * mat4(inv(directChild.object_to_world)));
 	} else {
-		next = nodes[childIndices[directChild.childrenIndex + nextLoad.pIdx]];
-		world_to_object = directChild.world_to_object;
+		next = nodes[childIndices[directChild.ChildrenIndex + nextLoad.pIdx]];
+		world_to_object = inv(directChild.object_to_world);
 	}
 
 
 	// here the shader adds the next payloads
 
-	vec3 origin = (world_to_object * vec4(nextLoad.world_to_object * vec4(rayOrigin,1),1)).xyz;
-	vec3 direction = (world_to_object * vec4(nextLoad.world_to_object * vec4(rayDirection,0),0)).xyz;
+	vec3 origin = world_to_object * vec4(nextLoad.world_to_object * vec4(rayOrigin,1),1);
+	vec3 direction = world_to_object * vec4(nextLoad.world_to_object * vec4(rayDirection,0),0);
 
 	float tNear, tFar;
-	intersectAABB(origin, direction, next.AABB_min.xyz, next.AABB_max.xyz, tNear, tFar);
+	intersectAABB(origin, direction, next.AABB_min, next.AABB_max, tNear, tFar);
 
-	world_to_object = next.world_to_object * world_to_object;
+	world_to_object = mat4x3(mat4(inv(next.object_to_world)) * mat4(world_to_object));
 
 	nextLoad.nIdx = next.Index;
-	nextLoad.world_to_object = mat4x3(world_to_object * mat4(nextLoad.world_to_object));
+	nextLoad.world_to_object = mat4x3(mat4(world_to_object) * mat4(nextLoad.world_to_object));
 	nextLoad.t = tNear;
 	traversalBuffer[index] = nextLoad;
 	
@@ -172,14 +176,14 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 		vec3 query_origin = (start.world_to_object * vec4(rayOrigin,1)).xyz;
 		vec3 query_direction = (start.world_to_object * vec4(rayDirection,0)).xyz;
 		if(root.IsInstanceList){
-			SceneNode list = nodes[childIndices[root.childrenIndex]];
+			SceneNode list = nodes[childIndices[root.ChildrenIndex]];
 			for (int i = 0; i < list.NumChildren; i++) {
-				SceneNode child = nodes[list.childrenIndex + i];
+				SceneNode child = nodes[list.ChildrenIndex + i];
 				//debugAABB(query_origin, query_direction, child);
 			}
 		} else {
 			for (int i = 0; i < root.NumChildren; i++) {
-				SceneNode child = nodes[childIndices[root.childrenIndex + i]];
+				SceneNode child = nodes[childIndices[root.ChildrenIndex + i]];
 				// debugAABB(query_origin, query_direction, child);
 			}
 		}
@@ -198,22 +202,22 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 
 		int start = stackSize;
 		SceneNode node = nodes[load.nIdx]; // retrieve scene Node
-		traversalDepth = max(node.level, traversalDepth); // not 100% correct but it gives a vague idea
+		traversalDepth = max(node.Level, traversalDepth); // not 100% correct but it gives a vague idea
 
-		uint tlasNumber = node.tlasNumber;
+		uint tlasNumber = node.TlasNumber;
 		vec3 query_origin = (load.world_to_object * vec4(rayOrigin,1)).xyz;
 		vec3 query_direction = (load.world_to_object * vec4(rayDirection,0)).xyz;
 
 		if (debug && displayAABBs) {
 			for (int i = 0; i < node.NumChildren; i++) {
-				SceneNode directChild = nodes[childIndices[node.childrenIndex + i]];
+				SceneNode directChild = nodes[childIndices[node.ChildrenIndex + i]];
 				debugAABB(query_origin, query_direction, directChild);
 			}
 			if(node.IsInstanceList){
 				if(displayListAABBs){
-					SceneNode list = nodes[childIndices[node.childrenIndex]];
+					SceneNode list = nodes[childIndices[node.ChildrenIndex]];
 					for (int i = 0; i < min(50,list.NumChildren); i++) {
-						SceneNode child = nodes[childIndices[list.childrenIndex + i]];
+						SceneNode child = nodes[childIndices[list.ChildrenIndex + i]];
 						debugAABB(query_origin, query_direction, child);
 					}
 				}
@@ -307,7 +311,7 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 				triangleTLAS = tlasNumber;
 			}
 		}
-		recordQuery(node.Index, node.level, load.t, rayOrigin, rayOrigin + best_t * rayDirection, triangleIntersections ,instanceIntersections);
+		recordQuery(node.Index, node.Level, load.t, rayOrigin, rayOrigin + best_t * rayDirection, triangleIntersections ,instanceIntersections);
 	}
 	SetDebugHsv(displayTLASNumber, triangleTLAS, colorSensitivity, true);
 	if (triangle_index >= 0) {

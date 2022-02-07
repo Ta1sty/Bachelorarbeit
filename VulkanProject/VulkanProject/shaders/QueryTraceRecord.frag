@@ -63,7 +63,7 @@ void checkQueryTrace(vec3 origin, vec3 direction) {
 	}
 	if (index != -1) {
 		SceneNode node = nodes[queryTraces[index].nodeNumber];
-		SetDebugHsv(displayQueryTrace, node.tlasNumber, colorSensitivity, false);
+		SetDebugHsv(displayQueryTrace, node.TlasNumber, colorSensitivity, false);
 	}
 }
 void endRecord() {

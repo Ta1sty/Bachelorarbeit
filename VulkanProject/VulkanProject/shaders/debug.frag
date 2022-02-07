@@ -37,10 +37,10 @@ void DebugOffIfSet() {
 
 float aabbT = 500;
 void debugAABB(vec3 rayOrigin, vec3 rayDir, SceneNode node) {
-	vec3 boxMin = node.AABB_min.xyz;
-	vec3 boxMax = node.AABB_max.xyz;
+	vec3 boxMin = node.AABB_min;
+	vec3 boxMax = node.AABB_max;
 	float tNear, tFar;
-	if (!intersectAABB(rayOrigin, rayDir, node.AABB_min.xyz, node.AABB_max.xyz, tNear, tFar)) return;
+	if (!intersectAABB(rayOrigin, rayDir, node.AABB_min, node.AABB_max, tNear, tFar)) return;
 	if (displayAABBs) {
 		vec3 extent = boxMax - boxMin;
 		vec3 P1 = rayOrigin + tNear * rayDir;

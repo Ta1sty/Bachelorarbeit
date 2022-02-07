@@ -4,6 +4,7 @@ namespace SceneCompiler.Scene.SceneTypes
 {
     public class Vertex
     {
+        public static readonly int Size = 48;
         public float[] Position; // 3 12
         public float[] Normal; // 3 12
         public float[] TexCoords; // 2 8 = 32 bytes

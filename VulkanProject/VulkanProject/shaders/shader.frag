@@ -1,5 +1,6 @@
 #version 460
 #extension GL_EXT_nonuniform_qualifier : enable
+#extension GL_GOOGLE_include_directive : enable
 #define RAY_QUERIES
 #ifdef RAY_QUERIES
 #extension GL_EXT_ray_query : require
@@ -19,7 +20,6 @@
 
 layout(location = 0) in vec3 fragColor;
 layout(location = 0) out vec4 outColor;
-
 void main() {
 	debugColor = vec4(0,0,0,0);
 	// from https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-generating-camera-rays/generating-camera-rays

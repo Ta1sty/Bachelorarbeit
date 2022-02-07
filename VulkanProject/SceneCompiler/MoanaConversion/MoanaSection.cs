@@ -191,7 +191,6 @@ namespace SceneCompiler.MoanaConversion
 
             Node = new SceneNode
             {
-                WorldToObject = worldToObject,
                 ObjectToWorld = objectToWorld,
                 Name = "Inst " + ObjectName,
                 ForceEven = true

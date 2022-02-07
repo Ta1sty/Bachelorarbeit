@@ -11,13 +11,6 @@ vec3 rotateByQuaternion(vec4 q, vec3 v) {
 	return v + 2.0*cross(cross(v, q.xyz ) + q.w*v, q.xyz);
 }
 
-vec4 getTranslation(mat4 tr){
-
-}
-
-vec4 getQuaternion(mat4 tr){
-	
-}
 
 mat4 getTransform(vec4 q, vec3 t){
     mat4 mat;
@@ -40,4 +33,8 @@ mat4 getTransform(vec4 q, vec3 t){
 
 	mat[3][3] = 1;
 	return mat;
+}
+mat4x3 inv(mat4x3 tr){
+	mat3 rot = inverse(mat3(tr));
+	return mat4x3(rot[0],rot[1],rot[2],-(rot*tr[3]));
 }

@@ -35,22 +35,19 @@ typedef struct nodeStructures {
 } NodeStructures;
 
 typedef struct sceneNode { // 16 byte alignment (4 floats)
-	float object_to_world[4][4];	// 0	64
-	float world_to_object[4][4];	// 0	128
-	float AABB_min[4];				// 0	144
-	float AABB_max[4];				// 0	160
-	int32_t IndexBufferIndex;		// 4	164
-	int32_t NumTriangles;			// 8	168
-	int32_t NumChildren;			// 12	172
-	int32_t ChildrenIndex;			// 0	176
-	int32_t Index;					// 4	180
-	int32_t Level;					// 8	184
-	uint32_t NumEven;				// 12	188
-	uint32_t NumOdd;				// 0	192
-	int32_t TlasNumber;				// 4	196
-	VkBool32 IsInstanceList;		// 8	200	// worst case is that we need 2 dummies, for the case that node is even, 
-	VkBool32 IsLodSelector;			// 12	204	// references even children and geometry
-	float pad3;						// 0	208
+	float object_to_world[3][4];	// 0	48
+	float AABB_min[3];				// 12	60
+	int32_t Index;					// 0	64
+	float AABB_max[3];				// 12	76
+	int32_t Level;					// 0	80
+	int32_t NumTriangles;			// 4	84
+	int32_t IndexBufferIndex;		// 8	88
+	int32_t NumChildren;			// 12	92
+	int32_t ChildrenIndex;			// 0	96
+	int32_t TlasNumber;				// 4	100
+	VkBool32 IsInstanceList;		// 8	104
+	VkBool32 IsLodSelector;			// 12	108
+	float pad3;						// 0	112
 } SceneNode;
 
 typedef struct vertex // ALWAYS KEEP THIS PADDED

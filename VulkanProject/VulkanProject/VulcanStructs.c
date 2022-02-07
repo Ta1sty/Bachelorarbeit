@@ -195,6 +195,16 @@ void create_device(VkInfo* vk_info) // see https://github.com/MomentsInGraphics/
 		printf("Ray tracing is available.\n");
 	else
 		printf("No ray tracing for u\n");
+
+	VkPhysicalDeviceProperties2 prop2 = {
+		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 
+	};
+	VkPhysicalDeviceAccelerationStructurePropertiesKHR accProp = { 
+		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR 
+	};
+	prop2.pNext = &accProp;
+	vkGetPhysicalDeviceProperties2(vk_info->physical_device, &prop2);
+	int a = 0;
 }
 
 void create_validation_layer(VkInfo* vk_info)

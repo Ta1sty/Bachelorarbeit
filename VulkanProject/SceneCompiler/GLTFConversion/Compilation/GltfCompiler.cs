@@ -127,23 +127,19 @@ namespace SceneCompiler.GLTFConversion.Compilation
                 {
                     rotation = Matrix4x4.CreateFromQuaternion(
                         new Quaternion(node.Rotation[0], node.Rotation[1], node.Rotation[2], node.Rotation[3]));
-                    Matrix4x4.Invert(rotation, out invRotation);
                 }
 
                 if (node.Scale != null)
                 {
                     scale = Matrix4x4.CreateScale(node.Scale[0], node.Scale[1], node.Scale[2]);
-                    Matrix4x4.Invert(scale, out invScale);
                 }
 
                 if (node.Translation != null)
                 {
                     translation = Matrix4x4.CreateTranslation(node.Translation[0], node.Translation[1], node.Translation[2]);
-                    invTranslation = Matrix4x4.CreateTranslation(-node.Translation[0], -node.Translation[1], -node.Translation[2]);
                 }
 
                 scNode.ObjectToWorld =  scale * rotation * translation;
-                scNode.WorldToObject = invTranslation * invRotation * invScale;
                 // TEST
                 /*
                 var v = new Vector4(4, -3, 2, 1);
@@ -159,7 +155,6 @@ namespace SceneCompiler.GLTFConversion.Compilation
                 Children = File.Scenes[0].Nodes.Select(x=>nodes[x]).ToList(),
                 NumChildren = File.Scenes[0].Nodes.Count,
                 ObjectToWorld = Matrix4x4.Identity,
-                WorldToObject = Matrix4x4.Identity,
                 Name = "ROOT"
             };
 

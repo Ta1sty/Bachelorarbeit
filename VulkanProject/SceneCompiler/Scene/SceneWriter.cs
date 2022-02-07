@@ -30,7 +30,7 @@ namespace SceneCompiler.Scene
 
         public void WriteVertices(List<Vertex> vertexBuffer)
         {
-            var size = 48; // see C project Vertex
+            var size = Vertex.Size; // see C project Vertex
 
             var index = 0;
             while (index < vertexBuffer.Count)
@@ -74,7 +74,7 @@ namespace SceneCompiler.Scene
             var indices = new List<int>(nodes.Sum(x=>x.NumChildren));
             // write sceneNodes
             {
-                var size = 208; // see C project SceneNode
+                var size = SceneNode.Size; // see C project SceneNode
                 var index = 0;
 
                 while (index < nodes.Count)

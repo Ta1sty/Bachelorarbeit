@@ -12,8 +12,6 @@ typedef struct queryTrace {
 	uint32_t instanceIntersections;
 } QueryTrace;
 
-void prepare_scene(Scene* scene, VkBool32 useMultiLevel);
-void depth_recursion(Scene* scene, SceneNode* node);
 void create_ray_descriptors(VkInfo* info, Scene* scene, uint32_t tlassBinding, uint32_t traceBinding);
 void create_trace_buffer(VkInfo* info, Scene* scene);
 void init_ray_descriptors(VkInfo* info, Scene* scene);

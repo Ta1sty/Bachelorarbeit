@@ -10,63 +10,6 @@
 // see https://github.com/MomentsInGraphics/vulkan_renderer, this macro creates a function pointer for dynamic function handles of vulkan
 #define VK_LOAD(FUNCTION_NAME) PFN_##FUNCTION_NAME p##FUNCTION_NAME = (PFN_##FUNCTION_NAME) glfwGetInstanceProcAddress(info->instance, #FUNCTION_NAME)
 
-void prepare_scene(Scene* scene, VkBool32 useMultiLevel)
-{
-	if (useMultiLevel == VK_TRUE)
-	{
-		GET_ROOT(scene);
-		root->Level = 0;
-		depth_recursion(scene, root);
-		for (uint32_t i = 0; i < scene->scene_data.numSceneNodes; i++)
-		{
-			SceneNode* node = &scene->scene_nodes[i];
-			node->NumEven = 0;
-			node->NumOdd = 0;
-			uint32_t evenOffset = 0;
-			uint32_t oddOffset = node->NumChildren - 1;
-			uint32_t* buffer = malloc(sizeof(uint32_t) * node->NumChildren);
-			for (int32_t j = 0; j < node->NumChildren; j++)
-			{
-				GET_CHILD_IDX(scene, node, j);
-				GET_CHILD(scene, node, j);
-				if (child->Level % 2 == 0)
-				{
-					buffer[evenOffset] = childIdx;
-					evenOffset++;
-					node->NumEven++;
-				}
-				else
-				{
-					buffer[oddOffset] = childIdx;
-					oddOffset--;
-					node->NumOdd++;
-				}
-			}
-			for (int32_t j = 0; j < node->NumChildren; j++)
-			{
-				scene->node_indices[node->ChildrenIndex + j] = buffer[j];
-			}
-			free(buffer);
-		}
-	}
-	else
-	{
-		collapse_parent_nodes(scene);
-		// write the levels. 0 for top, 1 for everyone else
-	}
-}
-
-// this method writes the depth levels for every scene node
-void depth_recursion(Scene* scene, SceneNode* node)
-{
-	for (int32_t i = 0; i < node->NumChildren; i++)
-	{
-		GET_CHILD(scene, node, i);
-		child->Level = max(node->Level + 1, child->Level);
-		depth_recursion(scene, child);
-	}
-}
-
 void build_all_acceleration_structures(VkInfo* info, Scene* scene)
 {
 	scene->acceleration_structures = malloc(sizeof(NodeStructures) * scene->scene_data.numSceneNodes);
@@ -131,7 +74,7 @@ void build_node_instance_list(VkInfo* info, Scene* scene, SceneNode* list)
 		}
 	}
 
-	printf("Build List\tI:%d\tL:%d\tC:%d\tT:%d\n", node->Index, node->Level, node->NumChildren, node->NumTriangles);
+	printf("Build List\tI:%d\tL:%d\tC:%d\tT:%d\n", list->Index, list->Level, node->NumChildren, node->NumTriangles);
 	VkBuffer stagingBuffer = 0;
 	VkDeviceMemory stagingMemory = 0;
 	VkAccelerationStructureInstanceKHR* staging_data;
@@ -295,9 +238,7 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 	// if node references geometry calls build BLAS for just the geometry
 	// if node references children call buildBLAS for every child node
 
-	uint32_t instance_count = node->NumOdd; // regular odd level BLAS children
-	if (node->NumEven > 0) instance_count++; // even level children get put into one node
-	if (node->NumTriangles > 0) instance_count++; // geometry also gets its own child
+	uint32_t instance_count = node->NumChildren; // regular odd level BLAS children
 	uint32_t instanceOffset = 0;
 
 	VkBuffer stagingBuffer = 0;
@@ -312,44 +253,12 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 					  (void**) & staging_data), "");
 
 	SceneNode* children = malloc(sizeof(SceneNode) * instance_count);
-	if (node->NumEven > 0 || node->NumTriangles > 0) 
-	// handle the even children and geometry
-	{
-		SceneNode dummyChild = {
-				.NumChildren = (int32_t) node->NumEven,
-				.ChildrenIndex = node->ChildrenIndex,
-				.NumTriangles = node->NumTriangles,
-				.IndexBufferIndex = node->IndexBufferIndex,
-				.Index = node->Index,
-				.object_to_world = {
-					{1, 0, 0, 0},
-					{0, 1, 0, 0},
-					{0, 0, 1, 0},
-					{0, 0, 0, 1}
-				},
-			.world_to_object = {
-					{1, 0, 0, 0},
-					{0, 1, 0, 0},
-					{0, 0, 1, 0},
-					{0, 0, 0, 1}
-				},
-			.Level = node->Level + 1,
-			.NumEven = node->NumEven,
-			.NumOdd = 0,
-		};
-		build_blas(info, scene, &dummyChild);
-		children[instanceOffset] = dummyChild;
-		instanceOffset++;
-	}
 
-	if (node->NumOdd > 0) // handle the normal case for odd level nodes
+	for (uint32_t i = 0; i < node->NumChildren; i++)
 	{
-		for (uint32_t i = 0; i < node->NumOdd; i++)
-		{
-			GET_CHILD(scene, node, node->NumEven + i);
-			// since this is depth first the BLAS should already be built
-			children[instanceOffset + i] = *child;
-		}
+		GET_CHILD(scene, node, i);
+		// since this is depth first the BLAS should already be built
+		children[instanceOffset + i] = *child;
 	}
 
 	// now build the instance geometry
@@ -530,17 +439,8 @@ void build_blas(VkInfo* info, Scene* scene, SceneNode* node)
 							{1, 0, 0, 0},
 							{0, 1, 0, 0},
 							{0, 0, 1, 0},
-							{0, 0, 0, 1}
 						},
-					.world_to_object = {
-					{1, 0, 0, 0},
-					{0, 1, 0, 0},
-					{0, 0, 1, 0},
-					{0, 0, 0, 1}
-					},
 					.Level = node->Level + 1,
-					.NumOdd = 1,
-					.NumEven = 0,
 				};
 				build_tlas(info, scene, &dummyNode);
 				child->TlasNumber = dummyNode.TlasNumber;

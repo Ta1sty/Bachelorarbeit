@@ -139,8 +139,7 @@ void flatten_scene(Scene* scene)
 		.NumChildren = 0
 	};
 	scene->scene_nodes[0] = everything;
-	memcpy(scene->scene_nodes[0].object_to_world, id, sizeof(float) * 4 * 4);
-	memcpy(scene->scene_nodes[0].world_to_object, id, sizeof(float) * 4 * 4);
+	memcpy(scene->scene_nodes[0].object_to_world, id, sizeof(float) * 3 * 4);
 
 
 	scene->node_indices = malloc(sizeof(uint32_t));
