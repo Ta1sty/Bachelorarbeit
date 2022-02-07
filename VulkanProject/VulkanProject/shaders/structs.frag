@@ -13,8 +13,6 @@ struct Material {
 struct SceneNode {
 	mat4 object_to_world;		// 0
 	mat4 world_to_object;		// 0
-	vec4 Quaternion;
-	vec4 Translation;
 	vec4 AABB_min;				// 0
 	vec4 AABB_max;				// 0
 	int IndexBuferIndex;		// 4

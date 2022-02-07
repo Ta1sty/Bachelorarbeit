@@ -11,15 +11,11 @@
 #define STRUCTS
 #include "structs.frag"
 
-#define MATH
-#include "math.frag"
-
 #define DEBUG
 #include "debug.frag"
 
 #define RAYTRACE
 #include "raytrace.frag"
-
 
 layout(location = 0) in vec3 fragColor;
 layout(location = 0) out vec4 outColor;
@@ -33,20 +29,8 @@ void main() {
 	int triangle_index = -1;
 
 	float t_hit;
-	startTraceRecord();	
-	for(int i = 0;i<numSceneNodes; i++) {
-		SceneNode node = nodes[i];
-		/*
-		vec4 inv = getInverseQuaternion(node.Quaternion);
-		mat4 tr1 = mat4(1) * node.object_to_world;
-		mat4 tr2 = getTransform(node.Quaternion, node.Translation.xyz);
-		recordQuery(node.Index, 0, inv.w, tr1[0].xyz, tr2[0].xyz, 0 ,0);*/
-		mat4 inv_tr1 = mat4(1) * node.world_to_object;
-		mat4 inv_tr2 = getInverseTransform(node.Quaternion, node.Translation.xyz);
-		recordQuery(node.Index, 0, 0, inv_tr1[3].xyz, inv_tr2[3].xyz, 0 ,0);
-	}
+	startTraceRecord();
 	outColor = rayTrace(rayOrigin, rayDirection, t_hit);
-
 	endRecord();
 	checkQueryTrace(rayOrigin, rayDirection);
 
