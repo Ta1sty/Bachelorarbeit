@@ -13,6 +13,7 @@
 // gets the root node of the scene
 #define GET_ROOT(scene) SceneNode* root = &##scene->scene_nodes[##scene->scene_data.rootSceneNode]
 
+#define TRANSFORM(scene, node) &##scene->node_transforms[##node->TransformIndex]
 // this is subject to change
 typedef struct viewData {
 	float pos[3];
@@ -34,8 +35,11 @@ typedef struct nodeStructures {
 	AccelerationStructure blas;
 } NodeStructures;
 
+typedef struct mat4x3 { // 4 collumns, 3 rows. Row major
+	float mat[3][4];
+} Mat4x3;
+
 typedef struct sceneNode { // 16 byte alignment (4 floats)
-	float object_to_world[3][4];	// 0	48
 	float AABB_min[3];				// 12	60
 	int32_t Index;					// 0	64
 	float AABB_max[3];				// 12	76
@@ -47,7 +51,7 @@ typedef struct sceneNode { // 16 byte alignment (4 floats)
 	int32_t TlasNumber;				// 4	100
 	VkBool32 IsInstanceList;		// 8	104
 	VkBool32 IsLodSelector;			// 12	108
-	float pad3;						// 0	112
+	uint32_t TransformIndex;		// 0	112-48 = 64
 } SceneNode;
 
 typedef struct vertex // ALWAYS KEEP THIS PADDED
@@ -66,8 +70,7 @@ typedef struct vertex // ALWAYS KEEP THIS PADDED
 #define LIGHT_ON 1 // light is on
 #define LIGHT_TYPE_POINT_LIGHT 2 // light is a point light
 #define LIGHT_TYPE_DIRECTIONAL_LIGHT 4 // light is a directional light
-#define LIGHT_IGNORE_MAX_DISTANCE = 64; // this light is respected regardless of distance
-#define LIGHT_USE_MIN_DST = 128; // this light in only respected if there is no occlusion for the minDst range
+#define LIGHT_TYPE_SUN 8
 typedef struct light // 64 bytes
 {
 	float position[3];
@@ -87,6 +90,7 @@ typedef struct sceneData
 	uint32_t numVertices;
 	uint32_t numTriangles;
 	uint32_t numSceneNodes;
+	uint32_t numTransforms;
 	uint32_t numNodeIndices;
 	uint32_t numLights;
 	uint32_t rootSceneNode;
@@ -187,6 +191,7 @@ typedef struct scene
 	uint32_t* indices;
 
 	SceneNode* scene_nodes;
+	Mat4x3* node_transforms;
 	uint32_t* node_indices;
 
 	NodeStructures* acceleration_structures; // 1-1 with sceneNodes
@@ -196,17 +201,6 @@ typedef struct scene
 	uint32_t numTLAS;
 	VkAccelerationStructureKHR* TLASs;
 } Scene;
-
-typedef struct flatNodeResult
-{
-	uint32_t num_vertices;
-	Vertex* vertices;
-} FlatNodeResult;
-
-typedef struct {
-	uint32_t numChildren;
-	SceneNode* children;
-} NodeCollapseResult;
 
 typedef struct sceneSelection
 {
@@ -221,8 +215,4 @@ void init_scene(Scene* scene);
 void load_scene(Scene* scene, char* path);
 void load_textures(TextureData* data, FILE* file);
 void load_texture(Texture* texture, FILE* file);
-void flatten_scene(Scene* scene);
-void collapse_parent_nodes(Scene* scene);
-FlatNodeResult flatten_node(Scene* scene, float parentTransform[4][4], SceneNode* node);
-NodeCollapseResult collapse_node(Scene* scene, float transform[4][4], SceneNode* node);
 void destroy_scene(Scene* scene);

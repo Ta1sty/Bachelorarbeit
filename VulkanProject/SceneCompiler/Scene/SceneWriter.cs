@@ -6,6 +6,7 @@ using System.Linq;
 using System.Drawing.Imaging;
 using System.Drawing;
 using SceneCompiler.Scene.SceneTypes;
+using System.Numerics;
 
 namespace SceneCompiler.Scene
 {
@@ -72,6 +73,8 @@ namespace SceneCompiler.Scene
         public void WriteSceneNodes(List<SceneNode> nodes, int rootNodeIndex)
         {
             var indices = new List<int>(nodes.Sum(x=>x.NumChildren));
+            var transforms = new List<Matrix4x4>();
+            transforms.Add(Matrix4x4.Identity);
             // write sceneNodes
             {
                 var size = SceneNode.Size; // see C project SceneNode
@@ -96,6 +99,14 @@ namespace SceneCompiler.Scene
                     for (var i = index;i<index+batchSize;i++)
                     {
                         nodes[i].ChildrenIndex = nodes[i].NumChildren > 0 ? indices.Count : -1;
+                        if (nodes[i].ObjectToWorld == Matrix4x4.Identity || SceneNode.MatrixAlmostZero(nodes[i].ObjectToWorld - Matrix4x4.Identity))
+                            nodes[i].TransformIndex = 0;
+                        else
+                        {
+                            nodes[i].TransformIndex = (uint)transforms.Count;
+                            transforms.Add(nodes[i].ObjectToWorld);
+                        }
+
                         pos = nodes[i].WriteToByteArray(nodeBuffer, pos);
                         indices.AddRange(nodes[i].Children.Select(x => x.Index));
                     }
@@ -105,6 +116,35 @@ namespace SceneCompiler.Scene
                 if (index != nodes.Count)
                     throw new Exception("Index after write is not nodes.count");
             }
+
+            // write transforms
+
+            {
+                var size = 4 * 4 * 3;
+                var buf = new byte[4 + transforms.Count * size];
+                var pos = -4;
+                BitConverter.GetBytes((uint)transforms.Count).CopyTo(buf.AsSpan(pos += 4));
+                foreach (var transform in transforms)
+                {
+                    BitConverter.GetBytes(transform.M11).CopyTo(buf.AsSpan(pos += 4));
+                    BitConverter.GetBytes(transform.M21).CopyTo(buf.AsSpan(pos += 4));
+                    BitConverter.GetBytes(transform.M31).CopyTo(buf.AsSpan(pos += 4));
+                    BitConverter.GetBytes(transform.M41).CopyTo(buf.AsSpan(pos += 4));
+
+                    BitConverter.GetBytes(transform.M12).CopyTo(buf.AsSpan(pos += 4));
+                    BitConverter.GetBytes(transform.M22).CopyTo(buf.AsSpan(pos += 4));
+                    BitConverter.GetBytes(transform.M32).CopyTo(buf.AsSpan(pos += 4));
+                    BitConverter.GetBytes(transform.M42).CopyTo(buf.AsSpan(pos += 4));
+
+                    BitConverter.GetBytes(transform.M13).CopyTo(buf.AsSpan(pos += 4));
+                    BitConverter.GetBytes(transform.M23).CopyTo(buf.AsSpan(pos += 4));
+                    BitConverter.GetBytes(transform.M33).CopyTo(buf.AsSpan(pos += 4));
+                    BitConverter.GetBytes(transform.M43).CopyTo(buf.AsSpan(pos += 4));
+                }
+                str.Write(buf);
+
+            }
+
             // write index array
             {
                 var pos = -4;

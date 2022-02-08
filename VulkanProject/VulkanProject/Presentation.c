@@ -56,6 +56,12 @@ void set_global_buffers(VkInfo* vk, Scene* scene)
 	memcpy(sceneNodeData, scene->scene_nodes, sizeof(SceneNode) * scene->scene_data.numSceneNodes);
 	vkUnmapMemory(vk->device, GET_NODE_BUFFER(vk).vk_buffer_memory);
 
+	Mat4x3* transfromData;
+	check(vkMapMemory(vk->device, GET_TRANSFROM_BUFFER(vk).vk_buffer_memory,
+		0, sizeof(Mat4x3) * scene->scene_data.numTransforms, 0, (void**)&transfromData), "");
+	memcpy(transfromData, scene->node_transforms, sizeof(Mat4x3) * scene->scene_data.numTransforms);
+	vkUnmapMemory(vk->device, GET_TRANSFROM_BUFFER(vk).vk_buffer_memory);
+
 	// child indices
 	uint32_t* childrenData;
 	check(vkMapMemory(vk->device, GET_CHILD_BUFFER(vk).vk_buffer_memory,

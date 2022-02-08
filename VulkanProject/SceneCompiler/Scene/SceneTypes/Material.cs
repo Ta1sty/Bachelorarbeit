@@ -4,6 +4,7 @@
     {
         public bool DoubleSided { get; set; }
         public MaterialProperties PbrMetallicRoughness { get; set; }
+        public string Name { get; set; }
     }
 
     public class MaterialProperties

@@ -1,5 +1,6 @@
 ﻿#define CLEANUP
 
+using System;
 using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -230,13 +231,13 @@ namespace SceneCompiler.MoanaConversion
             Node = new SceneNode();
             Node.Name = "Geom " + Name;
             Node.ForceEven = true;
-            Node.Children.AddRange(Meshes.Select(x=>x.GetSceneNode(buffers)));
+            Node.Children.AddRange(Meshes.Select(x=>x.GetSceneNode(buffers)).Where(x=>x != null));
 #if CLEANUP
             Meshes.Clear();
 #endif
             bool merge = true; // we need to do this, else programm will construct a blas for
                                // every single mesh and we exceed vkDeviceMaxAllocations (4096)
-            if (merge) // merges the meshes of the children all into one big mesh
+            if (merge && Node.Children.Count > 0) // merges the meshes of the children all into one big mesh
             {
                 Node.NumTriangles = Node.Children.Sum(x => x.NumTriangles);
                 Node.IndexBufferIndex = Node.Children.Min(x => x.IndexBufferIndex);
@@ -271,16 +272,6 @@ namespace SceneCompiler.MoanaConversion
             if (Node != null)
                 return Node;
 
-            var start = buffers.VertexBuffer.Count; // add this to all indices
-            Node = new SceneNode
-            {
-                IndexBufferIndex = buffers.IndexBuffer.Count,
-                NumTriangles = Shape.Indices.Count / 3,
-                Name = "Mesh " + Name,
-                ForceOdd = true
-            };
-            buffers.IndexBuffer.AddRange(Shape.Indices.Select(x=>(uint) (x+start)));
-
             var materialIndex = -1;
             if (MaterialName != null)
             {
@@ -291,7 +282,26 @@ namespace SceneCompiler.MoanaConversion
                         .FirstOrDefault(x => x.Name.Contains(MaterialName))?
                         .BufferIndex ?? -1;
                 }
+                if (materialIndex >= 0)
+                {
+                    var mat = buffers.MaterialBuffer[materialIndex];
+                    //Console.WriteLine(Name+ " Mapped Material: " + MaterialName + " to " + mat.Name);
+                }
+                else
+                {
+                    Console.WriteLine(Name + " Unmapped Material: " + MaterialName);
+                }
             }
+
+            var start = buffers.VertexBuffer.Count; // add this to all indices
+            Node = new SceneNode
+            {
+                IndexBufferIndex = buffers.IndexBuffer.Count,
+                NumTriangles = Shape.Indices.Count / 3,
+                Name = "Mesh " + Name,
+                ForceOdd = true
+            };
+            buffers.IndexBuffer.AddRange(Shape.Indices.Select(x=>(uint) (x+start)));
 
             var vertices = new List<Vertex>(Shape.Positions.Count);
             for (var i = 0; i < Shape.Positions.Count; i++)
@@ -372,7 +382,8 @@ namespace SceneCompiler.MoanaConversion
                     },
                     MetallicFactor = Metallic,
                     RoughnessFactor = Roughness
-                }
+                },
+                Name = Name
             };
             BufferIndex = buffers.MaterialBuffer.Count;
             buffers.MaterialBuffer.Add(SceneMaterial);

@@ -116,7 +116,7 @@ void build_node_instance_list(VkInfo* info, Scene* scene, SceneNode* list)
 			};
 
 			// todo multiply matrices
-			memcpy(&instance.transform.matrix, &child->object_to_world, sizeof(float) * 4 * 3);
+			memcpy(&instance.transform.matrix, TRANSFORM(scene, child).mat, sizeof(float) * 4 * 3);
 
 			memcpy(&staging_data[index], &instance, sizeof(VkAccelerationStructureInstanceKHR));
 			index++;
@@ -288,7 +288,7 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 			// this is the reference to use in case this is an odd level node
 		};
 
-		memcpy(&instance.transform.matrix, &child.object_to_world, sizeof(float) * 4 * 3);
+		memcpy(&instance.transform.matrix, TRANSFORM(scene, (&child)).mat, sizeof(float) * 4 * 3);
 
 		memcpy(&staging_data[i], &instance, sizeof(VkAccelerationStructureInstanceKHR));
 	}
@@ -423,30 +423,6 @@ void build_blas(VkInfo* info, Scene* scene, SceneNode* node)
 	// Handle node children
 	if (node->NumChildren > 0)
 	{
-		for (int32_t i = 0; i < node->NumChildren; i++)
-		{
-			GET_CHILD(scene, node, i);
-			if (child->Level % 2 == 1 && scene->acceleration_structures[child->Index].tlas.structure == NULL) // child is odd, we need a TLAS for it
-			{
-				if (scene->acceleration_structures[child->Index].blas.structure == NULL) error("Odd child does not have a BLAS??");
-				SceneNode dummyNode = {
-						.NumChildren = 1,
-						.ChildrenIndex = node->ChildrenIndex + i, // this is the node we want to create a TLAS for
-						.NumTriangles = 0,
-						.Index = child->Index,
-						.IndexBufferIndex = -1,
-						.object_to_world = {
-							{1, 0, 0, 0},
-							{0, 1, 0, 0},
-							{0, 0, 1, 0},
-						},
-					.Level = node->Level + 1,
-				};
-				build_tlas(info, scene, &dummyNode);
-				child->TlasNumber = dummyNode.TlasNumber;
-			}
-		}
-
 		VkAabbPositionsKHR* aabbData;
 		createBuffer(info, sizeof(VkAabbPositionsKHR) * node->NumChildren,
 			VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |

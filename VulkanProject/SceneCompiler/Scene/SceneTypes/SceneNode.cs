@@ -8,7 +8,7 @@ namespace SceneCompiler.Scene.SceneTypes
 {
     public class SceneNode
     {
-        public static readonly int Size = 112;
+        public static readonly int Size = 64;
         public List<SceneNode> Children = new();
         public List<SceneNode> Parents = new();
         public SceneNode Brother = null; // this node is practically identical to this one, project others onto this one#
@@ -28,7 +28,7 @@ namespace SceneCompiler.Scene.SceneTypes
         public int TlasNumber = -1;
         public bool IsInstanceList = false;
         public bool IsLodSelector = false;
-        public float pad3 = -1;
+        public uint TransformIndex = 0;
 
         public bool ForceOdd = false;
         public bool ForceEven = false;
@@ -65,21 +65,6 @@ namespace SceneCompiler.Scene.SceneTypes
 
         public int WriteToByteArray(byte[] nodeBuffer, int pos)
         {
-            // OBJECT TO WORLD
-            BitConverter.GetBytes(ObjectToWorld.M11).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(ObjectToWorld.M21).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(ObjectToWorld.M31).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(ObjectToWorld.M41).CopyTo(nodeBuffer.AsSpan(pos += 4));
-
-            BitConverter.GetBytes(ObjectToWorld.M12).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(ObjectToWorld.M22).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(ObjectToWorld.M32).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(ObjectToWorld.M42).CopyTo(nodeBuffer.AsSpan(pos += 4));
-
-            BitConverter.GetBytes(ObjectToWorld.M13).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(ObjectToWorld.M23).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(ObjectToWorld.M33).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(ObjectToWorld.M43).CopyTo(nodeBuffer.AsSpan(pos += 4));
 
             // Vec4 AABB Max, align 16 bytes
             BitConverter.GetBytes(AABB_min.X).CopyTo(nodeBuffer.AsSpan(pos += 4));
@@ -105,11 +90,11 @@ namespace SceneCompiler.Scene.SceneTypes
             BitConverter.GetBytes(TlasNumber).CopyTo(nodeBuffer.AsSpan(pos += 4));
             BitConverter.GetBytes((uint) (IsInstanceList ? 1 : 0)).CopyTo(nodeBuffer.AsSpan(pos += 4));
             BitConverter.GetBytes((uint) (IsLodSelector ? 1: 0)).CopyTo(nodeBuffer.AsSpan(pos += 4));
-            BitConverter.GetBytes(pad3).CopyTo(nodeBuffer.AsSpan(pos += 4));
+            BitConverter.GetBytes(TransformIndex).CopyTo(nodeBuffer.AsSpan(pos += 4));
             return pos;
         }
 
-        private static bool MatrixAlmostZero(Matrix4x4 mat)
+        public static bool MatrixAlmostZero(Matrix4x4 mat)
         {
             return Zero(mat.M11) && Zero(mat.M12) && Zero(mat.M13) && Zero(mat.M14) &&
                    Zero(mat.M21) && Zero(mat.M22) && Zero(mat.M23) && Zero(mat.M24) &&

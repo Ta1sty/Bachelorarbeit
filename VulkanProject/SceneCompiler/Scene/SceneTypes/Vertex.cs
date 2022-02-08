@@ -25,7 +25,7 @@ namespace SceneCompiler.Scene.SceneTypes
 
             BitConverter.GetBytes(TexCoords[0]).CopyTo(vertices.AsSpan(pos += 4));
             BitConverter.GetBytes(TexCoords[1]).CopyTo(vertices.AsSpan(pos += 4));
-            BitConverter.GetBytes(MaterialIndex).CopyTo(vertices.AsSpan(pos += 4));  // material index, TODO
+            BitConverter.GetBytes(MaterialIndex).CopyTo(vertices.AsSpan(pos += 4));
             BitConverter.GetBytes(0).CopyTo(vertices.AsSpan(pos += 4));  // pad3
             return pos;
         }

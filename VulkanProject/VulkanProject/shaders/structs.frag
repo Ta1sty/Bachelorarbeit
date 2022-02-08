@@ -5,6 +5,7 @@ struct Vertex {
 	float pad2;
 	vec2 tex_coord;// 32 - 8
 	int material_index;   // 40 - 4 - the index of the material to use
+	float pad3;
 };
 struct Material {
 	float k_a;
@@ -13,7 +14,6 @@ struct Material {
 	int texture_index;
 };
 struct SceneNode {
-	mat4x3 object_to_world;		// 0
 	vec3 AABB_min;				// 12
 	int Index;					// 0
 	vec3 AABB_max;				// 12
@@ -25,14 +25,13 @@ struct SceneNode {
 	int TlasNumber;				// 4
 	bool IsInstanceList;		// 8
 	bool IsLodSelector;			// 12
-	float pad;					// 0
+	uint TransformIndex;		// 0
 };
 
 #define LIGHT_ON 1
 #define LIGHT_TYPE_POINT 2
 #define LIGHT_TYPE_DIRECTIONAL 4
-#define LIGHT_IGNORE_MAX_DISTANCE 64
-#define LIGHT_USE_MIN_DST 128
+#define LIGHT_TYPE_SUN 8
 struct Light {
 	vec3 position;
 	uint type;
@@ -50,17 +49,19 @@ struct Light {
 #define MATERIAL_BUFFER_BINDING 3
 #define LIGHT_BUFFER_BINDING 4
 #define NODE_BUFFER_BINDING 5
-#define NODE_CHILDREN_BINDING 6
-#define SAMPLER_BINDING 7
-#define TEXTURE_BINDING 8
-#define FRAME_DATA_BINDING 9
-#define TLAS_BINDING 10
-#define TRACE_BINDING 11
+#define TRANSFORM_BUFFER_BINDING 6
+#define NODE_CHILDREN_BINDING 7
+#define SAMPLER_BINDING 8
+#define TEXTURE_BINDING 9
+#define FRAME_DATA_BINDING 10
+#define TLAS_BINDING 11
+#define TRACE_BINDING 12
 
 layout(binding = SCENE_DATA_BINDING, set = 0) uniform SceneData{
 	uint numVertices;
 	uint numTriangles;
 	uint numSceneNodes;
+	uint numTransforms;
 	uint numNodeIndices;
 	uint numLights;
 	uint rootSceneNode;
@@ -71,6 +72,7 @@ layout(binding = INDEX_BUFFER_BINDING, set = 0) buffer IndexBuffer { int[] indic
 layout(binding = MATERIAL_BUFFER_BINDING, set = 0) buffer MaterialBuffer { Material[] materials; };
 layout(binding = LIGHT_BUFFER_BINDING, set = 0) buffer LightBuffer { Light[] lights; };
 layout(binding = NODE_BUFFER_BINDING, set = 0, row_major) buffer NodeBuffer { SceneNode[] nodes; }; // the array of sceneNodes
+layout(binding = TRANSFORM_BUFFER_BINDING, set = 0, row_major) buffer TransformBuffer { mat4x3[] transforms; }; // the array of node transforms
 layout(binding = NODE_CHILDREN_BINDING, set = 0) buffer ChildBuffer { uint[] childIndices; }; // the index array for node children
 
 layout(binding = SAMPLER_BINDING, set = 1) uniform sampler samp;

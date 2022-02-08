@@ -58,6 +58,15 @@ void main() {
 					}
 				}
 			}
+			if((light.type & LIGHT_TYPE_SUN) != 0){
+				float t;
+				if(vertexIntersect(rayOrigin, rayDirection, rayOrigin + 10 * (-light.direction), t)){
+					if(t<light_t){
+						light_t = t;
+						closestLight = i;
+					}
+				}
+			}
 		}
 		if(closestLight>=0){
 			Light light = lights[closestLight];

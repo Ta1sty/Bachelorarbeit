@@ -26,6 +26,8 @@ namespace SceneCompiler.MoanaConversion
                 //if (!Path.GetFileName(folder).Contains("isBayCedar"))
                 //if (!Path.GetFileName(folder).Contains("isCoral"))
                 if (!Path.GetFileName(folder).Contains("isBeach"))
+                //if (!Path.GetFileName(folder).Contains("isCoastline"))
+                if (!Path.GetFileName(folder).Contains("isMountainB"))
                     continue;
                 moana.Sections.Add(ReadFolder(folder));
 

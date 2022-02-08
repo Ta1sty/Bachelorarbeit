@@ -10,6 +10,9 @@ using System.Text.RegularExpressions;
 using SceneCompiler.GLTFConversion.Compilation;
 using SceneCompiler.MoanaConversion;
 using SceneCompiler.Scene;
+using System.Linq;
+using System.Numerics;
+using SceneCompiler.Scene.SceneTypes;
 
 namespace SceneCompiler
 {
@@ -53,6 +56,14 @@ namespace SceneCompiler
             //instancePostCompile.InstanceMultiple(32, 32);
             //instancePostCompile.InstanceMultiple(32, 32);
 
+            foreach(var mat in compiler.Buffers.MaterialBuffer)
+            {
+                var index = compiler.Buffers.MaterialBuffer.IndexOf(mat);
+                var num = compiler.Buffers.VertexBuffer.Count(x=>x.MaterialIndex == index);
+                var first = compiler.Buffers.VertexBuffer.FindIndex(x => x.MaterialIndex == index);
+                Console.WriteLine(mat.Name + " used for " + num + " vertices");
+            }
+
 
             RayTracePostCompile rayTraceOptimization = new RayTracePostCompile(compiler.Buffers, true);
             rayTraceOptimization.PostCompile();
@@ -60,6 +71,11 @@ namespace SceneCompiler
             rayTraceOptimization.Validate();
             rayTraceOptimization.PrintScene();
             var writer = new SceneWriter();
+
+            var idCount = compiler.Buffers.Nodes.Count(x => 
+                (x.ObjectToWorld == Matrix4x4.Identity || SceneNode.MatrixAlmostZero(x.ObjectToWorld - Matrix4x4.Identity)));
+            Console.WriteLine("Scene Contained " + idCount + " identity transforms");
+
             writer.WriteBuffers(dst, compiler);
             Console.WriteLine("Total Number of Triangles: " + compiler.Buffers.Nodes[compiler.Buffers.RootNode].TotalPrimitiveCount);
             Console.WriteLine("PARSE FINISHED, PRESS ENTER");

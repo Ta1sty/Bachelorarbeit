@@ -68,6 +68,7 @@ namespace SceneCompiler.Scene
             for (var i = 0; i < buffer.Count; i++)
             {
                 buffer[i].Index = i;
+                buffer[i].NumChildren = buffer[i].Children.Count;
             }
             Console.WriteLine("computing AABBs");
             root.ComputeAABBs(_buffers);

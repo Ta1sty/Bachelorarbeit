@@ -49,7 +49,7 @@ void getHitPayload(int triangle, vec3 tuv, out vec4 color, out vec3 N, out Mater
 	}
 
 	// debug
-	if (!debug || debugColor[3] != 0) return;
+	if (!debug) return;
 
 	SetDebugCol(displayUV, vec4(u, v, 0, 1));
 	SetDebugCol(displayTex, vec4(tex.x, tex.y, 0, 1));
@@ -97,10 +97,10 @@ void instanceHitCompute(int index, vec3 rayOrigin, vec3 rayDirection, bool IsIns
 		SceneNode instancedChild = nodes[nextLoad.sIdx];
 		next = nodes[childIndices[instancedChild.ChildrenIndex + nextLoad.pIdx]]; // this is the instance 
 																			  // - odd (absorbed as AABB in directChild)
-		world_to_object = mat4x3(mat4(inv(instancedChild.object_to_world)) * mat4(inv(directChild.object_to_world)));
+		world_to_object = mat4x3(mat4(inv(transforms[instancedChild.TransformIndex])) * mat4(inv(transforms[directChild.TransformIndex])));
 	} else {
 		next = nodes[childIndices[directChild.ChildrenIndex + nextLoad.pIdx]];
-		world_to_object = inv(directChild.object_to_world);
+		world_to_object = inv(transforms[directChild.TransformIndex]);
 	}
 
 
@@ -112,7 +112,7 @@ void instanceHitCompute(int index, vec3 rayOrigin, vec3 rayDirection, bool IsIns
 	float tNear, tFar;
 	intersectAABB(origin, direction, next.AABB_min, next.AABB_max, tNear, tFar);
 
-	world_to_object = mat4x3(mat4(inv(next.object_to_world)) * mat4(world_to_object));
+	world_to_object = mat4x3(mat4(inv(transforms[next.TransformIndex])) * mat4(world_to_object));
 
 	nextLoad.nIdx = next.Index;
 	nextLoad.world_to_object = mat4x3(mat4(world_to_object) * mat4(nextLoad.world_to_object));
@@ -134,7 +134,7 @@ void instanceHitCompute(int index, vec3 rayOrigin, vec3 rayDirection, bool IsIns
 }
 
 
-void triangleHit(rayQueryEXT ray_query, SceneNode node) {
+void triangleHit(rayQueryEXT ray_query, SceneNode node, float minAlpha) {
 	float t = rayQueryGetIntersectionTEXT(ray_query, false);
 	vec2 uv = rayQueryGetIntersectionBarycentricsEXT(ray_query, false);
 	uint cIdx = rayQueryGetIntersectionInstanceCustomIndexEXT(ray_query, false);
@@ -153,16 +153,16 @@ void triangleHit(rayQueryEXT ray_query, SceneNode node) {
 	vec4 color;
 	Material material;
 	getHitPayload(triangle, tuv, color, N, material);
-	if (color[3] > 0)
+	if (color[3] > minAlpha)
 		rayQueryConfirmIntersectionEXT(ray_query);
 }
 
-bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, out vec3 tuv, out int triangle_index, out TraversalPayload resultPayload) {
+bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, float minAlpha,out vec3 tuv, out int triangle_index, out TraversalPayload resultPayload) {
 	numTraversals = 0;
 
 	tuv = vec3(0);
 
-	float min_t = 1.0e-3f;
+	float min_t = 1.0e-4f;
 	float best_t = t_max;
 
 	TraversalPayload start; // start at root node
@@ -238,8 +238,8 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 			switch (type) {
 			case gl_RayQueryCandidateIntersectionTriangleEXT:
 				// might want to check for opaque
-				// triangleHit(ray_query, node);
-				rayQueryConfirmIntersectionEXT(ray_query);
+				triangleHit(ray_query, node, minAlpha);
+				//rayQueryConfirmIntersectionEXT(ray_query);
 				triangleIntersections++;
 				break;
 			case gl_RayQueryCandidateIntersectionAABBEXT:
@@ -293,9 +293,13 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 			float t = rayQueryGetIntersectionTEXT(ray_query, true);
 			if (t < best_t) {
 				best_t = t;
-
-				uint cIdx = rayQueryGetIntersectionInstanceCustomIndexEXT(ray_query, true);
-				SceneNode blasChild = nodes[cIdx];
+				SceneNode blasChild;
+				if(node.IsInstanceList){
+					blasChild = nodes[rayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetEXT(ray_query, true)];
+				}
+				else {
+					blasChild = nodes[rayQueryGetIntersectionInstanceCustomIndexEXT(ray_query, true)];
+				}
 				triangle_index = blasChild.IndexBuferIndex / 3 + rayQueryGetIntersectionPrimitiveIndexEXT(ray_query, true);
 
 				tuv.x = t;
@@ -366,6 +370,7 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 }
 #endif
 
+const float MAX_T = 100000;
 
 vec4 shadeFragment(vec3 P, vec3 V, vec3 N, vec4 color, Material material) {
 	float n = 1; // todo phong exponent
@@ -377,39 +382,33 @@ vec4 shadeFragment(vec3 P, vec3 V, vec3 N, vec4 color, Material material) {
 		if ((light.type & LIGHT_ON) == 0) { // is the light on?
 			continue;
 		}
-		vec3 tuvShadow;
-		int index;
 
 		vec3 L = light.position - P;
 		float l_dst = length(L);
-		if (l_dst > light.maxDst && (light.type & LIGHT_IGNORE_MAX_DISTANCE) == 0) { // is the light near enough to even matter
-			continue;
-		}
+
 		float specular = 0;
 		float diffuse = material.k_d;
 		vec3 R = normalize(reflect(V, N));
 		if (renderShadows) {
 			TraversalPayload load;
+			vec3 tuvShadow;
+			int index;
 			if ((light.type & LIGHT_TYPE_POINT) != 0) { // point light, check if it is visible and then compute KS via L vector
+				if (l_dst > light.maxDst) { // is the light near enough to even matter
+					continue;
+				}
+
 				vec3 LN = normalize(L);
-				if (ray_trace_loop(P, LN, l_dst, rootSceneNode, tuvShadow, index, load)) { // is light source visible? shoot ray to lPos
+				if (ray_trace_loop(P, LN, l_dst, rootSceneNode,0.9f, tuvShadow, index, load)) { // is light source visible? shoot ray to lPos
 					continue;
 				}
 				specular = material.k_s * pow(max(0, dot(R, LN)), n);
 			}
-			else if ((light.type & LIGHT_TYPE_DIRECTIONAL) != 0) { // directional light, check if it is visible 
-				if ((light.type & LIGHT_USE_MIN_DST) != 0) { // shoot ray over minDst, if nothing is hit lighting is enabled
-					if (ray_trace_loop(P, normalize(-light.direction), light.minDst, rootSceneNode, tuvShadow, index, load)) { // shoot shadow ray into the light source
-						continue;
-					}
-					specular = material.k_s * pow(max(0, dot(R, -light.direction)), n);
+			else if ((light.type & LIGHT_TYPE_SUN) != 0) { // directional light, check if it is visible 
+				if (ray_trace_loop(P, normalize(-light.direction), MAX_T, rootSceneNode,0.9f, tuvShadow, index, load)) { // shoot shadow ray into the light source
+					continue;
 				}
-				else { // directional light with fixed position, this is probably not correct
-					if (ray_trace_loop(P, normalize(-light.direction), l_dst, rootSceneNode, tuvShadow, index, load)) {
-						continue;
-					}
-					specular = material.k_s * pow(max(0, dot(R, -light.direction)), n);
-				}
+				specular = material.k_s * pow(max(0, dot(R, -light.direction)), n);
 			}
 		}
 
@@ -430,7 +429,6 @@ vec4 shadeFragment(vec3 P, vec3 V, vec3 N, vec4 color, Material material) {
 	return vec4(sum.xyz, color[3]);
 }
 
-const float MAX_T = 100000;
 vec4 rayTrace(vec3 rayOrigin, vec3 rayDirection, out float t) {
 	vec4 color = vec4(0, 0, 0, 1);
 	float frac = 1;
@@ -442,7 +440,7 @@ vec4 rayTrace(vec3 rayOrigin, vec3 rayDirection, out float t) {
 		int triangle = -1;
 		TraversalPayload load;
 		vec3 tuv;
-		if (ray_trace_loop(rayOrigin, rayDirection, MAX_T, rootSceneNode, tuv, triangle, load))
+		if (ray_trace_loop(rayOrigin, rayDirection, MAX_T, rootSceneNode,0, tuv, triangle, load))
 			return vec4(1, 1, 1, 1);
 		else
 			return vec4(0, 0, 0, 1);
@@ -454,7 +452,7 @@ vec4 rayTrace(vec3 rayOrigin, vec3 rayDirection, out float t) {
 		TraversalPayload load;
 		vec3 tuv;
 		vec4 fracColor;
-		if (ray_trace_loop(P, V, MAX_T, rootSceneNode, tuv, triangle, load)) {
+		if (ray_trace_loop(P, V, MAX_T, rootSceneNode,0, tuv, triangle, load)) {
 			P = P + tuv.x * V;
 			vec3 N_obj;
 			vec4 fragCol;
@@ -470,7 +468,7 @@ vec4 rayTrace(vec3 rayOrigin, vec3 rayDirection, out float t) {
 			mat3 NormalTransform = transpose(inverse(object_to_world));
 			vec3 N_world = NormalTransform * N_obj;
 
-			fracColor = shadeFragment(P, V, N_world, fragCol, material);
+			fracColor = shadeFragment(P - 0.1f * V, V, N_world, fragCol, material);
 			if (depth == 0)
 				t = tuv.x;
 			depth++;

@@ -143,7 +143,7 @@ void changeScene(App* app)
         // prepare_scene(&app->scene, useMutliLevel);
     }
     else {
-        flatten_scene(&app->scene);
+        //flatten_scene(&app->scene);
     }
 
     destroy_imgui_buffers(&app->vk_info);
@@ -194,7 +194,7 @@ int main()
         // prepare_scene(&app.scene, useMutliLevel);
     }
     else {
-        flatten_scene(&app.scene);
+        //flatten_scene(&app.scene);
     }
 
 
