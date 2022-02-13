@@ -19,10 +19,13 @@ namespace SceneCompiler.Scene
             if (File.Exists(dst))
                 File.Delete(dst);
             str = File.Create(dst);
-
+            Console.WriteLine("Writing Vertices: " + compiler.Buffers.VertexBuffer.Count);
             WriteVertices(compiler.Buffers.VertexBuffer);
+            Console.WriteLine("Writing Indices: " + compiler.Buffers.IndexBuffer.Count);
             WriteIndices(compiler.Buffers.IndexBuffer);
+            Console.WriteLine("Writing Nodes: " + compiler.Buffers.Nodes.Count);
             WriteSceneNodes(compiler.Buffers.Nodes, compiler.Buffers.RootNode);
+            Console.WriteLine("Writing Materials: " + compiler.Buffers.MaterialBuffer.Count);
             WriteMaterials(compiler.Buffers.MaterialBuffer);
             compiler.WriteTextures(str);
             str.Dispose();

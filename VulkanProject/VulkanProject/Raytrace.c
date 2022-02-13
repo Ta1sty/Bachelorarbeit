@@ -12,8 +12,9 @@
 
 void build_all_acceleration_structures(VkInfo* info, Scene* scene)
 {
-	scene->acceleration_structures = malloc(sizeof(NodeStructures) * scene->scene_data.numSceneNodes);
-	memset(scene->acceleration_structures, 0, sizeof(NodeStructures) * scene->scene_data.numSceneNodes);
+
+	scene->acceleration_structures = malloc(sizeof(AccelerationStructure) * scene->scene_data.numSceneNodes);
+	memset(scene->acceleration_structures, 0, sizeof(AccelerationStructure) * scene->scene_data.numSceneNodes);
 	scene->TLASs = malloc(sizeof(VkAccelerationStructureKHR) * scene->scene_data.numSceneNodes);
 	scene->numTLAS = 0;
 	GET_ROOT(scene);
@@ -26,8 +27,7 @@ void build_node_acceleration_structure(VkInfo* info, Scene* scene, SceneNode* no
 	//BLAS blas; the BLAS for this SceneNode, it is set if this node has an odd level or if this node has an even level but it contains geometry
 
 	// check if they were already built
-	if (scene->acceleration_structures[node->Index].tlas.structure != NULL
-		|| scene->acceleration_structures[node->Index].blas.structure != NULL)
+	if (scene->acceleration_structures[node->Index].structure != NULL)
 		return;
 
 	if (node->IsInstanceList) {
@@ -95,7 +95,7 @@ void build_node_instance_list(VkInfo* info, Scene* scene, SceneNode* list)
 			// Specify the only instance
 			VkAccelerationStructureDeviceAddressInfoKHR address_request = {
 				.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR,
-				.accelerationStructure = scene->acceleration_structures[grandChild->Index].blas.structure,
+				.accelerationStructure = scene->acceleration_structures[grandChild->Index].structure,
 			};
 			VkAccelerationStructureInstanceKHR instance = {
 				.transform = {
@@ -215,9 +215,10 @@ void build_node_instance_list(VkInfo* info, Scene* scene, SceneNode* list)
 	AccelerationStructure acceleration_structure = {
 		.structure = structure,
 		.buffer = tlasBuffer,
-		.memory = tlasMemory
+		.memory = tlasMemory,
+		.size = top_sizes.accelerationStructureSize
 	};
-	scene->acceleration_structures[list->Index].tlas = acceleration_structure;
+	scene->acceleration_structures[list->Index] = acceleration_structure;
 	scene->TLASs[scene->numTLAS] = acceleration_structure.structure;
 	list->TlasNumber = scene->numTLAS;
 	scene->numTLAS++;
@@ -269,7 +270,7 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 		// Specify the only instance
 		VkAccelerationStructureDeviceAddressInfoKHR address_request = {
 			.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR,
-			.accelerationStructure = scene->acceleration_structures[child.Index].blas.structure,
+			.accelerationStructure = scene->acceleration_structures[child.Index].structure,
 		};
 		VkAccelerationStructureInstanceKHR instance = {
 			.transform = {
@@ -387,9 +388,10 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 	AccelerationStructure acceleration_structure = {
 		.structure = structure,
 		.buffer = tlasBuffer,
-		.memory = tlasMemory
+		.memory = tlasMemory,
+		.size = top_sizes.accelerationStructureSize
 	};
-	scene->acceleration_structures[node->Index].tlas = acceleration_structure;
+	scene->acceleration_structures[node->Index] = acceleration_structure;
 	scene->TLASs[scene->numTLAS] = acceleration_structure.structure;
 	node->TlasNumber = scene->numTLAS;
 	scene->numTLAS++;
@@ -660,9 +662,10 @@ void build_blas(VkInfo* info, Scene* scene, SceneNode* node)
 		AccelerationStructure acceleration_structure = {
 			.buffer = blasBuffer,
 			.memory = blasMemory,
-			.structure = structure
+			.structure = structure,
+			.size = bottom_size.accelerationStructureSize
 		};
-		scene->acceleration_structures[node->Index].blas = acceleration_structure;
+		scene->acceleration_structures[node->Index] = acceleration_structure;
 }
 
 void create_ray_descriptors(VkInfo* info, Scene* scene, uint32_t tlassBinding, uint32_t traceBinding)
@@ -765,16 +768,11 @@ void destroyAccelerationStructures(VkInfo* info, Scene* scene) {
 	VK_LOAD(vkDestroyAccelerationStructureKHR);
 
 	for (uint32_t i = 0; i < scene->scene_data.numSceneNodes; i++) {
-		NodeStructures node = scene->acceleration_structures[i];
-		if (node.blas.structure != NULL) {
-			pvkDestroyAccelerationStructureKHR(info->device, node.blas.structure, NULL);
-			vkDestroyBuffer(info->device, node.blas.buffer, NULL);
-			vkFreeMemory(info->device, node.blas.memory, NULL);
-		}
-		if (node.tlas.structure != NULL) {
-			pvkDestroyAccelerationStructureKHR(info->device, node.tlas.structure, NULL);
-			vkDestroyBuffer(info->device, node.tlas.buffer, NULL);
-			vkFreeMemory(info->device, node.tlas.memory, NULL);
+		AccelerationStructure node = scene->acceleration_structures[i];
+		if (node.structure != NULL) {
+			pvkDestroyAccelerationStructureKHR(info->device, node.structure, NULL);
+			vkDestroyBuffer(info->device, node.buffer, NULL);
+			vkFreeMemory(info->device, node.memory, NULL);
 		}
 	}
 	scene->numTLAS = 0;

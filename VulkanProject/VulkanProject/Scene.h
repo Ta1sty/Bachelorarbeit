@@ -28,12 +28,8 @@ typedef struct accelerationStructure
 	VkAccelerationStructureKHR structure;
 	VkBuffer buffer;
 	VkDeviceMemory memory;
+	uint64_t size; // in bytes
 } AccelerationStructure;
-
-typedef struct nodeStructures {
-	AccelerationStructure tlas;
-	AccelerationStructure blas;
-} NodeStructures;
 
 typedef struct mat4x3 { // 4 collumns, 3 rows. Row major
 	float mat[3][4];
@@ -194,7 +190,7 @@ typedef struct scene
 	Mat4x3* node_transforms;
 	uint32_t* node_indices;
 
-	NodeStructures* acceleration_structures; // 1-1 with sceneNodes
+	AccelerationStructure* acceleration_structures; // 1-1 with sceneNodes
 
 	Light* lights;
 

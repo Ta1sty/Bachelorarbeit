@@ -151,7 +151,7 @@ void changeScene(App* app)
     resize_callback_imgui(&app->vk_info, &app->scene, &app->sceneSelection);
 
     set_global_buffers(&app->vk_info, &app->scene);
-
+    printSceneSizes(&app->scene);
     app->sceneSelection.currentScene = app->sceneSelection.nextScene;
 
 }
@@ -211,6 +211,7 @@ int main()
     // which means 1000 during BVH traversal, we expect a depth of log(n) for the BVH, so say we have 2^16 triangles
     // we will have a depth of 16. 
     set_global_buffers(&app.vk_info, &app.scene);
+    printSceneSizes(&app.scene);
 	while (!glfwWindowShouldClose(app.window)) {
 		glfwPollEvents();
 		if(WINDOW_WIDTH > 0 && WINDOW_HEIGHT > 0)

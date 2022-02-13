@@ -53,7 +53,7 @@ namespace SceneCompiler
                 + Path.GetFileNameWithoutExtension(path) + ".vksc");
 
             InstancePostCompile instancePostCompile = new InstancePostCompile(compiler.Buffers);
-            //instancePostCompile.InstanceMultiple(32, 32);
+            //instancePostCompile.InstanceMultiple(16, 1);
             //instancePostCompile.InstanceMultiple(32, 32);
 
             foreach(var mat in compiler.Buffers.MaterialBuffer)
@@ -75,7 +75,7 @@ namespace SceneCompiler
             var idCount = compiler.Buffers.Nodes.Count(x => 
                 (x.ObjectToWorld == Matrix4x4.Identity || SceneNode.MatrixAlmostZero(x.ObjectToWorld - Matrix4x4.Identity)));
             Console.WriteLine("Scene Contained " + idCount + " identity transforms");
-
+            Console.WriteLine("Writing Scene");
             writer.WriteBuffers(dst, compiler);
             Console.WriteLine("Total Number of Triangles: " + compiler.Buffers.Nodes[compiler.Buffers.RootNode].TotalPrimitiveCount);
             Console.WriteLine("PARSE FINISHED, PRESS ENTER");

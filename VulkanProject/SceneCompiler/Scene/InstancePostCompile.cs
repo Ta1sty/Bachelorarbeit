@@ -19,6 +19,11 @@ namespace SceneCompiler.Scene
         public void InstanceMultiple(int numX, int numZ)
         {
             var root = _buffers.Nodes[_buffers.RootNode];
+
+            foreach (var node in _buffers.Nodes)
+            {
+                node.ResetAABB();
+            }
             root.ComputeAABBs(_buffers);
             // we want root to be instanced, therefore root must be odd
             root.ForceOdd = true;

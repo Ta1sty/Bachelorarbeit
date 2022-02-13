@@ -50,11 +50,11 @@ void load_scene(Scene* scene, char* path)
 	fread(scene->vertices, sizeof(Vertex), scene->scene_data.numVertices, file); // TODO security check
 
 	// IndexBuffer
-	uint32_t numIndices;
-	fread(&numIndices, sizeof(uint32_t), 1, file);
-	scene->scene_data.numTriangles = numIndices / 3;
-	scene->indices = malloc(sizeof(uint32_t) * numIndices);
-	fread(scene->indices, sizeof(uint32_t), numIndices, file);
+	uint32_t numIndicesF;
+	fread(&numIndicesF, sizeof(uint32_t), 1, file);
+	scene->scene_data.numTriangles = numIndicesF / 3;
+	scene->indices = malloc(sizeof(uint32_t) * numIndicesF);
+	fread(scene->indices, sizeof(uint32_t), numIndicesF, file);
 
 	// SceneNodes
 	fread(&scene->scene_data.numSceneNodes, sizeof(uint32_t), 1, file);
@@ -92,14 +92,6 @@ void load_scene(Scene* scene, char* path)
 	fclose(file);
 
 	init_scene(scene);
-
-	SceneNode n;
-	for (int i = 0; i < scene->scene_data.numSceneNodes; i++) {
-		n = scene->scene_nodes[i];
-		if (n.Level == 2) {
-			int a = 0;
-		}
-	}
 }
 
 void load_textures(TextureData* data, FILE* file)

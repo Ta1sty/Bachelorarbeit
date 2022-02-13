@@ -22,17 +22,17 @@ namespace SceneCompiler.MoanaConversion
             foreach (var folder in folders)
             {
                 //if (!Path.GetFileName(folder).Contains("isKava"))
-                //if (!Path.GetFileName(folder).Contains("isIronwoodA1"))
-                //if (!Path.GetFileName(folder).Contains("isBayCedar"))
-                //if (!Path.GetFileName(folder).Contains("isCoral"))
-                if (!Path.GetFileName(folder).Contains("isBeach"))
-                //if (!Path.GetFileName(folder).Contains("isCoastline"))
-                if (!Path.GetFileName(folder).Contains("isMountainB"))
-                    continue;
-                moana.Sections.Add(ReadFolder(folder));
+                if (Path.GetFileName(folder).Contains("isIronwoodA1")) moana.Sections.Add(ReadFolder(folder));
+                if (Path.GetFileName(folder).Contains("isIronwoodB")) moana.Sections.Add(ReadFolder(folder));
+                if (Path.GetFileName(folder).Contains("isBayCedar")) moana.Sections.Add(ReadFolder(folder));
+                //if (!Path.GetFileName(folder).Contains("isCoral")) moana.Sections.Add(ReadFolder(folder));
+                //if (!Path.GetFileName(folder).Contains("isBeach")) moana.Sections.Add(ReadFolder(folder));
+                //if (!Path.GetFileName(folder).Contains("isCoastline")) moana.Sections.Add(ReadFolder(folder));
+                if (Path.GetFileName(folder).Contains("isMountainB")) moana.Sections.Add(ReadFolder(folder));
+                if (Path.GetFileName(folder).Contains("isCoastline")) moana.Sections.Add(ReadFolder(folder));
 
                 //if(Environment.WorkingSet > 1L * 512 * 1024 * 1024)
-                //    break;
+                //    break;  
             }
             ValidateMoana(moana);
             moana.SetReference();
@@ -53,6 +53,16 @@ namespace SceneCompiler.MoanaConversion
             Textures = moana.Textures;
             Buffers.RootNode = root.Index;
 
+            /*var add = new List<SceneNode>();
+            var lodCreator = new LodCreator(Buffers);
+
+
+            foreach (var node in Buffers.Nodes.Where(x=>x.IsInstanceList))
+            {
+                // add.AddRange(lodCreator.CreateLevelsOfDetail(node, 1));
+            }
+            Buffers.Nodes.AddRange(add);
+            */
             ValidateSceneGraph(moana);
         }
 
@@ -72,64 +82,66 @@ namespace SceneCompiler.MoanaConversion
         private void ValidateMoana(Moana moana)
         {
             Console.WriteLine("Validating...");
-            foreach (var section in moana.Sections)
+            Parallel.ForEach(moana.Sections, section =>
             {
                 Console.WriteLine(section.Name);
-                foreach (var instance in section.InstancedGeometry.InstanceLists.SelectMany(x=>x.Instances))
+                Parallel.ForEach(section.InstancedGeometry.InstanceLists.SelectMany(x => x.Instances), instance =>
                 {
                     Geometry geometry = null;
                     if (instance.ObjectName.Contains(section.Name))
-                        geometry = section.InstancedGeometry.Geometries.Single(x=>x.Name == instance.ObjectName);
+                        geometry = section.InstancedGeometry.Geometries.Single(x => x.Name == instance.ObjectName);
 
                     if (geometry == null)
                         throw new Exception("Unresolved mapping for:" + instance.ObjectName);
 
-                    foreach (var child in instance.Children)
+                    Parallel.ForEach(instance.Children, child =>
                     {
                         var map = section.InstancedGeometries
-                            .SelectMany(x=>x.InstanceLists).SingleOrDefault(x => x.Name == child);
+                            .SelectMany(x => x.InstanceLists).SingleOrDefault(x => x.Name == child);
                         if (map == null)
                             throw new Exception("Unresolved mapping for:" + child);
-                    }
-                }
+                    });
+                });
 
-                foreach (var mesh in section.InstancedGeometry.Geometries.SelectMany(x=>x.Meshes))
+                Parallel.ForEach(section.InstancedGeometry.Geometries.SelectMany(x => x.Meshes), mesh =>
                 {
                     if (mesh.MaterialName == null)
                     {
                         Console.WriteLine("Missing material for mesh:" + mesh.Name);
-                        continue;
+                    } else
+                    {
+                        var map = section.Materials.SingleOrDefault(x => x.Name == mesh.MaterialName);
+                        if (map == null)
+                            throw new Exception("Unresolved mapping for material:" + mesh.MaterialName);
                     }
-                    var map = section.Materials.SingleOrDefault(x => x.Name == mesh.MaterialName);
-                    if (map == null)
-                        throw new Exception("Unresolved mapping for material:" + mesh.MaterialName);
-                }
+                 });
 
-                foreach (var instancedGeometry in section.InstancedGeometries)
+                Parallel.ForEach(section.InstancedGeometries, instancedGeometry =>
                 {
-                    foreach (var instance in instancedGeometry.InstanceLists.SelectMany(x=>x.Instances))
+                    Parallel.ForEach(instancedGeometry.InstanceLists.SelectMany(x => x.Instances), instance =>
                     {
                         var map = instancedGeometry.Geometries.SingleOrDefault(x => x.Name == instance.ObjectName);
                         if (map == null)
                             throw new Exception("Unresolved mapping for:" + instance.ObjectName);
-                    }
+                    });
 
-                    foreach (var mesh in instancedGeometry.Geometries.SelectMany(x=>x.Meshes))
+                    Parallel.ForEach(instancedGeometry.Geometries.SelectMany(x => x.Meshes), mesh =>
                     {
                         if (mesh.MaterialName == null)
                         {
                             Console.Write("Missing material for mesh:" + mesh.Name);
-                            continue;
-                        }
-                        var map = section.Materials.SingleOrDefault(x => x.Name == mesh.MaterialName);
-                        if (map == null)
+                        } else
                         {
-                            map = section.Materials.FirstOrDefault(x => x.Name.Contains(mesh.MaterialName));
-                            if (map == null) throw new Exception("Unresolved mapping for material:" + mesh.MaterialName);
+                            var map = section.Materials.SingleOrDefault(x => x.Name == mesh.MaterialName);
+                            if (map == null)
+                            {
+                                map = section.Materials.FirstOrDefault(x => x.Name.Contains(mesh.MaterialName));
+                                if (map == null) throw new Exception("Unresolved mapping for material:" + mesh.MaterialName);
+                            }
                         }
-                    }
-                }
-            }
+                    });
+               });
+            });
             Console.WriteLine("Validation successful");
         }
 
@@ -200,9 +212,19 @@ namespace SceneCompiler.MoanaConversion
 
         private Geometry ParseGeometryFile(string path)
         {
+            var info = new FileInfo(path);
             using var stream = new StreamReader(path);
             var geometry = new Geometry();
             geometry.Name = Path.GetFileName(path).Replace("_geometry.pbrt", "");
+
+            List<float[]> stageFlt = new();
+            List<uint> stageUInt = new();
+            var capacity = 500;
+            if (info.Length > 1024 * 1024 * 128)
+                capacity = 10000;
+            if (info.Length > 1024 * 1024 * 1024)
+                capacity = 500000;
+
             Mesh mesh = null;
             while (!stream.EndOfStream)
             {
@@ -247,10 +269,13 @@ namespace SceneCompiler.MoanaConversion
                             line = stream.ReadLine()!.Trim();
                             do
                             {
-                                mesh.Shape.Positions.Add(line.Split(" ")
+                                stageFlt.Capacity = capacity;
+                                stageFlt.Add(line.Split(" ")
                                     .Select(x=> float.Parse(x, CultureInfo.InvariantCulture))
                                     .ToArray());
                                 line = stream.ReadLine()!.Trim();
+                                mesh.Shape.Positions.AddRange(stageFlt);
+                                stageFlt.Clear();
                             } while (!line.Contains("]"));
                         }
                         if (line.Contains("\"normal N\""))
@@ -258,10 +283,13 @@ namespace SceneCompiler.MoanaConversion
                             line = stream.ReadLine()!.Trim();
                             do
                             {
-                                mesh.Shape.Normals.Add(line.Split(" ")
+                                stageFlt.Capacity = capacity;
+                                stageFlt.Add(line.Split(" ")
                                     .Select(x => float.Parse(x, CultureInfo.InvariantCulture))
                                     .ToArray());
                                 line = stream.ReadLine()!.Trim();
+                                mesh.Shape.Normals.AddRange(stageFlt);
+                                stageFlt.Clear();
                             } while (!line.Contains("]"));
                         }
                         if (line.Contains("\"point2 st\""))
@@ -269,10 +297,13 @@ namespace SceneCompiler.MoanaConversion
                             line = stream.ReadLine()!.Trim();
                             do
                             {
-                                mesh.Shape.Tex.Add(line.Split(" ")
+                                stageFlt.Capacity = capacity;
+                                stageFlt.Add(line.Split(" ")
                                     .Select(x => float.Parse(x, CultureInfo.InvariantCulture))
                                     .ToArray());
                                 line = stream.ReadLine()!.Trim();
+                                mesh.Shape.Tex.AddRange(stageFlt);
+                                stageFlt.Clear();
                             } while (!line.Contains("]"));
                         }
 
@@ -281,10 +312,13 @@ namespace SceneCompiler.MoanaConversion
                             line = stream.ReadLine()!.Trim();
                             do
                             {
-                                mesh.Shape.Indices.AddRange(line.Split(" ")
+                                stageUInt.Capacity = capacity;
+                                stageUInt.AddRange(line.Split(" ")
                                     .Select(x => uint.Parse(x, CultureInfo.InvariantCulture))
                                     .ToArray());
                                 line = stream.ReadLine()!.Trim();
+                                mesh.Shape.Indices.AddRange(stageUInt);
+                                stageUInt.Clear();
                             } while (!line.Contains("]"));
                         }
                     }
@@ -304,14 +338,17 @@ namespace SceneCompiler.MoanaConversion
 
         private InstanceList ParseInstancing(string instanceFile)
         {
+            var info = new FileInfo(instanceFile);
             using var stream = new StreamReader(instanceFile);
 
             var list = new InstanceList();
             list.Name = Path.GetFileName(instanceFile).Replace(".pbrt", "");
             Instance instance = null;
+            var capacityEstimate = info.Length * 4 / 1024;
+            list.Instances.Capacity = (int) capacityEstimate;
             while (!stream.EndOfStream)
-            {
-                var line = stream.ReadLine()!;
+            { 
+                var line = stream.ReadLine();
                 if (line.Contains("AttributeBegin"))
                 {
                     instance = new Instance();
@@ -354,6 +391,7 @@ namespace SceneCompiler.MoanaConversion
                 }
             }
             Console.WriteLine("Parsed " + instanceFile);
+            list.Instances.TrimExcess();
             return list;
         }
 
@@ -383,6 +421,7 @@ namespace SceneCompiler.MoanaConversion
                 {
                     if(!line.Contains("["))
                         continue;
+                    line = line.Replace("#", "");
                     var varDeclaration = line[..line.IndexOf("[", StringComparison.Ordinal)]
                         .Replace("\"", "")
                         .Trim();
@@ -417,6 +456,7 @@ namespace SceneCompiler.MoanaConversion
 
         public override void WriteTextures(FileStream str)
         {
+            Console.WriteLine("Writing Textures: " + Textures.Count);
             str.Write(BitConverter.GetBytes(Textures.Count));
             foreach (var texture in Textures)
             {

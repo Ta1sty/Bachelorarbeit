@@ -32,6 +32,8 @@ namespace SceneCompiler.Scene
             var buffer = _buffers.Nodes;
             SceneNode root = buffer[_buffers.RootNode];
             root.Level = 0;
+            Console.WriteLine("Merge instance Lists");
+            MergeInstanceList();
             Console.WriteLine("Ensure Device Limitations");
             CapInstanceLists();
 
@@ -71,7 +73,84 @@ namespace SceneCompiler.Scene
                 buffer[i].NumChildren = buffer[i].Children.Count;
             }
             Console.WriteLine("computing AABBs");
+            foreach (var node in _buffers.Nodes)
+                node.ResetAABB();
             root.ComputeAABBs(_buffers);
+        }
+
+        private void MergeInstanceList()
+        {
+            Console.WriteLine("Merging instance Lists");
+            var add = new List<SceneNode>();
+
+            foreach (var node in _buffers.Nodes)
+            {
+                if(node.Children.Count(x=>x.IsInstanceList) > 1)
+                {
+                    bool merge = true;
+                    // every instance list must have the same transfrom, ie all use identity(cause thats convenient)
+                    foreach (var child in node.Children.Where(x => x.IsInstanceList))
+                    {
+                        if (!SceneNode.MatrixAlmostZero(child.ObjectToWorld - Matrix4x4.Identity))
+                        {
+                            merge = false;
+                            break;
+                        }
+                    }
+                    if (!merge)
+                        continue;
+
+                    // every parent that references these lists must reference exactly these lists and none else
+                    // (could be better, but unimportant for now)
+                    var parents = node.Children.SelectMany(x => x.Parents).Distinct().ToList();
+                    foreach(var parent in parents)
+                    {
+                        if(!ListEqual(parent.Children.Where(x=>x.IsInstanceList), node.Children.Where(x => x.IsInstanceList))){
+                            merge = false;
+                            break;
+                        }
+                    }
+                    if (!merge)
+                        continue;
+                    // do the actual merge by inserting all children into the frist instance list and removing the others from the childChain
+                    var first = node.Children.First(x => x.IsInstanceList);
+                    var children = node.Children.SelectMany(x => x.Children).ToList();
+                    foreach(var child in children)
+                    {
+                        child.Parents.Clear();
+                        child.Parents.Add(first);
+                    }
+                    foreach(var list in node.Children.Where(x => x.IsInstanceList))
+                    {
+                        list.Children.Clear();
+                    }
+                    first.Children.Clear();
+                    first.Children = children;
+                    foreach(var parent in parents)
+                    {
+                        parent.Children.RemoveAll(x => x.IsInstanceList);
+                        parent.Children.Add(first);
+                    }
+                    first.Name += " Merge " + children.Count();
+                }
+            }
+        }
+
+        private bool ListEqual<T>(IEnumerable<T> list1, IEnumerable<T> list2)
+        {
+            if (list1.Count() != list2.Count())
+                return false;
+            foreach(var a in list1)
+            {
+                if (!list2.Contains(a))
+                    return false;
+            }
+            foreach(var b in list2)
+            {
+                if (!list1.Contains(b))
+                    return false;
+            }
+            return true;
         }
 
         public void AdjustEvenNode(SceneNode node, List<SceneNode> blasAdd)
@@ -336,6 +415,7 @@ namespace SceneCompiler.Scene
         // use DFS Layout since this also the way traversal is done, should improve caching
         private int BuildListRecursive(SceneNode node, int indexOffset)
         {
+            
             if (!node.Children.Any())
                 return indexOffset;
 
@@ -396,46 +476,119 @@ namespace SceneCompiler.Scene
 
         public void CapInstanceLists()
         {
-            var add = new List<SceneNode>();
+            var max = 1 << 22; // 23
+            var root = _buffers.Nodes[_buffers.RootNode];
+            var toSplit = new List<SceneNode>();
             foreach(var node in _buffers.Nodes)
             {
-                if (node.IsInstanceList)
+                if (node.IsInstanceList && node.Children.Count > max)
                 {
-                    var max = 1 << 23; // 23
-                    var children = node.Children.AsEnumerable().Skip(max);
-                    while (children.Count() > 0)
-                    {
-                        var take = children.Take(max);
-                        children = children.Skip(max);
-
-                        var part = new SceneNode
-                        {
-                            ForceEven = node.ForceEven,
-                            ForceOdd = node.ForceOdd,
-                            IsLodSelector = node.IsLodSelector,
-                            IsInstanceList = node.IsInstanceList,
-                            Parents = node.Parents,
-                            Children = take.ToList(),
-                            ObjectToWorld = node.ObjectToWorld,
-                            Name = " | Part " + node.Name
-                        };
-                        foreach(var parent in part.Parents)
-                        {
-                            parent.Children.Add(part);
-                        }
-                        foreach(var child in part.Children)
-                        {
-                            child.Parents.Remove(node);
-                            child.Parents.Add(part);
-                        }
-                        part.NumChildren = part.Children.Count;
-                        add.Add(part);
-                    }
-                    node.Children = node.Children.Take(max).ToList();
-                    node.NumChildren = node.Children.Count;
+                    toSplit.Add(node);
                 }
             }
-            _buffers.Nodes.AddRange(add);
+
+            while (toSplit.Any())
+            {
+                var left = toSplit[^1];
+                toSplit.RemoveAt(toSplit.Count - 1);
+                left.ComputeAABBs(_buffers);
+                var (leftChildren, rightChildren) = SplitNodes(left);
+
+                var right = new SceneNode
+                {
+                    ForceEven = left.ForceEven,
+                    ForceOdd = left.ForceOdd,
+                    IsLodSelector = left.IsLodSelector,
+                    IsInstanceList = left.IsInstanceList,
+                    Parents = left.Parents,
+                    Children = rightChildren,
+                    ObjectToWorld = left.ObjectToWorld,
+                    Name = "R" + left.Name,
+                    NumChildren = rightChildren.Count
+                };
+
+                left.Name = "L" + left.Name;
+                left.Children = leftChildren;
+                left.NumChildren = leftChildren.Count;
+
+                foreach (var parent in left.Parents)
+                {
+                    parent.Children.Add(right);
+                }
+
+                foreach(var child in rightChildren)
+                {
+                    child.Parents.Remove(left);
+                    child.Parents.Add(right);
+                }
+
+                _buffers.Nodes.Add(right);
+
+                if (left.IsInstanceList && left.Children.Count > max)
+                    toSplit.Add(left);
+                if (right.IsInstanceList && right.Children.Count > max)
+                    toSplit.Add(right);
+                left.ResetAABB();
+                right.ResetAABB();
+            }
+
+            foreach(var node in _buffers.Nodes)
+            {
+                node.ResetAABB();
+            }
+        }
+
+        private (List<SceneNode> left, List<SceneNode> right) SplitNodes(SceneNode node)
+        {
+            var left = new List<SceneNode>(node.Children.Count / 2 + 10);
+            var right = new List<SceneNode>(node.Children.Count / 2 + 10);
+
+
+            double medX = 0;
+            double medY = 0;
+            double medZ = 0;
+            foreach(var child in node.Children)
+            {
+                var middle = (child.AABB_max + child.AABB_min) / 2;
+                medX += middle.X;
+                medY += middle.Y;
+                medZ += middle.Z;
+            }
+            medX = medX / node.Children.Count;
+            medY = medY / node.Children.Count;
+            medZ = medZ / node.Children.Count;
+
+            var extent = node.AABB_max - node.AABB_min;
+
+            int axis = 0;
+            double split = medX;
+            if(extent.Y> extent.X || extent.Z > extent.X)
+            {
+                if (extent.Y > extent.Z)
+                {
+                    axis = 1;
+                    split = medY;
+                }
+                else
+                {
+                    axis = 2;
+                    split = medZ;
+                }
+            }
+
+            foreach(var child in node.Children)
+            {
+                var middle = (child.AABB_max + child.AABB_min) / 2;
+                double value = 0;
+                if (axis == 0) value = middle.X;
+                if (axis == 1) value = middle.Y;
+                if (axis == 2) value = middle.Z;
+                if (value < split)
+                    left.Add(child);
+                else
+                    right.Add(child);
+            }
+            return (left, right);
         }
     }
 }

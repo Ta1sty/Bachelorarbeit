@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 using SceneCompiler.GLTFConversion.GltfFileTypes;
@@ -133,6 +134,8 @@ namespace SceneCompiler.Scene.SceneTypes
         {
             if (isAABBComputed)
                 return;
+            if (Children.Count == 0 && NumTriangles == 0)
+                return;
             if (Children.Count > 10000)
             {
                 Parallel.ForEach(Children, child => child.ComputeAABBs(buffers));
@@ -145,6 +148,8 @@ namespace SceneCompiler.Scene.SceneTypes
 
             foreach (var child in Children) // children
             {
+                if (!child.isAABBComputed)
+                    continue;
                 var (min, max) = TransformAABB(ObjectToWorld, child.AABB_min, child.AABB_max);
                 AABB_min = Min(AABB_min, min);
                 AABB_max = Max(AABB_max, max);

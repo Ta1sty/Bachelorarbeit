@@ -1,7 +1,7 @@
-TLAS Number visualizatzion
-VMA
-(Ray Visusualization)
+change to world to object -didnt work, no usage in shader, but used in instance construction and aabb compute
+Normal offset Intersection P
+InstanceList Merge (split spacially)
 
--> transform aabb at the end of build to represent geometry and children transformed by the node-transform
+LOD ??
 
-buffer->uniform
+Multilevel instancing, with size

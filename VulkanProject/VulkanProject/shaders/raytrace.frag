@@ -78,7 +78,7 @@ struct TraversalPayload {
 #ifdef RAY_QUERIES
 // use a stack because:
 // keep the list as short as possible, I.E. use a depth first search
-const int BUFFER_SIZE = 30;
+const int BUFFER_SIZE = 100;
 int stackSize = 0;
 TraversalPayload traversalBuffer[BUFFER_SIZE];
 
@@ -372,9 +372,12 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 
 const float MAX_T = 100000;
 
-vec4 shadeFragment(vec3 P, vec3 V, vec3 N, vec4 color, Material material) {
+vec4 shadeFragment(vec3 P, vec3 V, vec3 N, vec4 color, Material material, int triangle) {
 	float n = 1; // todo phong exponent
 	// calculate lighting for each light source
+
+	recordQuery(999, 0, 0, P, P + N, 0 ,0);
+
 	vec3 sum = vec3(0);
 	for (int i = 0; i < numLights; i++) {
 		Light light = lights[i];
@@ -389,6 +392,7 @@ vec4 shadeFragment(vec3 P, vec3 V, vec3 N, vec4 color, Material material) {
 		float specular = 0;
 		float diffuse = material.k_d;
 		vec3 R = normalize(reflect(V, N));
+		vec3 POff = P + 0.01f * N;
 		if (renderShadows) {
 			TraversalPayload load;
 			vec3 tuvShadow;
@@ -399,13 +403,15 @@ vec4 shadeFragment(vec3 P, vec3 V, vec3 N, vec4 color, Material material) {
 				}
 
 				vec3 LN = normalize(L);
-				if (ray_trace_loop(P, LN, l_dst, rootSceneNode,0.9f, tuvShadow, index, load)) { // is light source visible? shoot ray to lPos
+				if (ray_trace_loop(POff, LN, l_dst, rootSceneNode,0.9f, tuvShadow, index, load)) { // is light source visible? shoot ray to lPos
 					continue;
 				}
 				specular = material.k_s * pow(max(0, dot(R, LN)), n);
 			}
 			else if ((light.type & LIGHT_TYPE_SUN) != 0) { // directional light, check if it is visible 
-				if (ray_trace_loop(P, normalize(-light.direction), MAX_T, rootSceneNode,0.9f, tuvShadow, index, load)) { // shoot shadow ray into the light source
+				vec3 LN = normalize(light.direction);
+				// offset by P + eps * N
+				if (ray_trace_loop(POff, -LN, MAX_T, rootSceneNode,0.9f, tuvShadow, index, load)) { // shoot shadow ray into the light source
 					continue;
 				}
 				specular = material.k_s * pow(max(0, dot(R, -light.direction)), n);
@@ -468,7 +474,7 @@ vec4 rayTrace(vec3 rayOrigin, vec3 rayDirection, out float t) {
 			mat3 NormalTransform = transpose(inverse(object_to_world));
 			vec3 N_world = NormalTransform * N_obj;
 
-			fracColor = shadeFragment(P - 0.1f * V, V, N_world, fragCol, material);
+			fracColor = shadeFragment(P, V, N_world, fragCol, material, triangle);
 			if (depth == 0)
 				t = tuv.x;
 			depth++;

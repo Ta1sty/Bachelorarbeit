@@ -120,58 +120,46 @@ void set_frame_buffers(VkInfo* vk, Scene* scene, uint32_t image_index) {
 	vkUnmapMemory(vk->device, GET_FRAMEDATA_BUFFER(vk,image_index).vk_buffer_memory);
 }
 
+void printSceneSizes(Scene* scene) {
+	uint64_t numVertices = scene->scene_data.numVertices;
+	uint64_t numIndices = (uint64_t) scene->scene_data.numTriangles * 3;
+	uint64_t numNodes = scene->scene_data.numSceneNodes;
+	uint64_t numTransforms = scene->scene_data.numTransforms;
+	uint64_t numChildIndices = scene->scene_data.numNodeIndices;
+
+	uint64_t mb = 1024 * 1024;
+
+	uint64_t sizeVertices = numVertices * sizeof(Vertex) / mb;
+	uint64_t sizeIndices = numIndices * sizeof(uint32_t) / mb;
+	uint64_t sizeNode = numNodes * sizeof(SceneNode) / mb;
+	uint64_t sizeTransforms = numTransforms * sizeof(Mat4x3) / mb;
+	uint64_t sizeChildIndices = numIndices * sizeof(uint32_t) / mb;
+
+	uint64_t numStructures = 0;
+	uint64_t sizeStructures = 0;
+	for (uint32_t i = 0; i < scene->scene_data.numSceneNodes; i++) {
+		AccelerationStructure acs = scene->acceleration_structures[i];
+		if (acs.structure != NULL) {
+			numStructures++;
+			sizeStructures += acs.size;
+		}
+	}
+	sizeStructures = sizeStructures / mb;
+
+
+	printf("Number of Vertices: %lu  Size: %lu mb\n", numVertices, sizeVertices);
+	printf("Number of Triangles: %lu  Size: %lu mb\n", numIndices, sizeIndices);
+	printf("Number of Nodes: %lu  Size: %lu mb\n", numNodes, sizeNode);
+	printf("Number of Transforms: %lu Size: %lu mb\n", numTransforms, sizeTransforms);
+	printf("Number of ChildIndices: %lu  Size: %lu mb\n", numChildIndices, sizeChildIndices);
+	printf("Number of AccStruc: %lu Size %lu mb\n", numStructures, sizeStructures);
+
+	uint64_t sceneSize = sizeVertices + sizeIndices + sizeNode + sizeTransforms + sizeChildIndices + sizeStructures;
+	printf("SceneSize: %lu mb\n", sceneSize);
+}
+
 void drawFrame(VkInfo* info, Scene* scene, SceneSelection* scene_selection) // see https://vulkan-tutorial.com/
 {
-	/*
-	uint32_t imageIndex;
-	vkAcquireNextImageKHR(info->device, info->swapchain.vk_swapchain, UINT64_MAX, 
-		info->imageAvailableSemaphore[0], VK_NULL_HANDLE, &imageIndex);
-
-	update_imgui_commandBuffer(info, scene, scene_selection, imageIndex);
-	set_frame_buffers(info, scene, imageIndex);
-
-	VkSubmitInfo submitInfo = {0};
-	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
-	VkCommandBuffer buffers[] = { info->command_buffers[imageIndex] , info->imgui_command_buffers[imageIndex] };
-
-	VkSemaphore waitSemaphores[] = { info->imageAvailableSemaphore[0] };
-	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-	submitInfo.waitSemaphoreCount = 1;
-	submitInfo.pWaitSemaphores = waitSemaphores;
-	submitInfo.pWaitDstStageMask = waitStages;
-	submitInfo.commandBufferCount = 2;
-	submitInfo.pCommandBuffers = &buffers;
-
-	VkSemaphore signalSemaphores[] = { info->renderFinishedSemaphore[0] };
-	submitInfo.signalSemaphoreCount = 1;
-	submitInfo.pSignalSemaphores = signalSemaphores;
-
-	check(vkQueueSubmit(info->graphics_queue, 1, &submitInfo, VK_NULL_HANDLE), " failed to submit draw");
-
-	VkPresentInfoKHR presentInfo = {0};
-	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-
-	presentInfo.waitSemaphoreCount = 1;
-	presentInfo.pWaitSemaphores = signalSemaphores;
-
-	VkSwapchainKHR swapChains[] = { info->swapchain.vk_swapchain };
-	presentInfo.swapchainCount = 1;
-	presentInfo.pSwapchains = swapChains;
-	presentInfo.pImageIndices = &imageIndex;
-
-	vkQueuePresentKHR(info->present_queue, &presentInfo);
-
-	double now = glfwGetTime();
-	double diff = now - info->lastFrame;
-	info->lastFrame = now;
-	info->frameRate = 1 / diff;
-
-	vkDeviceWaitIdle(info->device);
-
-	return;*/
-
-	
 	size_t currentFrame = info->currentFrame;
 	vkWaitForFences(info->device, 1, &info->inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
