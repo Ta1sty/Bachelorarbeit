@@ -72,6 +72,7 @@ namespace SceneCompiler.MoanaConversion
             }
             InstancedGeometries.Clear();
 #endif
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true);
             buffers.Nodes.Add(Node);
             return Node;
         }
@@ -133,6 +134,7 @@ namespace SceneCompiler.MoanaConversion
             Instances.Clear();
 #endif
             buffers.Nodes.Add(Node);
+            GC.Collect();
             return Node;
         }
         public void SetReference(InstancedGeometry instancedGeometry)
@@ -245,8 +247,6 @@ namespace SceneCompiler.MoanaConversion
                 Node.ForceEven = false;
                 Node.Children.Clear();
             }
-
-
             buffers.Nodes.Add(Node);
             return Node;
         }
@@ -306,13 +306,7 @@ namespace SceneCompiler.MoanaConversion
             var vertices = new List<Vertex>(Shape.Positions.Count);
             for (var i = 0; i < Shape.Positions.Count; i++)
             {
-                var vertex = new Vertex
-                {
-                    Normal = Shape.Normals[i],
-                    Position = Shape.Positions[i],
-                    TexCoords = Shape.Tex[i],
-                    MaterialIndex = materialIndex
-                };
+                var vertex = new Vertex(Shape.Positions[i], Shape.Normals[i], Shape.Tex[i], materialIndex);
                 vertices.Add(vertex);
             }
 

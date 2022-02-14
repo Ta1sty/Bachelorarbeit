@@ -35,6 +35,7 @@ namespace SceneCompiler.Scene.SceneTypes
         public bool ForceEven = false;
         public long TotalPrimitiveCount = 0;
         public bool isAABBComputed = false;
+
         public SceneNode ThisOrBrother()
         {
             return Brother ?? this;
@@ -161,7 +162,7 @@ namespace SceneCompiler.Scene.SceneTypes
                 for (var j = 0; j < 3; j++)
                 {
                     var v = buffers.VertexBuffer[(int)buffers.IndexBuffer[index + j]];
-                    var pos = new Vector3(v.Position[0], v.Position[1], v.Position[2]);
+                    var pos = v.Position();
                     var posTr = Vector3.Transform(pos, ObjectToWorld);
                     AABB_min = Min(AABB_min, posTr);
                     AABB_max = Max(AABB_max, posTr);

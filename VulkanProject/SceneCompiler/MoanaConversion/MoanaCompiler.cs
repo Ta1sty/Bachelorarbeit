@@ -21,15 +21,15 @@ namespace SceneCompiler.MoanaConversion
             var moana = new Moana();
             foreach (var folder in folders)
             {
-                //if (!Path.GetFileName(folder).Contains("isKava"))
-                if (Path.GetFileName(folder).Contains("isIronwoodA1")) moana.Sections.Add(ReadFolder(folder));
-                if (Path.GetFileName(folder).Contains("isIronwoodB")) moana.Sections.Add(ReadFolder(folder));
-                if (Path.GetFileName(folder).Contains("isBayCedar")) moana.Sections.Add(ReadFolder(folder));
-                //if (!Path.GetFileName(folder).Contains("isCoral")) moana.Sections.Add(ReadFolder(folder));
-                //if (!Path.GetFileName(folder).Contains("isBeach")) moana.Sections.Add(ReadFolder(folder));
-                //if (!Path.GetFileName(folder).Contains("isCoastline")) moana.Sections.Add(ReadFolder(folder));
-                if (Path.GetFileName(folder).Contains("isMountainB")) moana.Sections.Add(ReadFolder(folder));
+                //if (Path.GetFileName(folder).Contains("isKava"))
+                //if (Path.GetFileName(folder).Contains("isIronwoodA1")) moana.Sections.Add(ReadFolder(folder));
+                //if (Path.GetFileName(folder).Contains("isIronwoodB")) moana.Sections.Add(ReadFolder(folder));
+                //if (Path.GetFileName(folder).Contains("isBayCedar")) moana.Sections.Add(ReadFolder(folder));
+                //if (Path.GetFileName(folder).Contains("isCoral")) moana.Sections.Add(ReadFolder(folder));
+                //if (Path.GetFileName(folder).Contains("isBeach")) moana.Sections.Add(ReadFolder(folder));
                 if (Path.GetFileName(folder).Contains("isCoastline")) moana.Sections.Add(ReadFolder(folder));
+                //if (Path.GetFileName(folder).Contains("isMountainB")) moana.Sections.Add(ReadFolder(folder));
+                //if (Path.GetFileName(folder).Contains("isCoastline")) moana.Sections.Add(ReadFolder(folder));
 
                 //if(Environment.WorkingSet > 1L * 512 * 1024 * 1024)
                 //    break;  
@@ -64,6 +64,7 @@ namespace SceneCompiler.MoanaConversion
             Buffers.Nodes.AddRange(add);
             */
             ValidateSceneGraph(moana);
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true);
         }
 
         private void ValidateSceneGraph(Moana moana)

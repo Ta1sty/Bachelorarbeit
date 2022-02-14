@@ -5,3 +5,5 @@ InstanceList Merge (split spacially)
 LOD ??
 
 Multilevel instancing, with size
+
+vksc merge

@@ -1,33 +1,50 @@
 ﻿using System;
+using System.Numerics;
 
 namespace SceneCompiler.Scene.SceneTypes
 {
-    public class Vertex
+    public struct Vertex
     {
         public static readonly int Size = 48;
-        public float[] Position; // 3 12
-        public float[] Normal; // 3 12
-        public float[] TexCoords; // 2 8 = 32 bytes
-        public int MaterialIndex { get; set; } = -1;
+        private float[] Array;
+        public int MaterialIndex;
+        public Vertex(float[] pos, float[] norm, float[] tex, int materialIndex)
+        {
+            Array = new float[8];
+            Array[0] = pos[0];
+            Array[1] = pos[1];
+            Array[2] = pos[2];
+            Array[3] = norm[0];
+            Array[4] = norm[1];
+            Array[5] = norm[2];
+            Array[6] = tex[0];
+            Array[7] = tex[1];
+            MaterialIndex = materialIndex;
+        }
 
         public int WriteToByteArray(byte[] vertices, int pos)
         {
-            BitConverter.GetBytes(Position[0]).CopyTo(vertices.AsSpan(pos += 4));
-            BitConverter.GetBytes(Position[1]).CopyTo(vertices.AsSpan(pos += 4));
-            BitConverter.GetBytes(Position[2]).CopyTo(vertices.AsSpan(pos += 4));
+            BitConverter.GetBytes(Array[0]).CopyTo(vertices.AsSpan(pos += 4));
+            BitConverter.GetBytes(Array[1]).CopyTo(vertices.AsSpan(pos += 4));
+            BitConverter.GetBytes(Array[2]).CopyTo(vertices.AsSpan(pos += 4));
             BitConverter.GetBytes(0).CopyTo(vertices.AsSpan(pos += 4));  // pad1
 
-            BitConverter.GetBytes(Normal[0]).CopyTo(vertices.AsSpan(pos += 4));
-            BitConverter.GetBytes(Normal[1]).CopyTo(vertices.AsSpan(pos += 4));
-            BitConverter.GetBytes(Normal[2]).CopyTo(vertices.AsSpan(pos += 4));
+            BitConverter.GetBytes(Array[3]).CopyTo(vertices.AsSpan(pos += 4));
+            BitConverter.GetBytes(Array[4]).CopyTo(vertices.AsSpan(pos += 4));
+            BitConverter.GetBytes(Array[5]).CopyTo(vertices.AsSpan(pos += 4));
             BitConverter.GetBytes(0).CopyTo(vertices.AsSpan(pos += 4));  // pad2
 
 
-            BitConverter.GetBytes(TexCoords[0]).CopyTo(vertices.AsSpan(pos += 4));
-            BitConverter.GetBytes(TexCoords[1]).CopyTo(vertices.AsSpan(pos += 4));
+            BitConverter.GetBytes(Array[6]).CopyTo(vertices.AsSpan(pos += 4));
+            BitConverter.GetBytes(Array[7]).CopyTo(vertices.AsSpan(pos += 4));
             BitConverter.GetBytes(MaterialIndex).CopyTo(vertices.AsSpan(pos += 4));
             BitConverter.GetBytes(0).CopyTo(vertices.AsSpan(pos += 4));  // pad3
             return pos;
+        }
+
+        public Vector3 Position()
+        {
+            return new Vector3(Array[0], Array[1], Array[2]);
         }
     }
 }

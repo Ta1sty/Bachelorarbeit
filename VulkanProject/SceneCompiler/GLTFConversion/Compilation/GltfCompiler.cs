@@ -58,13 +58,7 @@ namespace SceneCompiler.GLTFConversion.Compilation
 
                     for (var i = 0; i < numElements; i++)
                     {
-                        var ver = new Vertex
-                        {
-                            Position = posReader.GetVec3(),
-                            Normal = norReader.GetVec3(),
-                            TexCoords = texReader.GetVec2(),
-                            MaterialIndex = arr.Material
-                        };
+                        var ver = new Vertex(posReader.GetVec3(), norReader.GetVec3(), texReader.GetVec2(), arr.Material);
                         vertexBuffer.Add(ver);
                     }
                     var faceAccessor = File.Accessors[arr.Indices];
