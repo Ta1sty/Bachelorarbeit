@@ -23,12 +23,12 @@ namespace SceneCompiler.MoanaConversion
 
             Node = new SceneNode();
             Node.Name = "ROOT Moana Island";
-            Node.Children.AddRange(Sections.Select(x=>x.GetSceneNode(buffers)));
+            Node.Children = Sections.Select(x=>x.GetSceneNode(buffers));
 
 #if CLEANUP
             Sections.Clear();
 #endif
-            buffers.Nodes.Add(Node);
+            buffers.Add(Node);
             return Node;
         }
         public void SetReference()
@@ -61,8 +61,8 @@ namespace SceneCompiler.MoanaConversion
                 material.ToSceneMaterial(buffers, Moana.Textures);
             }
 
-            Node.Children.AddRange(InstancedGeometry.InstanceLists
-                .Select(x=>x.GetSceneNode(buffers)));
+            Node.Children = InstancedGeometry.InstanceLists
+                .Select(x=>x.GetSceneNode(buffers));
 
 #if CLEANUP
             Materials.Clear();
@@ -73,7 +73,7 @@ namespace SceneCompiler.MoanaConversion
             InstancedGeometries.Clear();
 #endif
             GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true);
-            buffers.Nodes.Add(Node);
+            buffers.Add(Node);
             return Node;
         }
         public void SetReference(Moana moana)
@@ -129,11 +129,11 @@ namespace SceneCompiler.MoanaConversion
             Node.Name = "List " + Name;
             Node.ForceEven = true;
             Node.IsInstanceList = true;
-            Node.Children.AddRange(Instances.Select(x=>x.GetSceneNode(buffers)));
+            Node.Children = Instances.Select(x=>x.GetSceneNode(buffers));
 #if CLEANUP
             Instances.Clear();
 #endif
-            buffers.Nodes.Add(Node);
+            buffers.Add(Node);
             GC.Collect();
             return Node;
         }
@@ -199,18 +199,19 @@ namespace SceneCompiler.MoanaConversion
                 ForceEven = true
             };
 
-            Node.Children.AddRange(Children.Select(name=> InstanceList.InstancedGeometry.Section.InstancedGeometries
+            Node.Children = Children.Select(name=> InstanceList.InstancedGeometry.Section.InstancedGeometries
                 .SelectMany(x => x.InstanceLists).Single(x => x.Name == name)
-                .GetSceneNode(buffers)));
+                .GetSceneNode(buffers));
 
             if (ObjectName != null)
             {
-                Node.Children.Add(InstanceList.InstancedGeometry
+                buffers.AddChild(Node, 
+                    InstanceList.InstancedGeometry
                     .Geometries.Single(x => x.Name == ObjectName)
                     .GetSceneNode(buffers));
             }
 
-            buffers.Nodes.Add(Node);
+            buffers.Add(Node);
             return Node;
         }
         public void SetReference(InstanceList instanceList)
@@ -233,21 +234,21 @@ namespace SceneCompiler.MoanaConversion
             Node = new SceneNode();
             Node.Name = "Geom " + Name;
             Node.ForceEven = true;
-            Node.Children.AddRange(Meshes.Select(x=>x.GetSceneNode(buffers)).Where(x=>x != null));
+            Node.Children = Meshes.Select(x=>x.GetSceneNode(buffers)).Where(x=>x != null);
 #if CLEANUP
             Meshes.Clear();
 #endif
             bool merge = true; // we need to do this, else programm will construct a blas for
                                // every single mesh and we exceed vkDeviceMaxAllocations (4096)
-            if (merge && Node.Children.Count > 0) // merges the meshes of the children all into one big mesh
+            if (merge && Node.Children.Any()) // merges the meshes of the children all into one big mesh
             {
                 Node.NumTriangles = Node.Children.Sum(x => x.NumTriangles);
                 Node.IndexBufferIndex = Node.Children.Min(x => x.IndexBufferIndex);
                 Node.ForceOdd = true;
                 Node.ForceEven = false;
-                Node.Children.Clear();
+                buffers.ClearChildren(Node);
             }
-            buffers.Nodes.Add(Node);
+            buffers.Add(Node);
             return Node;
         }
         public void SetReference(InstancedGeometry instancedGeometry)
@@ -318,7 +319,7 @@ namespace SceneCompiler.MoanaConversion
             Shape.Tex.Clear();
             Shape.Indices.Clear();
 #endif
-            buffers.Nodes.Add(Node);
+            buffers.Add(Node);
             return Node;
         }
 

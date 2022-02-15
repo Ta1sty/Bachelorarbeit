@@ -10,8 +10,15 @@ namespace SceneCompiler.Scene.SceneTypes
     public class SceneNode
     {
         public static readonly int Size = 64;
-        public List<SceneNode> Children = new();
-        public List<SceneNode> Parents = new();
+        public static SceneBuffers buffers;
+        public IEnumerable<SceneNode> Children { 
+            get => buffers.GetChildren(this);
+            set => buffers.SetChildren(this, value);
+        }
+        public IEnumerable<SceneNode> Parents { 
+            get => buffers.GetParents(this); 
+            set => buffers.SetParents(this, value);
+        }
         public SceneNode Brother = null; // this node is practically identical to this one, project others onto this one#
 
         public string Name { get; set; }
@@ -19,12 +26,12 @@ namespace SceneCompiler.Scene.SceneTypes
 
         public Matrix4x4 ObjectToWorld = Matrix4x4.Identity;
         public Vector3 AABB_min = new(float.MaxValue, float.MaxValue, float.MaxValue);
-        public int Index = -1;
+        internal int Index = -1; // only visible from this namespace
         public Vector3 AABB_max = new(-float.MaxValue, -float.MaxValue, -float.MaxValue);
         public int Level = -1;
         public int NumTriangles = 0;
         public int IndexBufferIndex = -1;
-        public int NumChildren = 0;
+        public int NumChildren { get => Children.Count(); }
         public int ChildrenIndex = -1;
         public int TlasNumber = -1;
         public bool IsInstanceList = false;
@@ -113,7 +120,7 @@ namespace SceneCompiler.Scene.SceneTypes
         {
             var ret = "";
             ret += "I:" + Index + "\t";
-            ret += "P:" + Parents.Count + "\t";
+            ret += "P:" + Parents.Count() + "\t";
             ret += "C:" + NumChildren + "\t";
             ret += "T:" + NumTriangles + "\t";
             for (int i = 0; i < Level; i++)
@@ -126,7 +133,7 @@ namespace SceneCompiler.Scene.SceneTypes
                 ret += Name + " ";
 
             if (IsInstanceList)
-                ret += "InstanceList: " + Children[0].Children.Count;
+                ret += "InstanceList: " + Children.First().Children.Count();
 
             return ret;
         }
@@ -135,9 +142,9 @@ namespace SceneCompiler.Scene.SceneTypes
         {
             if (isAABBComputed)
                 return;
-            if (Children.Count == 0 && NumTriangles == 0)
+            if (!Children.Any() && NumTriangles == 0)
                 return;
-            if (Children.Count > 10000)
+            if (Children.Skip(10000).Any())
             {
                 Parallel.ForEach(Children, child => child.ComputeAABBs(buffers));
             }

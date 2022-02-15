@@ -18,7 +18,7 @@ namespace SceneCompiler.Scene
 
         public void InstanceMultiple(int numX, int numZ)
         {
-            var root = _buffers.Nodes[_buffers.RootNode];
+            var root = _buffers.Root;
 
             foreach (var node in _buffers.Nodes)
             {
@@ -40,7 +40,6 @@ namespace SceneCompiler.Scene
             var extentX = max.X - min.X;
             var extentZ = max.Z - min.Z;
 
-            _buffers.RootNode = _buffers.Nodes.Count;
             // construct a new instanceList, we also use this as the root
             var newRoot = new SceneNode
             {
@@ -48,7 +47,8 @@ namespace SceneCompiler.Scene
                 Name = "List ROOT",
                 ForceEven = true,
             };
-            _buffers.Nodes.Add(newRoot);
+            _buffers.Add(newRoot);
+            _buffers.Root = newRoot;
             for(var x = 0; x < numX; x++)
             {
                 for(var z = 0; z < numZ; z++)
@@ -60,14 +60,12 @@ namespace SceneCompiler.Scene
                         ObjectToWorld = Matrix4x4.CreateTranslation(xTranslation, 0, zTranslation),
                         Name = "Inst ROOT",
                         ForceEven = true,
-                        NumChildren = 1
                     };
-                    add.Children.Add(root);
-                    newRoot.Children.Add(add);
-                    _buffers.Nodes.Add(add);
+                    _buffers.AddChild(add, root);
+                    _buffers.AddChild(newRoot, add);
+                    _buffers.Add(add);
                 }
             }
-            newRoot.NumChildren = newRoot.Children.Count;
         }
     }
 }

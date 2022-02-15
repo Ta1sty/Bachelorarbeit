@@ -92,20 +92,17 @@ namespace SceneCompiler.GLTFConversion.Compilation
 
         private void BuildSceneGraph()
         {
-            var nodes = Buffers.Nodes;
             foreach (var node in File.Nodes)
             {
                 var scNode = new SceneNode();
                 if (node.Mesh == -1) // this node does not point to any geometry
                 {
-                    scNode.Children = node.Children.Select(x => nodes[x]).ToList();
-                    scNode.NumChildren = scNode.Children.Count;
+                    scNode.Children = node.Children.Select(x => Buffers.NodeByIndex(x)).ToList();
+                    var children = scNode.Children.ToList();
                 }
                 else
                 {
-                    scNode.Children = node.Children.Select(x => nodes[x]).ToList();
-                    scNode.NumChildren = scNode.Children.Count;
-
+                    scNode.Children = node.Children.Select(x => Buffers.NodeByIndex(x)).ToList();
 
                     scNode.IndexBufferIndex = (int) Meshes[node.Mesh].IndexStart;
                     scNode.NumTriangles = (int) Meshes[node.Mesh].Length / 3;
@@ -142,17 +139,16 @@ namespace SceneCompiler.GLTFConversion.Compilation
                 */
 
                 scNode.Name = node.Name;
-                nodes.Add(scNode);
+                Buffers.Add(scNode);
             }
             var end = new SceneNode
             {
-                Children = File.Scenes[0].Nodes.Select(x=>nodes[x]).ToList(),
-                NumChildren = File.Scenes[0].Nodes.Count,
+                Children = File.Scenes[0].Nodes.Select(x=>Buffers.NodeByIndex(x)).ToList(),
                 ObjectToWorld = Matrix4x4.Identity,
                 Name = "ROOT"
             };
 
-            var arr = nodes.ToArray();
+            var arr = Buffers.Nodes.ToArray();
             for(int i = 0;i<arr.Length;i++) // might change this
             {
                 for (int j = i + 1; j < arr.Length; j++)
@@ -164,12 +160,11 @@ namespace SceneCompiler.GLTFConversion.Compilation
                 }
             }
 
-            foreach (var node in nodes)
+            foreach (var node in Buffers.Nodes)
             {
                 node.Children = node.Children.Select(x => x.ThisOrBrother()).ToList();
             }
-
-            nodes = nodes.Where(x => x.Brother == null).ToList();
+            Buffers.SetSceneNodes(Buffers.Nodes.Where(x => x.Brother == null));
             end.Children = end.Children.Select(x => x.ThisOrBrother()).ToList();
             if (end.Children.Count(x => x.NumTriangles >= 0) == 1) // scene consists of only one mesh with a scene node
             {
@@ -181,7 +176,7 @@ namespace SceneCompiler.GLTFConversion.Compilation
                     .Where(x =>
                     {
                         if (x.NumTriangles <= 0) return true;
-                        if (x.Children.Count > 0) return true;
+                        if (x.Children.Count() > 0) return true;
                         if (x.ObjectToWorld.M41 != 0) return true;
                         if (x.ObjectToWorld.M42 != 0) return true;
                         if (x.ObjectToWorld.M43 != 0) return true;
@@ -189,24 +184,12 @@ namespace SceneCompiler.GLTFConversion.Compilation
                     }).ToList();
             }
 
-            end.NumChildren = end.Children.Count;
-            nodes.Add(end);
+            Buffers.Add(end);
 
-            for (int i = 0; i < nodes.Count; i++)
-            {
-                nodes[i].Index = i;
-            }
+            Buffers.RewriteAllParents();
 
-            foreach (var node in nodes)
-            {
-                foreach (var child in node.Children)
-                {
-                    child.Parents.Add(node);
-                }
-            }
-
-            Buffers.Nodes = nodes;
-            Buffers.RootNode = Buffers.Nodes.Count - 1; // because the node for the scene is added last
+            Buffers.Root = end;
+            // because the node for the scene is added last
         }
 
         public override void CompileScene(string path)

@@ -23,8 +23,8 @@ namespace SceneCompiler.Scene
             WriteVertices(compiler.Buffers.VertexBuffer);
             Console.WriteLine("Writing Indices: " + compiler.Buffers.IndexBuffer.Count);
             WriteIndices(compiler.Buffers.IndexBuffer);
-            Console.WriteLine("Writing Nodes: " + compiler.Buffers.Nodes.Count);
-            WriteSceneNodes(compiler.Buffers.Nodes, compiler.Buffers.RootNode);
+            Console.WriteLine("Writing Nodes: " + compiler.Buffers.Nodes.Count());
+            WriteSceneNodes(compiler.Buffers);
             Console.WriteLine("Writing Materials: " + compiler.Buffers.MaterialBuffer.Count);
             WriteMaterials(compiler.Buffers.MaterialBuffer);
             compiler.WriteTextures(str);
@@ -73,9 +73,10 @@ namespace SceneCompiler.Scene
             }
             str.Write(triangles);
         }
-        public void WriteSceneNodes(List<SceneNode> nodes, int rootNodeIndex)
+        public void WriteSceneNodes(SceneBuffers buffers)
         {
-            var indices = new List<int>(nodes.Sum(x=>x.NumChildren));
+            var count = buffers.Nodes.Count();
+            var indices = new List<int>(buffers.Nodes.Sum(x=>x.NumChildren));
             var transforms = new List<Matrix4x4>();
             transforms.Add(Matrix4x4.Identity);
             // write sceneNodes
@@ -83,10 +84,10 @@ namespace SceneCompiler.Scene
                 var size = SceneNode.Size; // see C project SceneNode
                 var index = 0;
 
-                while (index < nodes.Count)
+                while (index < count)
                 {
                     var pos = -4;
-                    int batchSize = (int) Math.Min(nodes.Count - index, 1024);
+                    int batchSize = (int) Math.Min(count - index, 1024);
                     int batchByteSize = batchSize * size;
                     if(index == 0)
                     {
@@ -95,28 +96,29 @@ namespace SceneCompiler.Scene
                     var nodeBuffer = new byte[batchByteSize];
                     if(index == 0)
                     {
-                        BitConverter.GetBytes((uint)nodes.Count).CopyTo(nodeBuffer.AsSpan(pos += 4));
-                        BitConverter.GetBytes((uint)rootNodeIndex).CopyTo(nodeBuffer.AsSpan(pos += 4));
+                        BitConverter.GetBytes((uint)count).CopyTo(nodeBuffer.AsSpan(pos += 4));
+                        BitConverter.GetBytes((uint)buffers.RootIndex).CopyTo(nodeBuffer.AsSpan(pos += 4));
                     }
 
                     for (var i = index;i<index+batchSize;i++)
                     {
-                        nodes[i].ChildrenIndex = nodes[i].NumChildren > 0 ? indices.Count : -1;
-                        if (nodes[i].ObjectToWorld == Matrix4x4.Identity || SceneNode.MatrixAlmostZero(nodes[i].ObjectToWorld - Matrix4x4.Identity))
-                            nodes[i].TransformIndex = 0;
+                        var node = buffers.NodeByIndex(i);
+                        node.ChildrenIndex = node.NumChildren > 0 ? indices.Count : -1;
+                        if (node.ObjectToWorld == Matrix4x4.Identity || SceneNode.MatrixAlmostZero(node.ObjectToWorld - Matrix4x4.Identity))
+                            node.TransformIndex = 0;
                         else
                         {
-                            nodes[i].TransformIndex = (uint)transforms.Count;
-                            transforms.Add(nodes[i].ObjectToWorld);
+                            node.TransformIndex = (uint)transforms.Count;
+                            transforms.Add(node.ObjectToWorld);
                         }
 
-                        pos = nodes[i].WriteToByteArray(nodeBuffer, pos);
-                        indices.AddRange(nodes[i].Children.Select(x => x.Index));
+                        pos = node.WriteToByteArray(nodeBuffer, pos);
+                        indices.AddRange(node.Children.Select(x => x.Index));
                     }
                     str.Write(nodeBuffer);
                     index += batchSize;
                 }
-                if (index != nodes.Count)
+                if (index != count)
                     throw new Exception("Index after write is not nodes.count");
             }
 

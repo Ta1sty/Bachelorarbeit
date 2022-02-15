@@ -67,7 +67,7 @@ namespace SceneCompiler
 
             RayTracePostCompile rayTraceOptimization = new RayTracePostCompile(compiler.Buffers, true);
             rayTraceOptimization.PostCompile();
-            rayTraceOptimization.RebuildNodeBufferFromRoot();
+            compiler.Buffers.RebuildNodeBufferFromRoot();
             rayTraceOptimization.Validate();
             rayTraceOptimization.PrintScene();
             var writer = new SceneWriter();
@@ -77,8 +77,9 @@ namespace SceneCompiler
             Console.WriteLine("Scene Contained " + idCount + " identity transforms");
             Console.WriteLine("Writing Scene");
             writer.WriteBuffers(dst, compiler);
-            Console.WriteLine("Total Number of Triangles: " + compiler.Buffers.Nodes[compiler.Buffers.RootNode].TotalPrimitiveCount);
+            Console.WriteLine("Total Number of Triangles: " + compiler.Buffers.Root.TotalPrimitiveCount);
             Console.WriteLine("PARSE FINISHED, PRESS ENTER");
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true);
             Console.ReadLine();
         }
 

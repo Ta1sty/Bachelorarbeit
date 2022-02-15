@@ -29,8 +29,7 @@ namespace SceneCompiler.Scene
         private void MultiLevel()
         {
             Console.WriteLine("Adjusting Scene Graph");
-            var buffer = _buffers.Nodes;
-            SceneNode root = buffer[_buffers.RootNode];
+            SceneNode root = _buffers.Root;
             root.Level = 0;
             Console.WriteLine("Merge instance Lists");
             MergeInstanceList();
@@ -41,37 +40,29 @@ namespace SceneCompiler.Scene
             DepthRecursion(root);
             Console.WriteLine("Number of Triangles: " + root.TotalPrimitiveCount);
             Console.WriteLine("Removing empty children");
-            Parallel.ForEach(buffer, x => x.Children = x.Children.Where(x => x.TotalPrimitiveCount > 0).ToList());
+            foreach(var node in _buffers.Nodes)
+            {
+                node.Children = node.Children.Where(x => x.TotalPrimitiveCount > 0);
+            }
 
             List<SceneNode> blasAdd = new();
             List<SceneNode> tlasAdd = new();
             Console.WriteLine("inserting dummys");
-            var evenTask = Task.Run(() =>
-            {
-                foreach (var node in buffer.Where(x => x.Level % 2 == 0))
-                    AdjustEvenNode(node, blasAdd);
-            });
 
-            var oddTask = Task.Run(() =>
-            {
-                foreach (var node in buffer.Where(x => x.Level % 2 == 1))
-                    AdjustOddNode(node, tlasAdd);
-            });
+            foreach (var node in _buffers.Nodes.Where(x => x.Level % 2 == 0))
+                AdjustEvenNode(node, blasAdd);
 
-            evenTask.Wait();
-            oddTask.Wait();
+            foreach (var node in _buffers.Nodes.Where(x => x.Level % 2 == 1))
+                AdjustOddNode(node, tlasAdd);
 
-            buffer.AddRange(tlasAdd);
-            buffer.AddRange(blasAdd);
+            _buffers.AddRange(tlasAdd);
+            _buffers.AddRange(blasAdd);
 
 
             Console.WriteLine("added " + (tlasAdd.Count +blasAdd.Count) + " dummies to the scenegraph");
 
-            for (var i = 0; i < buffer.Count; i++)
-            {
-                buffer[i].Index = i;
-                buffer[i].NumChildren = buffer[i].Children.Count;
-            }
+
+            _buffers.ValidateSceneNodes();
             Console.WriteLine("computing AABBs");
             foreach (var node in _buffers.Nodes)
                 node.ResetAABB();
@@ -117,19 +108,19 @@ namespace SceneCompiler.Scene
                     var children = node.Children.SelectMany(x => x.Children).ToList();
                     foreach(var child in children)
                     {
-                        child.Parents.Clear();
-                        child.Parents.Add(first);
+                        _buffers.ClearParents(first);
+                        _buffers.AddParent(child, first);
                     }
                     foreach(var list in node.Children.Where(x => x.IsInstanceList))
                     {
-                        list.Children.Clear();
+                        _buffers.ClearChildren(list);
                     }
-                    first.Children.Clear();
+                    _buffers.ClearChildren(first);
                     first.Children = children;
                     foreach(var parent in parents)
                     {
-                        parent.Children.RemoveAll(x => x.IsInstanceList);
-                        parent.Children.Add(first);
+                        parent.Children = parent.Children.Where(x => !x.IsInstanceList);
+                        _buffers.AddChild(parent, first);
                     }
                     first.Name += " Merge " + children.Count();
                 }
@@ -173,7 +164,7 @@ namespace SceneCompiler.Scene
             {
                 bool selector(SceneNode x)
                 {
-                    if (x.Children.Count != evenChildren.Count)
+                    if (x.Children.Count() != evenChildren.Count)
                         return false;
                     foreach (var child in evenChildren)
                     {
@@ -204,7 +195,6 @@ namespace SceneCompiler.Scene
                         IndexBufferIndex = node.IndexBufferIndex,
                         NumTriangles = node.NumTriangles,
                         // add the even children
-                        NumChildren = evenChildren.Count,
                         Children = new List<SceneNode>(evenChildren),
                         // set transforms to identity
                         ObjectToWorld = Matrix4x4.Identity,
@@ -218,9 +208,7 @@ namespace SceneCompiler.Scene
                 node.NumTriangles = 0;
 
                 // add only the odd children
-                node.Children.Clear();
-                node.Children.AddRange(oddChildren);
-                node.NumChildren = oddChildren.Count;
+                _buffers.SetChildren(node, oddChildren);
             }
         }
 
@@ -247,7 +235,7 @@ namespace SceneCompiler.Scene
                 // so if possible we want to reuse the tlas
                 var dummy = tlasAdd.Where(x =>
                 {
-                    if (x.Children.Count != oddChildren.Count)
+                    if (x.Children.Count() != oddChildren.Count)
                         return false;
                     foreach (var child in oddChildren)
                     {
@@ -271,7 +259,6 @@ namespace SceneCompiler.Scene
                         Level = node.Level + 1,
                         Name = "DummyTLAS",
                         // add the odd children
-                        NumChildren = oddChildren.Count,
                         Children = new List<SceneNode>(oddChildren),
                         // set transforms to identity
                         ObjectToWorld = Matrix4x4.Identity,
@@ -283,9 +270,7 @@ namespace SceneCompiler.Scene
                 evenChildren.Add(dummy);
 
                 // add only the even children
-                node.Children.Clear();
-                node.Children.AddRange(evenChildren);
-                node.NumChildren = evenChildren.Count;
+                _buffers.SetChildren(node, evenChildren);
             }
             else
             {
@@ -296,6 +281,7 @@ namespace SceneCompiler.Scene
         public void Validate()
         {
             Console.WriteLine("Validating SceneGraph");
+            _buffers.ValidateSceneNodes();
             Parallel.ForEach(_buffers.Nodes, node =>
            {
                if (node.Level < 0)
@@ -315,10 +301,10 @@ namespace SceneCompiler.Scene
                    if (node.NumTriangles > 0)
                        throw new Exception("instance List can not contain geometry");
 
-                   if (node.Children.Count != 1)
+                   if (node.Children.Count() != 1)
                        throw new Exception("instance List must have exactly one child (DummyBLAS)");
 
-                   var dummyBLAS = node.Children[0];
+                   var dummyBLAS = node.Children.First();
 
                    if (dummyBLAS.Name != "DummyBLAS")
                        throw new Exception("child of instancle List is not a dummyTLAS");
@@ -344,14 +330,10 @@ namespace SceneCompiler.Scene
 
                if (node.Index < 0)
                    throw new Exception("Index was not set");
-               if (_buffers.Nodes[node.Index] != node)
-                   throw new Exception("Index doesn't match actual index");
                if (node.Level % 2 == 0 && node.NumTriangles > 0)
                    throw new Exception("Even node references Geometry");
                if (node.NumChildren == 0 && node.NumTriangles == 0)
                    throw new Exception("Node doesn't reference anything");
-               if (node.Children.Count != node.NumChildren)
-                   throw new Exception("Node NumChildren count differs from actual count");
                if (node.NumTriangles > 0 && node.IndexBufferIndex < 0)
                    throw new Exception("Node says it contains geometry but index buffer pointer is not set");
                if (node.Brother != null)
@@ -363,7 +345,7 @@ namespace SceneCompiler.Scene
         {
             foreach (var node in _buffers.Nodes)
             {
-                if (node.Name.Contains("Dummy") && node.Parents[0].IsInstanceList)
+                if (node.Name.Contains("Dummy") && node.Parents.First().IsInstanceList)
                     continue;
                 var str = node.ToString();
                 if (str.Contains("Mesh"))
@@ -372,84 +354,6 @@ namespace SceneCompiler.Scene
                     continue;
                 Console.WriteLine(str);
             }
-        }
-
-        public void RebuildNodeBufferFromRoot()
-        {
-            Console.WriteLine("Rebuilding the buffer from the root");
-            var root = _buffers.Nodes[_buffers.RootNode];
-            Parallel.ForEach(_buffers.Nodes, t =>
-            {
-                t.Index = -1;
-                t.Parents.Clear();
-            });
-            root.Index = 0;
-            BuildListRecursive(root, 1);
-
-            var arr = new SceneNode[_buffers.Nodes.Count(x=>x.Index != -1)];
-            var unused = 0;
-            foreach (var node in _buffers.Nodes)
-            {
-                if(node.Index == -1)
-                {
-                    unused++;
-                    continue;
-                }
-                arr[node.Index] = node;
-            }
-
-            Console.WriteLine("Removed " + unused + " unused Nodes");
-
-            _buffers.RootNode = 0;
-            _buffers.Nodes.Clear();
-            _buffers.Nodes.AddRange(arr);
-
-            foreach (var node in _buffers.Nodes)
-            {
-                foreach (var child in node.Children)
-                {
-                    child.Parents.Add(node);
-                }
-            }
-        }
-        // use DFS Layout since this also the way traversal is done, should improve caching
-        private int BuildListRecursive(SceneNode node, int indexOffset)
-        {
-            
-            if (!node.Children.Any())
-                return indexOffset;
-
-            int start = indexOffset;
-
-            if (node.IsInstanceList)
-            {
-                if (node.Children[0].Index < 0)
-                {
-                    node.Children[0].Index = indexOffset;
-                    indexOffset++;
-                    node = node.Children[0];
-                }
-            }
-            foreach (var child in node.Children)
-            {
-                if (child.Index < 0)
-                {
-                    child.Index = indexOffset;
-                    indexOffset++;
-                }
-            }
-
-            if (start == indexOffset) return indexOffset; // all were already added
-                                                          // call for all children
-                                                          // TODO might want to avoid calling twice for a node
-
-
-            foreach (var child in node.Children)
-            {
-                indexOffset = BuildListRecursive(child, indexOffset);
-            }
-
-            return indexOffset;
         }
 
         private void DepthRecursion(SceneNode node)
@@ -477,11 +381,11 @@ namespace SceneCompiler.Scene
         public void CapInstanceLists()
         {
             var max = 1 << 22; // 23
-            var root = _buffers.Nodes[_buffers.RootNode];
+            var root = _buffers.Root;
             var toSplit = new List<SceneNode>();
             foreach(var node in _buffers.Nodes)
             {
-                if (node.IsInstanceList && node.Children.Count > max)
+                if (node.IsInstanceList && node.Children.Skip(max).Any())
                 {
                     toSplit.Add(node);
                 }
@@ -504,29 +408,27 @@ namespace SceneCompiler.Scene
                     Children = rightChildren,
                     ObjectToWorld = left.ObjectToWorld,
                     Name = "R" + left.Name,
-                    NumChildren = rightChildren.Count
                 };
 
                 left.Name = "L" + left.Name;
                 left.Children = leftChildren;
-                left.NumChildren = leftChildren.Count;
 
                 foreach (var parent in left.Parents)
                 {
-                    parent.Children.Add(right);
+                    _buffers.AddChild(parent, right);
                 }
 
                 foreach(var child in rightChildren)
                 {
-                    child.Parents.Remove(left);
-                    child.Parents.Add(right);
+                    _buffers.SetParents(child, child.Parents.Where(x => x != left));
+                    _buffers.AddParent(child, right);
                 }
 
-                _buffers.Nodes.Add(right);
+                _buffers.Add(right);
 
-                if (left.IsInstanceList && left.Children.Count > max)
+                if (left.IsInstanceList && left.Children.Skip(max).Any())
                     toSplit.Add(left);
-                if (right.IsInstanceList && right.Children.Count > max)
+                if (right.IsInstanceList && right.Children.Skip(max).Any())
                     toSplit.Add(right);
                 left.ResetAABB();
                 right.ResetAABB();
@@ -540,8 +442,9 @@ namespace SceneCompiler.Scene
 
         private (List<SceneNode> left, List<SceneNode> right) SplitNodes(SceneNode node)
         {
-            var left = new List<SceneNode>(node.Children.Count / 2 + 10);
-            var right = new List<SceneNode>(node.Children.Count / 2 + 10);
+            var count = node.Children.Count();
+            var left = new List<SceneNode>(count / 2 + 10);
+            var right = new List<SceneNode>(count / 2 + 10);
 
 
             double medX = 0;
@@ -554,9 +457,9 @@ namespace SceneCompiler.Scene
                 medY += middle.Y;
                 medZ += middle.Z;
             }
-            medX = medX / node.Children.Count;
-            medY = medY / node.Children.Count;
-            medZ = medZ / node.Children.Count;
+            medX = medX / count;
+            medY = medY / count;
+            medZ = medZ / count;
 
             var extent = node.AABB_max - node.AABB_min;
 

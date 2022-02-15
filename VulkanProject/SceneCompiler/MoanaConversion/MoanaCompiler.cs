@@ -21,13 +21,13 @@ namespace SceneCompiler.MoanaConversion
             var moana = new Moana();
             foreach (var folder in folders)
             {
-                //if (Path.GetFileName(folder).Contains("isKava"))
+                //if (Path.GetFileName(folder).Contains("isKava")) moana.Sections.Add(ReadFolder(folder));
                 //if (Path.GetFileName(folder).Contains("isIronwoodA1")) moana.Sections.Add(ReadFolder(folder));
                 //if (Path.GetFileName(folder).Contains("isIronwoodB")) moana.Sections.Add(ReadFolder(folder));
                 //if (Path.GetFileName(folder).Contains("isBayCedar")) moana.Sections.Add(ReadFolder(folder));
-                //if (Path.GetFileName(folder).Contains("isCoral")) moana.Sections.Add(ReadFolder(folder));
+                if (Path.GetFileName(folder).Contains("isCoral")) moana.Sections.Add(ReadFolder(folder));
                 //if (Path.GetFileName(folder).Contains("isBeach")) moana.Sections.Add(ReadFolder(folder));
-                if (Path.GetFileName(folder).Contains("isCoastline")) moana.Sections.Add(ReadFolder(folder));
+                //if (Path.GetFileName(folder).Contains("isCoastline")) moana.Sections.Add(ReadFolder(folder));
                 //if (Path.GetFileName(folder).Contains("isMountainB")) moana.Sections.Add(ReadFolder(folder));
                 //if (Path.GetFileName(folder).Contains("isCoastline")) moana.Sections.Add(ReadFolder(folder));
 
@@ -40,18 +40,12 @@ namespace SceneCompiler.MoanaConversion
             var root = moana.GetSceneNode(Buffers);
 
             Console.WriteLine("Setting Parents and indices");
-            for (var i = 0; i < Buffers.Nodes.Count; i++)
-            {
-                Buffers.Nodes[i].Index = i;
-                Buffers.Nodes[i].NumChildren = Buffers.Nodes[i].Children.Count;
-                foreach (var child in Buffers.Nodes[i].Children)
-                {
-                    child.Parents.Add(Buffers.Nodes[i]);
-                }
-            }
+            Buffers.RewriteAllParents();
+
+            Buffers.ValidateSceneNodes();
 
             Textures = moana.Textures;
-            Buffers.RootNode = root.Index;
+            Buffers.Root = root;
 
             /*var add = new List<SceneNode>();
             var lodCreator = new LodCreator(Buffers);
