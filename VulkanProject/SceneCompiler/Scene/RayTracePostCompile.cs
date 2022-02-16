@@ -45,21 +45,24 @@ namespace SceneCompiler.Scene
                 node.Children = node.Children.Where(x => x.TotalPrimitiveCount > 0);
             }
 
+            Console.WriteLine("inserting dummys");
             List<SceneNode> blasAdd = new();
             List<SceneNode> tlasAdd = new();
-            Console.WriteLine("inserting dummys");
+            var count = _buffers.Count();
+            for(var i = 0; i < count; i++)
+            {
+                SceneNode node = _buffers.NodeByIndex(i);
+                if(node.Level % 2 == 0)
+                {
+                    AdjustEvenNode(node, blasAdd);
+                }
+                else
+                {
+                    AdjustOddNode(node, tlasAdd);
+                }
+            }
 
-            foreach (var node in _buffers.Nodes.Where(x => x.Level % 2 == 0))
-                AdjustEvenNode(node, blasAdd);
-
-            foreach (var node in _buffers.Nodes.Where(x => x.Level % 2 == 1))
-                AdjustOddNode(node, tlasAdd);
-
-            _buffers.AddRange(tlasAdd);
-            _buffers.AddRange(blasAdd);
-
-
-            Console.WriteLine("added " + (tlasAdd.Count +blasAdd.Count) + " dummies to the scenegraph");
+            Console.WriteLine("added " + (_buffers.Count()-count) + " dummies to the scenegraph");
 
 
             _buffers.ValidateSceneNodes();
@@ -108,7 +111,7 @@ namespace SceneCompiler.Scene
                     var children = node.Children.SelectMany(x => x.Children).ToList();
                     foreach(var child in children)
                     {
-                        _buffers.ClearParents(first);
+                        _buffers.ClearParents(child);
                         _buffers.AddParent(child, first);
                     }
                     foreach(var list in node.Children.Where(x => x.IsInstanceList))
@@ -195,11 +198,12 @@ namespace SceneCompiler.Scene
                         IndexBufferIndex = node.IndexBufferIndex,
                         NumTriangles = node.NumTriangles,
                         // add the even children
-                        Children = new List<SceneNode>(evenChildren),
                         // set transforms to identity
                         ObjectToWorld = Matrix4x4.Identity,
                     };
                     blasAdd.Add(dummy);
+                    _buffers.Add(dummy);
+                    dummy.Children = new List<SceneNode>(evenChildren);
                 }
                 // add odd dummy to buffer and to children of the even node
                 oddChildren.Add(dummy);
@@ -259,11 +263,12 @@ namespace SceneCompiler.Scene
                         Level = node.Level + 1,
                         Name = "DummyTLAS",
                         // add the odd children
-                        Children = new List<SceneNode>(oddChildren),
                         // set transforms to identity
                         ObjectToWorld = Matrix4x4.Identity,
                     };
                     tlasAdd.Add(dummy);
+                    _buffers.Add(dummy);
+                    dummy.Children = new List<SceneNode>(oddChildren);
                 }
 
                 // add even dummy to buffer and children of the odd node
@@ -338,6 +343,11 @@ namespace SceneCompiler.Scene
                    throw new Exception("Node says it contains geometry but index buffer pointer is not set");
                if (node.Brother != null)
                    throw new Exception("An identical brother exists, this node was supposed to be removed");
+               /* To expensive
+                * if (!node.Parents.All(x => x.Children.Contains(node)))
+                   throw new Exception("This node references a parent that doesnt reference this node as a child");
+               if (!node.Children.All(x => x.Parents.Contains(node)))
+                   throw new Exception("This node references a child that doesnt reference this node as a parent");*/
            });
         }
 
@@ -404,12 +414,12 @@ namespace SceneCompiler.Scene
                     ForceOdd = left.ForceOdd,
                     IsLodSelector = left.IsLodSelector,
                     IsInstanceList = left.IsInstanceList,
-                    Parents = left.Parents,
-                    Children = rightChildren,
                     ObjectToWorld = left.ObjectToWorld,
                     Name = "R" + left.Name,
                 };
-
+                _buffers.Add(right);
+                right.Children = rightChildren;
+                right.Parents = left.Parents;
                 left.Name = "L" + left.Name;
                 left.Children = leftChildren;
 
@@ -424,7 +434,6 @@ namespace SceneCompiler.Scene
                     _buffers.AddParent(child, right);
                 }
 
-                _buffers.Add(right);
 
                 if (left.IsInstanceList && left.Children.Skip(max).Any())
                     toSplit.Add(left);

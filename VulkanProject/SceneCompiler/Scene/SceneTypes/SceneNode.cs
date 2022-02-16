@@ -23,10 +23,13 @@ namespace SceneCompiler.Scene.SceneTypes
 
         public string Name { get; set; }
 
+        internal int FirstChild = -1;
+        internal int FirstParent = -1;
 
         public Matrix4x4 ObjectToWorld = Matrix4x4.Identity;
         public Vector3 AABB_min = new(float.MaxValue, float.MaxValue, float.MaxValue);
         internal int Index = -1; // only visible from this namespace
+        internal int NewIndex = -1; // use for reordering operations
         public Vector3 AABB_max = new(-float.MaxValue, -float.MaxValue, -float.MaxValue);
         public int Level = -1;
         public int NumTriangles = 0;

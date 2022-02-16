@@ -24,8 +24,8 @@ namespace SceneCompiler.MoanaConversion
                 //if (Path.GetFileName(folder).Contains("isKava")) moana.Sections.Add(ReadFolder(folder));
                 //if (Path.GetFileName(folder).Contains("isIronwoodA1")) moana.Sections.Add(ReadFolder(folder));
                 //if (Path.GetFileName(folder).Contains("isIronwoodB")) moana.Sections.Add(ReadFolder(folder));
-                //if (Path.GetFileName(folder).Contains("isBayCedar")) moana.Sections.Add(ReadFolder(folder));
-                if (Path.GetFileName(folder).Contains("isCoral")) moana.Sections.Add(ReadFolder(folder));
+                if (Path.GetFileName(folder).Contains("isBayCedar")) moana.Sections.Add(ReadFolder(folder));
+                //if (Path.GetFileName(folder).Contains("isCoral")) moana.Sections.Add(ReadFolder(folder));
                 //if (Path.GetFileName(folder).Contains("isBeach")) moana.Sections.Add(ReadFolder(folder));
                 //if (Path.GetFileName(folder).Contains("isCoastline")) moana.Sections.Add(ReadFolder(folder));
                 //if (Path.GetFileName(folder).Contains("isMountainB")) moana.Sections.Add(ReadFolder(folder));
@@ -212,13 +212,13 @@ namespace SceneCompiler.MoanaConversion
             var geometry = new Geometry();
             geometry.Name = Path.GetFileName(path).Replace("_geometry.pbrt", "");
 
-            List<float[]> stageFlt = new();
+            List<float> stageFlt = new();
             List<uint> stageUInt = new();
-            var capacity = 500;
+            var capacity = 500*3;
             if (info.Length > 1024 * 1024 * 128)
-                capacity = 10000;
+                capacity = 10000*3;
             if (info.Length > 1024 * 1024 * 1024)
-                capacity = 500000;
+                capacity = 500000*3;
 
             Mesh mesh = null;
             while (!stream.EndOfStream)
@@ -262,59 +262,57 @@ namespace SceneCompiler.MoanaConversion
                         if (line.Contains("\"point P\"") || line.Contains("\"point3 P\""))
                         {
                             line = stream.ReadLine()!.Trim();
+                            stageFlt.Capacity = capacity;
                             do
                             {
-                                stageFlt.Capacity = capacity;
-                                stageFlt.Add(line.Split(" ")
-                                    .Select(x=> float.Parse(x, CultureInfo.InvariantCulture))
-                                    .ToArray());
+                                stageFlt.AddRange(line.Split(" ")
+                                    .Select(x=> float.Parse(x, CultureInfo.InvariantCulture)));
                                 line = stream.ReadLine()!.Trim();
-                                mesh.Shape.Positions.AddRange(stageFlt);
-                                stageFlt.Clear();
                             } while (!line.Contains("]"));
+                            mesh.Shape.Positions.AddRange(stageFlt);
+                            stageFlt.Clear();
                         }
                         if (line.Contains("\"normal N\""))
                         {
                             line = stream.ReadLine()!.Trim();
+                            stageFlt.Capacity = capacity;
                             do
                             {
-                                stageFlt.Capacity = capacity;
-                                stageFlt.Add(line.Split(" ")
-                                    .Select(x => float.Parse(x, CultureInfo.InvariantCulture))
-                                    .ToArray());
+                                stageFlt.AddRange(line.Split(" ")
+                                    .Select(x => float.Parse(x, CultureInfo.InvariantCulture)));
                                 line = stream.ReadLine()!.Trim();
-                                mesh.Shape.Normals.AddRange(stageFlt);
-                                stageFlt.Clear();
                             } while (!line.Contains("]"));
+                            mesh.Shape.Normals.AddRange(stageFlt);
+                            stageFlt.Clear();
                         }
                         if (line.Contains("\"point2 st\""))
                         {
                             line = stream.ReadLine()!.Trim();
+                            stageFlt.Capacity = capacity;
                             do
                             {
-                                stageFlt.Capacity = capacity;
-                                stageFlt.Add(line.Split(" ")
-                                    .Select(x => float.Parse(x, CultureInfo.InvariantCulture))
-                                    .ToArray());
+                                stageFlt.AddRange(line.Split(" ")
+                                    .Select(x => float.Parse(x, CultureInfo.InvariantCulture)));
                                 line = stream.ReadLine()!.Trim();
-                                mesh.Shape.Tex.AddRange(stageFlt);
-                                stageFlt.Clear();
+
                             } while (!line.Contains("]"));
+                            mesh.Shape.Tex.AddRange(stageFlt);
+                            stageFlt.Clear();
                         }
 
                         if (line.Contains("\"integer indices\""))
                         {
                             line = stream.ReadLine()!.Trim();
+                            stageUInt.Capacity = capacity;
                             do
                             {
-                                stageUInt.Capacity = capacity;
                                 stageUInt.AddRange(line.Split(" ")
                                     .Select(x => uint.Parse(x, CultureInfo.InvariantCulture))
                                     .ToArray());
                                 line = stream.ReadLine()!.Trim();
-                                mesh.Shape.Indices.AddRange(stageUInt);
-                                stageUInt.Clear();
                             } while (!line.Contains("]"));
+                            mesh.Shape.Indices.AddRange(stageUInt);
+                            stageUInt.Clear();
                         }
                     }
                 }
@@ -353,9 +351,9 @@ namespace SceneCompiler.MoanaConversion
                 {
                     if (line.Contains("Transform"))
                     {
-                        var start = line.IndexOf("[", StringComparison.Ordinal);
-                        var arrayStr = line.Substring(start).Replace(" ", ",");
-                        instance.Transform = JsonSerializer.Deserialize<float[]>(arrayStr);
+                        var start = line.IndexOf("[", StringComparison.Ordinal)+1;
+                        var arrayStr = line.Substring(start, line.Length-start-1);
+                        instance.Transform = arrayStr.Split(" ").Select(x => float.Parse(x, CultureInfo.InvariantCulture)).ToArray();
                     }
 
                     if (line.Contains(" ObjectInstance"))
@@ -367,6 +365,8 @@ namespace SceneCompiler.MoanaConversion
                     
                     if (line.Contains(" Include"))
                     {
+                        if (instance.Children == null)
+                            instance.Children = new();
                         var start = line.LastIndexOf("/", StringComparison.Ordinal) + 1;
                         var end = line.LastIndexOf(".", StringComparison.Ordinal);
                         instance.Children.Add(line.Substring(start, end-start));
@@ -375,7 +375,7 @@ namespace SceneCompiler.MoanaConversion
 
                 if (line.Contains("AttributeEnd"))
                 {
-                    if (instance != null && instance.ObjectName == null && instance.Children.Count == 0)
+                    if (instance != null && instance.ObjectName == null && instance.Children == null)
                         instance = null;
 
                     if (instance != null)

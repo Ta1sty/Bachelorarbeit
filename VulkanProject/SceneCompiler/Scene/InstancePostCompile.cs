@@ -49,6 +49,7 @@ namespace SceneCompiler.Scene
             };
             _buffers.Add(newRoot);
             _buffers.Root = newRoot;
+            var added = new List<SceneNode>(numX*numZ);
             for(var x = 0; x < numX; x++)
             {
                 for(var z = 0; z < numZ; z++)
@@ -61,11 +62,13 @@ namespace SceneCompiler.Scene
                         Name = "Inst ROOT",
                         ForceEven = true,
                     };
-                    _buffers.AddChild(add, root);
-                    _buffers.AddChild(newRoot, add);
                     _buffers.Add(add);
+                    _buffers.AddChild(add, root);
+                    added.Add(add);
                 }
             }
+            newRoot.Children = added;
+
         }
     }
 }

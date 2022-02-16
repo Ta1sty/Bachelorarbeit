@@ -53,8 +53,7 @@ namespace SceneCompiler
                 + Path.GetFileNameWithoutExtension(path) + ".vksc");
 
             InstancePostCompile instancePostCompile = new InstancePostCompile(compiler.Buffers);
-            //instancePostCompile.InstanceMultiple(16, 1);
-            //instancePostCompile.InstanceMultiple(32, 32);
+            instancePostCompile.InstanceMultiple(1024, 1024);
 
             foreach(var mat in compiler.Buffers.MaterialBuffer)
             {

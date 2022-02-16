@@ -95,6 +95,8 @@ namespace SceneCompiler.GLTFConversion.Compilation
             foreach (var node in File.Nodes)
             {
                 var scNode = new SceneNode();
+                Buffers.Add(scNode);
+
                 if (node.Mesh == -1) // this node does not point to any geometry
                 {
                     scNode.Children = node.Children.Select(x => Buffers.NodeByIndex(x)).ToList();
@@ -139,15 +141,15 @@ namespace SceneCompiler.GLTFConversion.Compilation
                 */
 
                 scNode.Name = node.Name;
-                Buffers.Add(scNode);
             }
             var end = new SceneNode
             {
-                Children = File.Scenes[0].Nodes.Select(x=>Buffers.NodeByIndex(x)).ToList(),
                 ObjectToWorld = Matrix4x4.Identity,
                 Name = "ROOT"
             };
-
+            Buffers.Add(end);
+            end.Children = File.Scenes[0].Nodes.Select(x => Buffers.NodeByIndex(x)).ToList();
+            var childeren = end.Children.ToList();
             var arr = Buffers.Nodes.ToArray();
             for(int i = 0;i<arr.Length;i++) // might change this
             {
@@ -165,6 +167,8 @@ namespace SceneCompiler.GLTFConversion.Compilation
                 node.Children = node.Children.Select(x => x.ThisOrBrother()).ToList();
             }
             Buffers.SetSceneNodes(Buffers.Nodes.Where(x => x.Brother == null));
+
+
             end.Children = end.Children.Select(x => x.ThisOrBrother()).ToList();
             if (end.Children.Count(x => x.NumTriangles >= 0) == 1) // scene consists of only one mesh with a scene node
             {
@@ -184,7 +188,6 @@ namespace SceneCompiler.GLTFConversion.Compilation
                     }).ToList();
             }
 
-            Buffers.Add(end);
 
             Buffers.RewriteAllParents();
 

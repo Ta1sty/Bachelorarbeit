@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Numerics;
 
 namespace SceneCompiler.Scene.SceneTypes
@@ -19,6 +20,20 @@ namespace SceneCompiler.Scene.SceneTypes
             Array[5] = norm[2];
             Array[6] = tex[0];
             Array[7] = tex[1];
+            MaterialIndex = materialIndex;
+        }
+
+        public Vertex(int triangle, List<float> pos, List<float> norm, List<float> tex, int materialIndex)
+        {
+            Array = new float[8];
+            Array[0] = pos[triangle * 3 + 0];
+            Array[1] = pos[triangle * 3 + 1];
+            Array[2] = pos[triangle * 3 + 2];
+            Array[3] = norm[triangle * 3 + 0];
+            Array[4] = norm[triangle * 3 + 1];
+            Array[5] = norm[triangle * 3 + 2];
+            Array[6] = tex[triangle * 2 + 0];
+            Array[7] = tex[triangle * 2 + 1];
             MaterialIndex = materialIndex;
         }
 

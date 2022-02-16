@@ -23,12 +23,12 @@ namespace SceneCompiler.MoanaConversion
 
             Node = new SceneNode();
             Node.Name = "ROOT Moana Island";
+            buffers.Add(Node);
             Node.Children = Sections.Select(x=>x.GetSceneNode(buffers));
 
 #if CLEANUP
             Sections.Clear();
 #endif
-            buffers.Add(Node);
             return Node;
         }
         public void SetReference()
@@ -55,6 +55,7 @@ namespace SceneCompiler.MoanaConversion
 
             Node = new SceneNode();
             Node.Name = "Sect " + Name;
+            buffers.Add(Node);
 
             foreach (var material in Materials)
             {
@@ -73,7 +74,6 @@ namespace SceneCompiler.MoanaConversion
             InstancedGeometries.Clear();
 #endif
             GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true);
-            buffers.Add(Node);
             return Node;
         }
         public void SetReference(Moana moana)
@@ -129,11 +129,11 @@ namespace SceneCompiler.MoanaConversion
             Node.Name = "List " + Name;
             Node.ForceEven = true;
             Node.IsInstanceList = true;
+            buffers.Add(Node);
             Node.Children = Instances.Select(x=>x.GetSceneNode(buffers));
 #if CLEANUP
             Instances.Clear();
 #endif
-            buffers.Add(Node);
             GC.Collect();
             return Node;
         }
@@ -152,7 +152,7 @@ namespace SceneCompiler.MoanaConversion
         public InstanceList InstanceList { get; set; }
         public string ObjectName { get; set; }
         public float[] Transform { get; set; }
-        public List<string> Children { get; set; } = new();
+        public List<string> Children { get; set; }
         public SceneNode Node { get; set; }
         public SceneNode GetSceneNode(SceneBuffers buffers)
         {
@@ -198,10 +198,15 @@ namespace SceneCompiler.MoanaConversion
                 Name = "Inst " + ObjectName,
                 ForceEven = true
             };
+            buffers.Add(Node);
 
-            Node.Children = Children.Select(name=> InstanceList.InstancedGeometry.Section.InstancedGeometries
-                .SelectMany(x => x.InstanceLists).Single(x => x.Name == name)
-                .GetSceneNode(buffers));
+            if(Children != null)
+            {
+                Node.Children = Children.Select(name => InstanceList.InstancedGeometry.Section.InstancedGeometries
+                    .SelectMany(x => x.InstanceLists).Single(x => x.Name == name)
+                    .GetSceneNode(buffers));
+            }
+
 
             if (ObjectName != null)
             {
@@ -211,7 +216,6 @@ namespace SceneCompiler.MoanaConversion
                     .GetSceneNode(buffers));
             }
 
-            buffers.Add(Node);
             return Node;
         }
         public void SetReference(InstanceList instanceList)
@@ -234,6 +238,7 @@ namespace SceneCompiler.MoanaConversion
             Node = new SceneNode();
             Node.Name = "Geom " + Name;
             Node.ForceEven = true;
+            buffers.Add(Node);
             Node.Children = Meshes.Select(x=>x.GetSceneNode(buffers)).Where(x=>x != null);
 #if CLEANUP
             Meshes.Clear();
@@ -248,7 +253,6 @@ namespace SceneCompiler.MoanaConversion
                 Node.ForceEven = false;
                 buffers.ClearChildren(Node);
             }
-            buffers.Add(Node);
             return Node;
         }
         public void SetReference(InstancedGeometry instancedGeometry)
@@ -302,12 +306,14 @@ namespace SceneCompiler.MoanaConversion
                 Name = "Mesh " + Name,
                 ForceOdd = true
             };
+            buffers.Add(Node);
             buffers.IndexBuffer.AddRange(Shape.Indices.Select(x=>(uint) (x+start)));
 
             var vertices = new List<Vertex>(Shape.Positions.Count);
-            for (var i = 0; i < Shape.Positions.Count; i++)
+            var num = Shape.Positions.Count / 3;
+            for (var i = 0; i < num; i++)
             {
-                var vertex = new Vertex(Shape.Positions[i], Shape.Normals[i], Shape.Tex[i], materialIndex);
+                var vertex = new Vertex(i, Shape.Positions, Shape.Normals, Shape.Tex, materialIndex);
                 vertices.Add(vertex);
             }
 
@@ -319,7 +325,6 @@ namespace SceneCompiler.MoanaConversion
             Shape.Tex.Clear();
             Shape.Indices.Clear();
 #endif
-            buffers.Add(Node);
             return Node;
         }
 
@@ -331,9 +336,9 @@ namespace SceneCompiler.MoanaConversion
 
     public class Shape
     {
-        public List<float[]> Positions { get; set; } = new();
-        public List<float[]> Normals { get; set; } = new();
-        public List<float[]> Tex { get; set; } = new();
+        public List<float> Positions { get; set; } = new();
+        public List<float> Normals { get; set; } = new();
+        public List<float> Tex { get; set; } = new();
         public List<uint> Indices { get; set; } = new();
     }
 
