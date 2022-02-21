@@ -37,7 +37,7 @@ namespace SceneCompiler.GLTFConversion.Compilation
             var vertexBuffer = Buffers.VertexBuffer;
             foreach (var mesh in File.Meshes)
             {
-                uint start = (uint) indexBuffer.Count;
+                var start = indexBuffer.Count;
                 foreach (var arr in mesh.Primitives)
                 {
                     var positionAccessor = File.Accessors[arr.Attributes.Position];
@@ -61,7 +61,7 @@ namespace SceneCompiler.GLTFConversion.Compilation
 
                     for (var i = 0; i < numElements; i++)
                     {
-                        var ver = new Vertex(posReader.GetVec3(), norReader.GetVec3(), texReader.GetVec2(), arr.Material);
+                        var ver = new Vertex(posReader.GetVec3(), norReader.GetVec3(), texReader.GetVec2(), arr.Material, start);
                         vertexBuffer.Add(ver);
                     }
                     var faceAccessor = File.Accessors[arr.Indices];
@@ -87,8 +87,8 @@ namespace SceneCompiler.GLTFConversion.Compilation
                 var length = end - start;
                 Meshes.Add(new MeshData
                 {
-                    IndexStart = start,
-                    Length = length
+                    IndexStart = (uint)start,
+                    Length = (uint)length
                 });
             }
         }

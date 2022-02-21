@@ -7,9 +7,12 @@ namespace SceneCompiler.Scene.SceneTypes
     public struct Vertex
     {
         public static readonly int Size = 48;
-        private float[] Array;
-        public int MaterialIndex;
-        public Vertex(float[] pos, float[] norm, float[] tex, int materialIndex)
+        private float[] Array; // contains the float values
+        public int MaterialIndex; // the material index in the materialbuffer
+
+        // not passed to vksc
+        public int IndexOffset; //the offset that was added to the index of this vertex
+        public Vertex(IReadOnlyList<float> pos, IReadOnlyList<float> norm, IReadOnlyList<float> tex, int materialIndex, int indexOffset)
         {
             Array = new float[8];
             Array[0] = pos[0];
@@ -21,20 +24,37 @@ namespace SceneCompiler.Scene.SceneTypes
             Array[6] = tex[0];
             Array[7] = tex[1];
             MaterialIndex = materialIndex;
+            IndexOffset = indexOffset;
         }
 
-        public Vertex(int triangle, List<float> pos, List<float> norm, List<float> tex, int materialIndex)
+        public Vertex(int index, IReadOnlyList<float> pos, IReadOnlyList<float> norm, IReadOnlyList<float> tex, int materialIndex, int indexOffset)
         {
             Array = new float[8];
-            Array[0] = pos[triangle * 3 + 0];
-            Array[1] = pos[triangle * 3 + 1];
-            Array[2] = pos[triangle * 3 + 2];
-            Array[3] = norm[triangle * 3 + 0];
-            Array[4] = norm[triangle * 3 + 1];
-            Array[5] = norm[triangle * 3 + 2];
-            Array[6] = tex[triangle * 2 + 0];
-            Array[7] = tex[triangle * 2 + 1];
+            Array[0] = pos[index * 3 + 0];
+            Array[1] = pos[index * 3 + 1];
+            Array[2] = pos[index * 3 + 2];
+            Array[3] = norm[index * 3 + 0];
+            Array[4] = norm[index * 3 + 1];
+            Array[5] = norm[index * 3 + 2];
+            Array[6] = tex[index * 2 + 0];
+            Array[7] = tex[index * 2 + 1];
             MaterialIndex = materialIndex;
+            IndexOffset = indexOffset;
+        }
+
+        public Vertex(int index, IReadOnlyList<float> floats, int materialIndex, int indexOffset)
+        {
+            MaterialIndex = materialIndex;
+            Array = new float[8];
+            Array[0] = floats[index * 8 + 0];
+            Array[1] = floats[index * 8 + 1];
+            Array[2] = floats[index * 8 + 2];
+            Array[3] = floats[index * 8 + 3];
+            Array[4] = floats[index * 8 + 4];
+            Array[5] = floats[index * 8 + 5];
+            Array[6] = floats[index * 8 + 6];
+            Array[7] = floats[index * 8 + 7];
+            IndexOffset = indexOffset;
         }
 
         public int WriteToByteArray(byte[] vertices, int pos)
@@ -60,6 +80,17 @@ namespace SceneCompiler.Scene.SceneTypes
         public Vector3 Position()
         {
             return new Vector3(Array[0], Array[1], Array[2]);
+        }
+
+        public Vector3 Normal()
+        {
+            return new Vector3(Array[3], Array[4], Array[5]);
+
+        }
+
+        public Vector2 Tex()
+        {
+            return new Vector2(Array[6], Array[7]);
         }
     }
 }

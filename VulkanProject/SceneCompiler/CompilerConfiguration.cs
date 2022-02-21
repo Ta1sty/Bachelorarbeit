@@ -67,6 +67,8 @@ namespace SceneCompiler
         public string MoanaRootPath { get; set; } = null;
         /// <summary>cleans up the parsed moana file once the scenenodes are made. Preserves memory during compilation</summary>
         public bool Cleanup { get; set; } = true;
+        /// <summary>Merges the meshes of a geometry file into one large mesh</summary>
+        public bool MergeMeshes { get; set; } = true;
         /// <summary>takes the first geometry of the first included section as the root of the scenegraph</summary>
         public bool UseFirstGeometry { get; set; } = false;
         /// <summary>the sections to include</summary>

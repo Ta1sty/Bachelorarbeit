@@ -1,6 +1,8 @@
 ﻿using SceneCompiler.Scene.SceneTypes;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,7 +16,7 @@ namespace SceneCompiler.Scene
         {
             _buffers = buffers;
         }
-        public void CreateLevelsOfDetail(SceneNode node, int amount) // returns the number of nodes to add to the scene Buffer
+        public void CreateLevelsOfDetail(SceneNode node, int amount, int factor) // returns the number of nodes to add to the scene Buffer
         {
             if (!node.ForceEven)
                 throw new Exception("can only create LOD selector for even nodes (a TLAS)"); // since InstanceHitCompute is exectued for even nodes
@@ -52,6 +54,7 @@ namespace SceneCompiler.Scene
                     NumTriangles = node.NumTriangles,
                     ObjectToWorld = node.ObjectToWorld,
                 };
+                CreateLod(lod, factor);
                 _buffers.Add(lod);
                 _buffers.AddParent(lod,selector);
                 _buffers.AddChild(selector, lod);
@@ -62,6 +65,28 @@ namespace SceneCompiler.Scene
                 }
             }
             _buffers.AddChild(selector, node);
+        }
+
+        public void CreateLod(SceneNode node, int factor)
+        {
+            var input = GeometryLoader.CreateObj(_buffers, node);
+            var output = Path.Combine(Path.GetDirectoryName(input)!, node.Name + ".ply");
+            var targetNum = (node.NumTriangles / factor).ToString();
+            var args = new[]{ input, output, targetNum };
+            var proc = Process.Start("tridecimator.exe", args);
+
+            proc.WaitForExit();
+            var ply = GeometryLoader.LoadPly(output);
+            var start = _buffers.VertexBuffer.Count;
+            var offset = _buffers.IndexBuffer.Count;
+            _buffers.IndexBuffer.AddRange(ply.Indices.Select(x=> (uint)(x + start)));
+            node.IndexBufferIndex = offset;
+            node.NumTriangles = ply.Indices.Length / 3;
+            for (var i = 0; i < ply.VertexMaterials.Length; i++)
+            {
+                var vertex = new Vertex(i, ply.VertexFloats, ply.VertexMaterials[i], start);
+                _buffers.VertexBuffer.Add(vertex);
+            }
         }
     }
 }

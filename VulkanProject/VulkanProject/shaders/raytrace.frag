@@ -113,7 +113,7 @@ void instanceHitCompute(int index, vec3 rayOrigin, vec3 rayDirection, bool IsIns
 
 	if(next.IsLodSelector) {
 		SceneNode dummy = nodes[childIndices[next.ChildrenIndex]];
-		next = nodes[childIndices[dummy.ChildrenIndex + 1]];
+		next = nodes[childIndices[dummy.ChildrenIndex + 0]];
 	}
 
 	// here the shader adds the next payloads

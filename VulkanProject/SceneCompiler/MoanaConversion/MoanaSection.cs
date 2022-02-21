@@ -317,7 +317,7 @@ namespace SceneCompiler.MoanaConversion
             var num = Shape.Positions.Count / 3;
             for (var i = 0; i < num; i++)
             {
-                var vertex = new Vertex(i, Shape.Positions, Shape.Normals, Shape.Tex, materialIndex);
+                var vertex = new Vertex(i, Shape.Positions, Shape.Normals, Shape.Tex, materialIndex, start);
                 vertices.Add(vertex);
             }
 
