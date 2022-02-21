@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text.Json;
 using System.Threading;
 using System.Windows.Forms;
-using Microsoft.VisualBasic;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using SceneCompiler.GLTFConversion.Compilation;
@@ -16,14 +13,14 @@ using SceneCompiler.Scene.SceneTypes;
 
 namespace SceneCompiler
 {
-    class Program
+    public class Program
     {
         static void Main(string[] args)
         {
             NativeMethods.AllocConsole();
 
 
-            
+
             foreach (var arg in args)
             {
                 Console.WriteLine(arg);
@@ -36,47 +33,98 @@ namespace SceneCompiler
             ASceneCompiler compiler = null;
 
             var location = Assembly.GetExecutingAssembly().Location;
+            using var buffers = new SceneBuffers();
 
-            if (true)
+            var config = CompilerConfiguration.Configuration;
+            if (config.MoanaConfiguration.ConvertMoana && config.GltfConfiguration.ConvertGltf)
+                throw new Exception("can not convert gltf and moana, only one can be true");
+            if (config.MoanaConfiguration.ConvertMoana)
             {
-                path = regex.Replace(location,
+                if(config.MoanaConfiguration.MoanaRootPath == null)
+                    path = regex.Replace(location,
                     @"island\pbrt");
-                compiler = ConvertMoana(path);
-            } else
+                else
+                    path = config.MoanaConfiguration.MoanaRootPath;
+                compiler = ConvertMoana(path, buffers);
+            }
+            else if (config.GltfConfiguration.ConvertGltf)
             {
                 path = ChooseFile();
-                compiler = ConvertGLTF(path);
+                compiler = ConvertGltf(path, buffers);
             }
-
-            var dst = regex.Replace(location,
-                @"VulkanProject\Scenes\"
-                + Path.GetFileNameWithoutExtension(path) + ".vksc");
-
-            InstancePostCompile instancePostCompile = new InstancePostCompile(compiler.Buffers);
-            instancePostCompile.InstanceMultiple(1024, 1024);
-
-            foreach(var mat in compiler.Buffers.MaterialBuffer)
+            else
             {
-                var index = compiler.Buffers.MaterialBuffer.IndexOf(mat);
-                var num = compiler.Buffers.VertexBuffer.Count(x=>x.MaterialIndex == index);
-                var first = compiler.Buffers.VertexBuffer.FindIndex(x => x.MaterialIndex == index);
-                Console.WriteLine(mat.Name + " used for " + num + " vertices");
+                throw new Exception("at least one convert type must be true");
+            }
+
+            var dst = "";
+            if (config.CustomStorePath == null)
+            {
+                dst = regex.Replace(location,
+                    @"VulkanProject\Scenes\"
+                    + compiler.SceneName + ".vksc");
+            }
+            else
+            {
+                dst = Path.Combine(config.CustomStorePath, compiler.SceneName + ".vksc");
             }
 
 
-            RayTracePostCompile rayTraceOptimization = new RayTracePostCompile(compiler.Buffers, true);
+            if (config.LodConfiguration.UseLod)
+            {
+                var lodNodes = buffers.Nodes.Where(x => x.NumTriangles > config.LodConfiguration.LodTriangleThreshold)
+                    .ToList();
+                var creator = new LodCreator(buffers);
+                foreach (var node in lodNodes)
+                {
+                    node.ForceOdd = false;
+                    node.ForceEven = true;
+                    creator.CreateLevelsOfDetail(node, config.LodConfiguration.NumLod);
+                }
+            }
+
+            if (config.InstanceConfiguration.UseInstancing)
+            {
+                var instancePostCompile = new InstancePostCompile(buffers);
+                for (var i = 0; i < config.InstanceConfiguration.InstanceCount; i++)
+                {
+                    instancePostCompile.InstanceMultiple(config.InstanceConfiguration.InstanceX, config.InstanceConfiguration.InstanceZ);
+                }
+            }
+
+
+            if(config.DebugConfiguration.PrintMaterials)
+            {
+                foreach (var mat in buffers.MaterialBuffer)
+                {
+                    var index = buffers.MaterialBuffer.IndexOf(mat);
+                    var num = buffers.VertexBuffer.Count(x => x.MaterialIndex == index);
+                    var first = buffers.VertexBuffer.FindIndex(x => x.MaterialIndex == index);
+                    Console.WriteLine(mat.Name + " used for " + num + " vertices");
+                }
+            }
+
+            var rayTraceOptimization = new RayTracePostCompile(buffers);
             rayTraceOptimization.PostCompile();
-            compiler.Buffers.RebuildNodeBufferFromRoot();
-            rayTraceOptimization.Validate();
-            rayTraceOptimization.PrintScene();
+
+            if(config.OptimizationConfiguration.RootBufferRebuild)
+                buffers.RebuildNodeBufferFromRoot();
+            if(config.DebugConfiguration.ValidateSceneGraph)
+                rayTraceOptimization.Validate();
+            if(config.DebugConfiguration.PrintScene)
+                rayTraceOptimization.PrintScene();
+
             var writer = new SceneWriter();
 
-            var idCount = compiler.Buffers.Nodes.Count(x => 
+            var idCount = buffers.Nodes.Count(x => 
                 (x.ObjectToWorld == Matrix4x4.Identity || SceneNode.MatrixAlmostZero(x.ObjectToWorld - Matrix4x4.Identity)));
             Console.WriteLine("Scene Contained " + idCount + " identity transforms");
             Console.WriteLine("Writing Scene");
             writer.WriteBuffers(dst, compiler);
-            Console.WriteLine("Total Number of Triangles: " + compiler.Buffers.Root.TotalPrimitiveCount);
+            Console.WriteLine("Total Number of Triangles: " + buffers.Root.TotalPrimitiveCount);
+            var numTlas = buffers.Nodes.Count(x =>x.NeedsTlas);
+            var numBlas = buffers.Nodes.Count(x => x.NeedsBlas);
+            Console.WriteLine("Num TLAS: " + numTlas + " Num BLAS: " + numBlas);
             Console.WriteLine("PARSE FINISHED, PRESS ENTER");
             GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true);
             Console.ReadLine();
@@ -110,17 +158,16 @@ namespace SceneCompiler
             return path;
         }
 
-        private static ASceneCompiler ConvertMoana(string path)
+        private static ASceneCompiler ConvertMoana(string path, SceneBuffers buffers)
         {
-            ASceneCompiler compiler = new MoanaCompiler();
+            ASceneCompiler compiler = new MoanaCompiler(buffers);
             compiler.CompileScene(path);
             return compiler;
         }
 
-        private static ASceneCompiler ConvertGLTF(string path)
+        private static ASceneCompiler ConvertGltf(string path, SceneBuffers buffers)
         {
-            //using var src = File.Open(@"C:\Users\marku\Desktop\BA\Models\textureCube\2Cubes.gltf", FileMode.Open);
-            ASceneCompiler compiler = new GLTFCompiler();
+            ASceneCompiler compiler = new GLTFCompiler(buffers);
             compiler.CompileScene(path);
             return compiler;
         }

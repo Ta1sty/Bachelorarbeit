@@ -67,8 +67,15 @@ namespace SceneCompiler.Scene
                     added.Add(add);
                 }
             }
-            newRoot.Children = added;
 
+            var dummy = new SceneNode
+            {
+                Name = "DummyBLAS",
+                ForceOdd = true,
+            };
+            _buffers.Add(dummy);
+            _buffers.AddChild(newRoot, dummy);
+            dummy.Children = added;
         }
     }
 }

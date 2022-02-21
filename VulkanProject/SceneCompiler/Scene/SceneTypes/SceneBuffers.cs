@@ -7,51 +7,9 @@ using System.Threading.Tasks;
 
 namespace SceneCompiler.Scene.SceneTypes
 {
-    public class SceneBuffers
+    public class SceneBuffers  :IDisposable
     {
-        private struct NodeRelation
-        {
-            internal int child;
-            internal int parent;
-            public NodeRelation(int parent, int child)
-            {
-                this.child = child;
-                this.parent = parent;
-            }
-            public override string ToString()
-            {
-                return parent + " : " + child;
-            }
-            public override bool Equals(object obj)
-            {
-                var rel = (NodeRelation) obj;
-                return child == rel.child && parent == rel.parent;
-            }
-            public override int GetHashCode()
-            {
-                return parent<<16+(child<<16)>>16;
-            }
-        }
-
-        private class ChildComparer : IComparer<NodeRelation>
-        {
-            public int Compare(NodeRelation x, NodeRelation y)
-            {
-                if (x.parent != y.parent) return x.parent - y.parent;
-                return x.child - y.child;
-            }
-        }
-        private static ChildComparer childComparer = new();
-        private class ParentComparer : IComparer<NodeRelation>
-        {
-            public int Compare(NodeRelation x, NodeRelation y)
-            {
-                if (x.child != y.child) return x.child - y.child;
-                return x.parent - y.parent;
-            }
-        }
-        private static ParentComparer parentComparer = new();
-
+        internal static SceneBuffers ActiveBuffer { get; set; }
 
         public List<Vertex> VertexBuffer { get; set; } = new();
         public List<uint> IndexBuffer { get; set; } = new();
@@ -62,7 +20,19 @@ namespace SceneCompiler.Scene.SceneTypes
 
         private List<SceneNode> SceneNodes = new();
         private Dictionary<int, int[]> ChildrenList = new();
-        private Dictionary<int, int[]> ParentList = new(); 
+        private Dictionary<int, int[]> ParentList = new();
+
+        public SceneBuffers()
+        {
+            if (ActiveBuffer != null)
+                throw new Exception("There can only be one active SceneBuffer at any time");
+            ActiveBuffer = this;
+        }
+
+        public void Dispose()
+        {
+            ActiveBuffer = null;
+        }
 
         public void Add(SceneNode node)
         {

@@ -3,8 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Drawing.Imaging;
-using System.Drawing;
 using SceneCompiler.Scene.SceneTypes;
 using System.Numerics;
 
@@ -61,7 +59,7 @@ namespace SceneCompiler.Scene
             }
             if (index != vertexBuffer.Count)
                 throw new Exception("Index after write is not vertex.count");
-       }
+        }
         public void WriteIndices(List<uint> indexBuffer)
         {
             var triangles = new byte[4 * indexBuffer.Count + 4]; // first 4 bytes is uint32 for numIndices
@@ -87,8 +85,8 @@ namespace SceneCompiler.Scene
                 while (index < count)
                 {
                     var pos = -4;
-                    int batchSize = (int) Math.Min(count - index, 1024);
-                    int batchByteSize = batchSize * size;
+                    var batchSize = Math.Min(count - index, 1024);
+                    var batchByteSize = batchSize * size;
                     if(index == 0)
                     {
                         batchByteSize += 4 + 4;

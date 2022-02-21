@@ -10,14 +10,13 @@ namespace SceneCompiler.Scene.SceneTypes
     public class SceneNode
     {
         public static readonly int Size = 64;
-        public static SceneBuffers buffers;
         public IEnumerable<SceneNode> Children { 
-            get => buffers.GetChildren(this);
-            set => buffers.SetChildren(this, value);
+            get => SceneBuffers.ActiveBuffer.GetChildren(this);
+            set => SceneBuffers.ActiveBuffer.SetChildren(this, value);
         }
         public IEnumerable<SceneNode> Parents { 
-            get => buffers.GetParents(this); 
-            set => buffers.SetParents(this, value);
+            get => SceneBuffers.ActiveBuffer.GetParents(this); 
+            set => SceneBuffers.ActiveBuffer.SetParents(this, value);
         }
         public SceneNode Brother = null; // this node is practically identical to this one, project others onto this one#
 
@@ -45,6 +44,35 @@ namespace SceneCompiler.Scene.SceneTypes
         public bool ForceEven = false;
         public long TotalPrimitiveCount = 0;
         public bool isAABBComputed = false;
+
+        public bool NeedsTlas
+        {
+            get
+            {
+                if (Level % 2 != 0)
+                    return false;
+                var grandparent = Parents.FirstOrDefault()?.Parents.FirstOrDefault();
+                if (grandparent is { IsInstanceList: true })
+                    return false;
+                if (IsLodSelector)
+                    return false;
+                return true;
+            }
+        }
+
+        public bool NeedsBlas
+        {
+            get
+            {
+                if (Level % 2 != 1)
+                    return false;
+                if (Parents.FirstOrDefault()?.IsInstanceList ?? false)
+                    return false;
+                if (Parents.FirstOrDefault()?.IsLodSelector ?? false)
+                    return false;
+                return true;
+            }
+        }
 
         public SceneNode ThisOrBrother()
         {
@@ -122,6 +150,12 @@ namespace SceneCompiler.Scene.SceneTypes
         public override string ToString()
         {
             var ret = "";
+            if (NeedsTlas)
+                ret += "TLAS\t";
+            else if (NeedsBlas)
+                ret += "BLAS\t";
+            else
+                ret += "NONE\t";
             ret += "I:" + Index + "\t";
             ret += "P:" + Parents.Count() + "\t";
             ret += "C:" + NumChildren + "\t";

@@ -35,6 +35,18 @@ void build_node_acceleration_structure(VkInfo* info, Scene* scene, SceneNode* no
 		return;
 	}
 
+	if(node->IsLodSelector) // lod selector skips itself and its child 
+		//and resumes with the grandchildren
+	{
+		GET_CHILD(scene, node, 0);
+		for (int i = 0; i < child->NumChildren; i++)
+		{
+			GET_GRANDCHILD(scene, child, i);
+			build_node_acceleration_structure(info, scene, grandChild);
+		}
+		return;
+	}
+
 	// if not we build all child ASs
 	for (int i = 0; i < node->NumChildren; i++)
 	{
@@ -74,7 +86,6 @@ void build_node_instance_list(VkInfo* info, Scene* scene, SceneNode* list)
 		}
 	}
 
-	printf("Build List\tI:%d\tL:%d\tC:%d\tT:%d\n", list->Index, list->Level, node->NumChildren, node->NumTriangles);
 	VkBuffer stagingBuffer = 0;
 	VkDeviceMemory stagingMemory = 0;
 	VkAccelerationStructureInstanceKHR* staging_data;
@@ -157,6 +168,8 @@ void build_node_instance_list(VkInfo* info, Scene* scene, SceneNode* list)
 
 	VkBuffer tlasBuffer;
 	VkDeviceMemory tlasMemory;
+	VkDeviceSize size = top_sizes.accelerationStructureSize;
+	printf("Build List\tI:%d\tL:%d\tC:%d\tT:%d\tS: %llumb\n", list->Index, list->Level, node->NumChildren, node->NumTriangles, size/(1048576));
 
 	createBuffer(info, top_sizes.accelerationStructureSize,
 		VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR,
@@ -228,7 +241,6 @@ void build_node_instance_list(VkInfo* info, Scene* scene, SceneNode* list)
 // see https://github.com/MomentsInGraphics/vulkan_renderer
 void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 {
-	printf("Build TLAS\tI:%d\tL:%d\tC:%d\tT:%d\n", node->Index, node->Level, node->NumChildren, node->NumTriangles);
 	// credits to christopher
 	VK_LOAD(vkGetAccelerationStructureBuildSizesKHR);
 	VK_LOAD(vkCreateAccelerationStructureKHR);
@@ -330,6 +342,8 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 
 	VkBuffer tlasBuffer;
 	VkDeviceMemory tlasMemory;
+	VkDeviceSize size = top_sizes.accelerationStructureSize;
+	printf("Build TLAS\tI:%d\tL:%d\tC:%d\tT:%d\tS:%llumb\n", node->Index, node->Level, node->NumChildren, node->NumTriangles, size / 1048576);
 
 	createBuffer(info, top_sizes.accelerationStructureSize,
 		VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR,
@@ -401,7 +415,6 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 // see https://github.com/MomentsInGraphics/vulkan_renderer
 void build_blas(VkInfo* info, Scene* scene, SceneNode* node)
 {
-	printf("Build BLAS\tI:%d\tL:%d\tC:%d\tT:%d\n", node->Index, node->Level, node->NumChildren, node->NumTriangles);
 	// 2 things to do
 	// if node references geometry add relevant geometry
 	// if node references children recursively create new TLAS
@@ -592,6 +605,10 @@ void build_blas(VkInfo* info, Scene* scene, SceneNode* node)
 			&bottom_build_info, &primitive_count, &bottom_size);
 
 		// Create buffers for the acceleration structures
+
+		VkDeviceSize size = bottom_size.accelerationStructureSize;
+		printf("Build BLAS\tI:%d\tL:%d\tC:%d\tT:%d\tS:%llumb\n", node->Index, node->Level, node->NumChildren, node->NumTriangles, size / 1048576);
+
 
 		VkBuffer blasBuffer = 0;
 		VkDeviceMemory blasMemory = 0;

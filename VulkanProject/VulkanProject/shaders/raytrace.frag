@@ -78,7 +78,7 @@ struct TraversalPayload {
 #ifdef RAY_QUERIES
 // use a stack because:
 // keep the list as short as possible, I.E. use a depth first search
-const int BUFFER_SIZE = 100;
+const int BUFFER_SIZE = 20;
 int stackSize = 0;
 TraversalPayload traversalBuffer[BUFFER_SIZE];
 
@@ -91,7 +91,7 @@ void instanceHitCompute(int index, vec3 rayOrigin, vec3 rayDirection, bool IsIns
 	SceneNode directChild = nodes[nextLoad.nIdx]; // use the custom index to take a shortcut
 	mat4x3 world_to_object;
 
-	// we can now do LOD or whatever we feel like doing - currently InstanceList Implementation
+	// instance list implementation
 	SceneNode next;
 	if(IsInstanceList) {
 		SceneNode instancedChild = nodes[nextLoad.sIdx];
@@ -102,13 +102,26 @@ void instanceHitCompute(int index, vec3 rayOrigin, vec3 rayDirection, bool IsIns
 		next = nodes[childIndices[directChild.ChildrenIndex + nextLoad.pIdx]];
 		world_to_object = inv(transforms[directChild.TransformIndex]);
 	}
+	// discard is not possible without either reodering the buffer or some other operation
+	// therefore to discard an instance hit, set tMax to high value
+	// to add more then one traversal load, just set the loads and the stacksize accordingly
+	// reordering the buffer can be troublesome so just add them at the end, they will get exectued first
+	// the ordering of the instancehits is still kept. Meaning the instance and all added loads will get exectued before the loads
+	// that were of the previous one
 
+	// we can now do LOD or whatever we feel like doing
+
+	if(next.IsLodSelector) {
+		SceneNode dummy = nodes[childIndices[next.ChildrenIndex]];
+		next = nodes[childIndices[dummy.ChildrenIndex + 1]];
+	}
 
 	// here the shader adds the next payloads
 
 	vec3 origin = world_to_object * vec4(nextLoad.world_to_object * vec4(rayOrigin,1),1);
 	vec3 direction = world_to_object * vec4(nextLoad.world_to_object * vec4(rayDirection,0),0);
 
+	// need to compute tNear to sort out instanceHits of AABBs that are behind a previous triangle hit
 	float tNear, tFar;
 	intersectAABB(origin, direction, next.AABB_min, next.AABB_max, tNear, tFar);
 
@@ -121,15 +134,6 @@ void instanceHitCompute(int index, vec3 rayOrigin, vec3 rayDirection, bool IsIns
 	
 	if (debug && displayAABBs) {
 		debugAABB(origin, direction, next);
-		/*vec3 query_origin = (nextLoad.world_to_object * vec4(rayOrigin,1)).xyz;
-		vec3 query_direction = (nextLoad.world_to_object * vec4(rayDirection,0)).xyz;
-		
- else {
-			for (int i = 0; i < next.NumChildren; i++) {
-				SceneNode child = nodes[childIndices[next.childrenIndex + i]];
-				//debugAABB(query_origin, query_direction, child);
-			}
-		}*/
 	}
 }
 

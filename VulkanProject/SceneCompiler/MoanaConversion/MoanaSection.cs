@@ -1,6 +1,4 @@
-﻿#define CLEANUP
-
-using System;
+﻿using System;
 using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -9,8 +7,11 @@ using System.Numerics;
 using SceneCompiler.Scene.SceneTypes;
 
 namespace SceneCompiler.MoanaConversion
-{
-
+{ 
+    internal static class Cleanup
+    {
+        public static readonly bool Enabled = CompilerConfiguration.Configuration.MoanaConfiguration.Cleanup;
+    }
     public class Moana
     {
         public List<Texture> Textures { get; set; } = new();
@@ -25,10 +26,8 @@ namespace SceneCompiler.MoanaConversion
             Node.Name = "ROOT Moana Island";
             buffers.Add(Node);
             Node.Children = Sections.Select(x=>x.GetSceneNode(buffers));
-
-#if CLEANUP
-            Sections.Clear();
-#endif
+            if(Cleanup.Enabled)
+                Sections.Clear();
             return Node;
         }
         public void SetReference()
@@ -65,14 +64,16 @@ namespace SceneCompiler.MoanaConversion
             Node.Children = InstancedGeometry.InstanceLists
                 .Select(x=>x.GetSceneNode(buffers));
 
-#if CLEANUP
-            Materials.Clear();
-            foreach (var instancedGeometry in InstancedGeometries)
+            if (Cleanup.Enabled)
             {
-                instancedGeometry.Clear();
+                Materials.Clear();
+                foreach (var instancedGeometry in InstancedGeometries)
+                {
+                    instancedGeometry.Clear();
+                }
+                InstancedGeometries.Clear();
             }
-            InstancedGeometries.Clear();
-#endif
+
             GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true);
             return Node;
         }
@@ -131,9 +132,10 @@ namespace SceneCompiler.MoanaConversion
             Node.IsInstanceList = true;
             buffers.Add(Node);
             Node.Children = Instances.Select(x=>x.GetSceneNode(buffers));
-#if CLEANUP
-            Instances.Clear();
-#endif
+            if (Cleanup.Enabled)
+            {
+                Instances.Clear();
+            }
             GC.Collect();
             return Node;
         }
@@ -240,9 +242,11 @@ namespace SceneCompiler.MoanaConversion
             Node.ForceEven = true;
             buffers.Add(Node);
             Node.Children = Meshes.Select(x=>x.GetSceneNode(buffers)).Where(x=>x != null);
-#if CLEANUP
-            Meshes.Clear();
-#endif
+
+            if (Cleanup.Enabled)
+            {
+                Meshes.Clear();
+            }
             bool merge = true; // we need to do this, else programm will construct a blas for
                                // every single mesh and we exceed vkDeviceMaxAllocations (4096)
             if (merge && Node.Children.Any()) // merges the meshes of the children all into one big mesh
@@ -318,13 +322,13 @@ namespace SceneCompiler.MoanaConversion
             }
 
             buffers.VertexBuffer.AddRange(vertices);
-
-#if CLEANUP
-            Shape.Positions.Clear();
-            Shape.Normals.Clear();
-            Shape.Tex.Clear();
-            Shape.Indices.Clear();
-#endif
+            if (Cleanup.Enabled)
+            {
+                Shape.Positions.Clear();
+                Shape.Normals.Clear();
+                Shape.Tex.Clear();
+                Shape.Indices.Clear();
+            }
             return Node;
         }
 

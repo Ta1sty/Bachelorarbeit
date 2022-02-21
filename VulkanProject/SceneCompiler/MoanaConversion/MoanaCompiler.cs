@@ -14,6 +14,11 @@ namespace SceneCompiler.MoanaConversion
     public class MoanaCompiler : ASceneCompiler
     {
         public List<Texture> Textures = new();
+        public MoanaConfiguration Configuration = CompilerConfiguration.Configuration.MoanaConfiguration;
+        public MoanaCompiler(SceneBuffers buffers) : base(buffers)
+        {
+
+        }
         public override void CompileScene(string path)
         {
             var folders = Directory.GetDirectories(path);
@@ -21,20 +26,16 @@ namespace SceneCompiler.MoanaConversion
             var moana = new Moana();
             foreach (var folder in folders)
             {
-                //if (Path.GetFileName(folder).Contains("isKava")) moana.Sections.Add(ReadFolder(folder));
-                //if (Path.GetFileName(folder).Contains("isIronwoodA1")) moana.Sections.Add(ReadFolder(folder));
-                //if (Path.GetFileName(folder).Contains("isIronwoodB")) moana.Sections.Add(ReadFolder(folder));
-                if (Path.GetFileName(folder).Contains("isBayCedar")) moana.Sections.Add(ReadFolder(folder));
-                //if (Path.GetFileName(folder).Contains("isCoral")) moana.Sections.Add(ReadFolder(folder));
-                //if (Path.GetFileName(folder).Contains("isBeach")) moana.Sections.Add(ReadFolder(folder));
-                //if (Path.GetFileName(folder).Contains("isCoastline")) moana.Sections.Add(ReadFolder(folder));
-                //if (Path.GetFileName(folder).Contains("isMountainB")) moana.Sections.Add(ReadFolder(folder));
-                //if (Path.GetFileName(folder).Contains("isCoastline")) moana.Sections.Add(ReadFolder(folder));
-
-                //if(Environment.WorkingSet > 1L * 512 * 1024 * 1024)
-                //    break;  
+                if (Configuration.Includes.Any(x=>x == Path.GetFileName(folder))) 
+                    moana.Sections.Add(ReadFolder(folder));
             }
-            ValidateMoana(moana);
+
+            foreach (var section in moana.Sections)
+            {
+                SceneName += section.Name.Replace("is", "") + ",";
+            }
+            if(Configuration.ValidateMoana)
+                ValidateMoana(moana);
             moana.SetReference();
             Console.WriteLine("Creating Scenegraph");
             var root = moana.GetSceneNode(Buffers);
@@ -42,26 +43,16 @@ namespace SceneCompiler.MoanaConversion
             Console.WriteLine("Setting Parents and indices");
             Buffers.RewriteAllParents();
 
-            Buffers.ValidateSceneNodes();
-
             Textures = moana.Textures;
-            Buffers.Root = root;
-
-            /*var add = new List<SceneNode>();
-            var lodCreator = new LodCreator(Buffers);
-
-
-            foreach (var node in Buffers.Nodes.Where(x=>x.IsInstanceList))
-            {
-                // add.AddRange(lodCreator.CreateLevelsOfDetail(node, 1));
-            }
-            Buffers.Nodes.AddRange(add);
-            */
-            ValidateSceneGraph(moana);
+            Buffers.Root = Configuration.UseFirstGeometry ? 
+                root.Children.First().Children.First().Children.First() : 
+                root;
+            if(Configuration.ValidateMaterials)
+                ValidateMaterials(moana);
             GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true);
         }
 
-        private void ValidateSceneGraph(Moana moana)
+        private void ValidateMaterials(Moana moana)
         {
             foreach (var vertex in Buffers.VertexBuffer)
             {
@@ -109,7 +100,7 @@ namespace SceneCompiler.MoanaConversion
                         if (map == null)
                             throw new Exception("Unresolved mapping for material:" + mesh.MaterialName);
                     }
-                 });
+                });
 
                 Parallel.ForEach(section.InstancedGeometries, instancedGeometry =>
                 {

@@ -14,7 +14,10 @@ namespace SceneCompiler.GLTFConversion.Compilation
     public class GLTFCompiler : ASceneCompiler
     {
         internal GltfFile File { get; set; }
+        public GLTFCompiler(SceneBuffers buffers) : base(buffers)
+        {
 
+        }
         private readonly List<BufferReader> usedReaders = new();
         internal List<byte[]> GltfBuffers { get; set; } = new();
         private List<MeshData> Meshes { get; set; } = new();
@@ -100,7 +103,6 @@ namespace SceneCompiler.GLTFConversion.Compilation
                 if (node.Mesh == -1) // this node does not point to any geometry
                 {
                     scNode.Children = node.Children.Select(x => Buffers.NodeByIndex(x)).ToList();
-                    var children = scNode.Children.ToList();
                 }
                 else
                 {
@@ -149,45 +151,50 @@ namespace SceneCompiler.GLTFConversion.Compilation
             };
             Buffers.Add(end);
             end.Children = File.Scenes[0].Nodes.Select(x => Buffers.NodeByIndex(x)).ToList();
-            var childeren = end.Children.ToList();
-            var arr = Buffers.Nodes.ToArray();
-            for(int i = 0;i<arr.Length;i++) // might change this
+
+            if (CompilerConfiguration.Configuration.GltfConfiguration.RemoveDuplicates)
             {
-                for (int j = i + 1; j < arr.Length; j++)
+                var arr = Buffers.Nodes.ToArray();
+                for (int i = 0; i < arr.Length; i++) // might change this
                 {
-                    if (arr[i].Brother == null && arr[i].Simmilar(arr[j]))
+                    for (int j = i + 1; j < arr.Length; j++)
                     {
-                        arr[j].Brother = arr[i];
+                        if (arr[i].Brother == null && arr[i].Simmilar(arr[j]))
+                        {
+                            arr[j].Brother = arr[i];
+                        }
                     }
                 }
+
+                foreach (var node in Buffers.Nodes)
+                {
+                    node.Children = node.Children.Select(x => x.ThisOrBrother()).ToList();
+                }
+                Buffers.SetSceneNodes(Buffers.Nodes.Where(x => x.Brother == null));
+
+                end.Children = end.Children.Select(x => x.ThisOrBrother()).ToList();
             }
 
-            foreach (var node in Buffers.Nodes)
+            if (CompilerConfiguration.Configuration.GltfConfiguration.RemovePresumedInstances)
             {
-                node.Children = node.Children.Select(x => x.ThisOrBrother()).ToList();
+                if (end.Children.Count(x => x.NumTriangles >= 0) == 1) // scene consists of only one mesh with a scene node
+                {
+
+                }
+                else // scene consists of more than one, assume instancing
+                {
+                    end.Children = end.Children
+                        .Where(x =>
+                        {
+                            if (x.NumTriangles <= 0) return true;
+                            if (x.Children.Any()) return true;
+                            if (x.ObjectToWorld.M41 != 0) return true;
+                            if (x.ObjectToWorld.M42 != 0) return true;
+                            if (x.ObjectToWorld.M43 != 0) return true;
+                            return false;
+                        }).ToList();
+                }
             }
-            Buffers.SetSceneNodes(Buffers.Nodes.Where(x => x.Brother == null));
-
-
-            end.Children = end.Children.Select(x => x.ThisOrBrother()).ToList();
-            if (end.Children.Count(x => x.NumTriangles >= 0) == 1) // scene consists of only one mesh with a scene node
-            {
-
-            }
-            else // scene consists of more than one, assume instancing
-            {
-                end.Children = end.Children
-                    .Where(x =>
-                    {
-                        if (x.NumTriangles <= 0) return true;
-                        if (x.Children.Count() > 0) return true;
-                        if (x.ObjectToWorld.M41 != 0) return true;
-                        if (x.ObjectToWorld.M42 != 0) return true;
-                        if (x.ObjectToWorld.M43 != 0) return true;
-                        return false;
-                    }).ToList();
-            }
-
 
             Buffers.RewriteAllParents();
 
@@ -203,11 +210,12 @@ namespace SceneCompiler.GLTFConversion.Compilation
             {
                 PropertyNameCaseInsensitive = true
             };
-             File = JsonSerializer.Deserialize<GltfFile>(res, opt);
-             DecodeBuffers();
-             ParseMeshes();
-             BuildSceneGraph();
-             Buffers.MaterialBuffer = File.Materials;
+            SceneName = Path.GetFileNameWithoutExtension(path);
+            File = JsonSerializer.Deserialize<GltfFile>(res, opt);
+            DecodeBuffers();
+            ParseMeshes();
+            BuildSceneGraph(); 
+            Buffers.MaterialBuffer = File.Materials;
         }
         public override void WriteTextures(FileStream str)
         {

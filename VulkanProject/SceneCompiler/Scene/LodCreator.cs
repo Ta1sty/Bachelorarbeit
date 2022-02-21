@@ -14,7 +14,7 @@ namespace SceneCompiler.Scene
         {
             _buffers = buffers;
         }
-        public List<SceneNode> CreateLevelsOfDetail(SceneNode node, int amount) // returns the number of nodes to add to the scene Buffer
+        public void CreateLevelsOfDetail(SceneNode node, int amount) // returns the number of nodes to add to the scene Buffer
         {
             if (!node.ForceEven)
                 throw new Exception("can only create LOD selector for even nodes (a TLAS)"); // since InstanceHitCompute is exectued for even nodes
@@ -25,6 +25,7 @@ namespace SceneCompiler.Scene
                 IsLodSelector = true,
                 Name = "LOD-Sel " + node.Name,
             };
+            _buffers.Add(selector);
 
             var lods = new SceneNode[amount];
             foreach (var parent in node.Parents)
@@ -36,14 +37,31 @@ namespace SceneCompiler.Scene
             _buffers.ClearParents(node);
             _buffers.AddParent(node, selector);
             _buffers.AddChild(selector, node);
-            node.Name = "LOD 0 " + node.Name;
+            var name = node.Name;
+            node.Name = "LOD 0 " + name;
             lods[0] = node;
             // create
-
-
-            // add
-
-            return new List<SceneNode> { selector };
+            for (var i = 1; i < amount; i++)
+            {
+                var lod = new SceneNode
+                {
+                    Name = "LOD " + i + " " + name,
+                    ForceEven = true,
+                    IndexBufferIndex = node.IndexBufferIndex,
+                    IsInstanceList = node.IsInstanceList,
+                    NumTriangles = node.NumTriangles,
+                    ObjectToWorld = node.ObjectToWorld,
+                };
+                _buffers.Add(lod);
+                _buffers.AddParent(lod,selector);
+                _buffers.AddChild(selector, lod);
+                _buffers.SetChildren(lod, node.Children);
+                foreach (var child in node.Children)
+                {
+                    _buffers.AddParent(child, lod);
+                }
+            }
+            _buffers.AddChild(selector, node);
         }
     }
 }
