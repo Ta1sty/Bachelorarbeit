@@ -13,11 +13,7 @@ namespace SceneCompiler.Scene
     {
         public static string CreateObj(SceneBuffers buffers, SceneNode node)
         {
-            var indexOffset = int.MaxValue;
-            for (var i = 0; i < node.NumTriangles * 3; i++)
-            {
-                indexOffset = Math.Min(indexOffset, (int)buffers.IndexBuffer[node.IndexBufferIndex + i]);
-            }
+            var indexOffset = buffers.VertexBuffer[(int)buffers.IndexBuffer[node.IndexBufferIndex]].IndexOffset;
 
             var vertexList = buffers.IndexBuffer.GetRange(node.IndexBufferIndex, node.NumTriangles * 3)
                 .Select(x => buffers.VertexBuffer[(int)x]);
@@ -101,10 +97,17 @@ namespace SceneCompiler.Scene
                 throw new Exception("wrong file format");
 
             var buffer = new byte[info.Length];
-            var fltDst = new float[numVer * 12];
+            var fltDst = new float[numVer * 8];
             var intDst = new int[numVer]; // 
+
             var bStr = str.BaseStream;
-            bStr.Position = 0x184;
+            bStr.Position = 0;
+            var count = 0;
+            while (count < 19)
+            {
+                if(bStr.ReadByte() == 0x0a) // skip 19 new line characters
+                    count++;
+            }
             bStr.Read(buffer);
             var pos = -4;
             for (var i = 0; i < numVer; i++)

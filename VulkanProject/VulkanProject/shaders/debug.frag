@@ -19,7 +19,7 @@ void SetDebugHsv(bool option, float number, float range, bool clampValue) {
 	if (!debugSetEnabled) return;
 	float x = number / range;
 	if (clampValue)
-		x = min(x, 0.66);
+		x = min(x*0.66, 0.66);
 	debugColor = vec4(hsv2rgb(vec3(x, 1, 1)), 1);
 }
 

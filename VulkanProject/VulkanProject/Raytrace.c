@@ -815,10 +815,14 @@ void compile_query_trace(VkInfo* info, Scene* scene)
 	{
 		QueryTrace t = traces[i];
 		SceneNode node = scene->scene_nodes[t.nodeNumber];
-
-		if (t.isValid == 0)
-			break;
+		if(t.triangleIntersections == 123)
+		{
+			int a = 0;
+			printf("Level:%d\n", t.nodeLevel);
+		}
+		//if (t.isValid == 0)
+		//	break;
 	}
 	vkUnmapMemory(info->device, info->ray_descriptor.traceMemory);
-	scene->camera.settings.recordQueryTrace == 0;
+	scene->camera.settings.recordQueryTrace = 0;
 }

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -49,10 +50,10 @@ namespace SceneCompiler.Scene
                 {
                     Name = "LOD " + i + " " + name,
                     ForceEven = true,
-                    IndexBufferIndex = node.IndexBufferIndex,
-                    IsInstanceList = node.IsInstanceList,
-                    NumTriangles = node.NumTriangles,
-                    ObjectToWorld = node.ObjectToWorld,
+                    IndexBufferIndex = lods[i-1].IndexBufferIndex,
+                    IsInstanceList = lods[i-1].IsInstanceList,
+                    NumTriangles = lods[i-1].NumTriangles,
+                    ObjectToWorld = lods[i-1].ObjectToWorld,
                 };
                 CreateLod(lod, factor);
                 _buffers.Add(lod);
@@ -63,8 +64,12 @@ namespace SceneCompiler.Scene
                 {
                     _buffers.AddParent(child, lod);
                 }
+
+                lods[i] = lod;
+
+                if (lod.NumTriangles < CompilerConfiguration.Configuration.LodConfiguration.LodTriangleThreshold)
+                    break;
             }
-            _buffers.AddChild(selector, node);
         }
 
         public void CreateLod(SceneNode node, int factor)
@@ -72,21 +77,38 @@ namespace SceneCompiler.Scene
             var input = GeometryLoader.CreateObj(_buffers, node);
             var output = Path.Combine(Path.GetDirectoryName(input)!, node.Name + ".ply");
             var targetNum = (node.NumTriangles / factor).ToString();
-            var args = new[]{ input, output, targetNum };
-            var proc = Process.Start("tridecimator.exe", args);
+            var args = new[]{ input, output, targetNum};
+            Console.WriteLine("Create " + node.Name + " T:" + targetNum);
+            var proc = Process.Start("tridecimator.exe", args.Concat(CompilerConfiguration.Configuration.LodConfiguration.TriDecimatorArguments));
 
             proc.WaitForExit();
             var ply = GeometryLoader.LoadPly(output);
             var start = _buffers.VertexBuffer.Count;
             var offset = _buffers.IndexBuffer.Count;
-            _buffers.IndexBuffer.AddRange(ply.Indices.Select(x=> (uint)(x + start)));
             node.IndexBufferIndex = offset;
             node.NumTriangles = ply.Indices.Length / 3;
-            for (var i = 0; i < ply.VertexMaterials.Length; i++)
+            var vertices = ply.VertexMaterials
+                .Select((mat, i) => new Vertex(i, ply.VertexFloats, mat, start))
+                .ToArray();
+
+            var dict = new Dictionary<Vertex, int>();
+
+            for (var i = 0; i < ply.Indices.Length; i++)
             {
-                var vertex = new Vertex(i, ply.VertexFloats, ply.VertexMaterials[i], start);
-                _buffers.VertexBuffer.Add(vertex);
+                var vertex = vertices[ply.Indices[i]];
+                dict.TryAdd(vertex, dict.Keys.Count);
+                ply.Indices[i] = dict.GetValueOrDefault(vertex);
             }
+
+            var add = new Vertex[dict.Keys.Count];
+            foreach (var (vertex,index) in dict)
+            {
+                add[index] = vertex;
+            }
+
+            _buffers.VertexBuffer.AddRange(add);
+
+            _buffers.IndexBuffer.AddRange(ply.Indices.Select(x => (uint)(x + start)));
         }
     }
 }

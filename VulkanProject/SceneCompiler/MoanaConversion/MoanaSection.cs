@@ -241,15 +241,17 @@ namespace SceneCompiler.MoanaConversion
             Node.Name = "Geom " + Name;
             Node.ForceEven = true;
             buffers.Add(Node);
-            Node.Children = Meshes.Select(x=>x.GetSceneNode(buffers)).Where(x=>x != null);
+
+            var offset = buffers.VertexBuffer.Count;
+            Node.Children = Meshes.Select(x=>x.GetSceneNode(buffers, offset)).Where(x=>x != null);
 
             if (Cleanup.Enabled)
             {
                 Meshes.Clear();
             }
-            bool merge = true; // we need to do this, else programm will construct a blas for
-                               // every single mesh and we exceed vkDeviceMaxAllocations (4096)
-            if (merge && Node.Children.Any()) // merges the meshes of the children all into one big mesh
+            // we need to do this, else programm will construct a blas for
+            // every single mesh and we exceed vkDeviceMaxAllocations (4096)
+            if (CompilerConfiguration.Configuration.MoanaConfiguration.MergeMeshes && Node.Children.Any()) // merges the meshes of the children all into one big mesh
             {
                 Node.NumTriangles = Node.Children.Sum(x => x.NumTriangles);
                 Node.IndexBufferIndex = Node.Children.Min(x => x.IndexBufferIndex);
@@ -276,7 +278,7 @@ namespace SceneCompiler.MoanaConversion
         public Shape Shape { get; set; }
         public string MaterialName { get; set; }
         public SceneNode Node { get; set; }
-        public SceneNode GetSceneNode(SceneBuffers buffers)
+        public SceneNode GetSceneNode(SceneBuffers buffers, int offset)
         {    
             if (Node != null)
                 return Node;
@@ -317,7 +319,10 @@ namespace SceneCompiler.MoanaConversion
             var num = Shape.Positions.Count / 3;
             for (var i = 0; i < num; i++)
             {
-                var vertex = new Vertex(i, Shape.Positions, Shape.Normals, Shape.Tex, materialIndex, start);
+                var indexOffset = start;
+                if (CompilerConfiguration.Configuration.MoanaConfiguration.MergeMeshes)
+                    indexOffset = offset;
+                var vertex = new Vertex(i, Shape.Positions, Shape.Normals, Shape.Tex, materialIndex, indexOffset);
                 vertices.Add(vertex);
             }
 

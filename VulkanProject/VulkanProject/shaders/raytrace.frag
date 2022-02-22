@@ -110,14 +110,7 @@ void instanceHitCompute(int index, vec3 rayOrigin, vec3 rayDirection, bool IsIns
 	// that were of the previous one
 
 	// we can now do LOD or whatever we feel like doing
-
-	if(next.IsLodSelector) {
-		SceneNode dummy = nodes[childIndices[next.ChildrenIndex]];
-		next = nodes[childIndices[dummy.ChildrenIndex + 0]];
-	}
-
-	// here the shader adds the next payloads
-
+	
 	vec3 origin = world_to_object * vec4(nextLoad.world_to_object * vec4(rayOrigin,1),1);
 	vec3 direction = world_to_object * vec4(nextLoad.world_to_object * vec4(rayDirection,0),0);
 
@@ -125,8 +118,37 @@ void instanceHitCompute(int index, vec3 rayOrigin, vec3 rayDirection, bool IsIns
 	float tNear, tFar;
 	intersectAABB(origin, direction, next.AABB_min, next.AABB_max, tNear, tFar);
 
-	world_to_object = mat4x3(mat4(inv(transforms[next.TransformIndex])) * mat4(world_to_object));
+	if(next.IsLodSelector) {
+		SceneNode dummy = nodes[childIndices[next.ChildrenIndex]];
+		int N = dummy.NumChildren;
 
+		mat3 tr = mat3(world_to_object * mat4(nextLoad.world_to_object));
+
+		float eigMax = 1/length(tr[0]);
+		eigMax = max(eigMax, 1/length(tr[1]));
+		eigMax = max(eigMax, 1/length(tr[2])); // computes the biggest eigenvalue of the object_to_world transform
+
+		float rObject = length(next.AABB_max-next.AABB_min)/2;
+		float rWorld = eigMax * rObject;
+
+		float rMax = 1000;
+		float t = max(0,tNear);
+		float rPixel = rWorld * height / (tan(PI / 180 * fov) * 2 * t);
+		int lod = -int(log2(pow(2,N-1) * rPixel/rMax));
+		
+		lod = max(lod, 0);
+		lod = min(lod, N-1);
+
+		//recordLODSelect(next.Index, mat4(tr), tNear, rObject, rWorld, rPixel, eigMax, lod);
+		SetDebugHsv(displayLOD, lod, N, true);
+		next = nodes[childIndices[dummy.ChildrenIndex + lod]];
+	}
+
+
+
+	world_to_object = mat4x3(mat4(inv(transforms[next.TransformIndex])) * mat4(world_to_object));
+	
+	// here the shader adds the next payloads
 	nextLoad.nIdx = next.Index;
 	nextLoad.world_to_object = mat4x3(mat4(world_to_object) * mat4(nextLoad.world_to_object));
 	nextLoad.t = tNear;
@@ -177,20 +199,6 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, f
 	if (debug && displayAABBs) {
 		SceneNode root = nodes[root];
 		debugAABB(rayOrigin, rayDirection, root);
-		vec3 query_origin = (start.world_to_object * vec4(rayOrigin,1)).xyz;
-		vec3 query_direction = (start.world_to_object * vec4(rayDirection,0)).xyz;
-		if(root.IsInstanceList){
-			SceneNode list = nodes[childIndices[root.ChildrenIndex]];
-			for (int i = 0; i < list.NumChildren; i++) {
-				SceneNode child = nodes[list.ChildrenIndex + i];
-				//debugAABB(query_origin, query_direction, child);
-			}
-		} else {
-			for (int i = 0; i < root.NumChildren; i++) {
-				SceneNode child = nodes[childIndices[root.ChildrenIndex + i]];
-				// debugAABB(query_origin, query_direction, child);
-			}
-		}
 	}
 
 	traversalBuffer[0] = start;
@@ -315,7 +323,6 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, f
 				resultPayload.nIdx = blasChild.Index;
 				resultPayload.world_to_object = mat4x3(world_to_object * mat4(load.world_to_object));
 				resultPayload.t = best_t;
-
 				triangleTLAS = tlasNumber;
 			}
 		}
@@ -380,7 +387,7 @@ vec4 shadeFragment(vec3 P, vec3 V, vec3 N, vec4 color, Material material, int tr
 	float n = 1; // todo phong exponent
 	// calculate lighting for each light source
 
-	recordQuery(999, 0, 0, P, P + N, 0 ,0);
+	//recordQuery(999, 0, 0, P, P + N, 0 ,0);
 
 	vec3 sum = vec3(0);
 	for (int i = 0; i < numLights; i++) {

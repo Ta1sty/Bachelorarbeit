@@ -2,6 +2,7 @@
 #include "Globals.h"
 
 typedef struct queryTrace {
+	float matrix[4][4];
 	float start[3];
 	float t;
 	float end[3];
@@ -18,7 +19,7 @@ void init_ray_descriptors(VkInfo* info, Scene* scene);
 
 void build_all_acceleration_structures(VkInfo* info, Scene* scene);
 void build_node_acceleration_structure(VkInfo* info, Scene* scene, SceneNode* node);
-void build_node_instance_list(VkInfo* info, Scene* scene, SceneNode* node);
+void build_node_instance_list(VkInfo* info, Scene* scene, SceneNode* list);
 
 void build_tlas(VkInfo* info, Scene* scene, SceneNode* node);
 void build_blas(VkInfo* info, Scene* scene, SceneNode* node);

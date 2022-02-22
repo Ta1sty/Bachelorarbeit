@@ -1,4 +1,5 @@
 struct QueryTrace {
+	mat4 matrix;
 	vec3 start;
 	float t;
 	vec3 end;
@@ -32,6 +33,22 @@ void recordQuery(uint nodeNumber, int nodeLevel, float t, vec3 start, vec3 end, 
 	add.instanceIntersections = instanceIntersections;
 	add.t = t;
 
+	// add
+	queryTraces[nextRecord] = add;
+	nextRecord++;
+}
+void recordLODSelect(int node, mat4 world_to_object, float tNear, float rObject, float rWorld, float rPixel, float eigMax, int lod) {
+	if (!recordTrace || nextRecord >= traceMax - 2) return;
+	QueryTrace add;
+	add.matrix = world_to_object;
+	add.start = vec3(rObject, rWorld, rPixel);
+	add.end = vec3(eigMax, 0, 0);
+	add.nodeLevel = lod;
+	add.nodeNumber = node;
+	add.isValid = 1;
+	add.triangleIntersections = 123;
+	add.instanceIntersections = 321;
+	add.t = tNear;
 	// add
 	queryTraces[nextRecord] = add;
 	nextRecord++;

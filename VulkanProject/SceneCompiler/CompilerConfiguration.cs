@@ -113,11 +113,13 @@ namespace SceneCompiler
         /// <summary>uses lod for large triangle meshes</summary>
         public bool UseLod { get; set; } = false;
         /// <summary>the amount of triangles needed for lod to be used</summary>
-        public int LodTriangleThreshold { get; set; } = 1000000;
+        public int LodTriangleThreshold { get; set; } = 100000;
         /// <summary>The reduction factor per level of lod. Means factor 4 is ~25% of triangles</summary>
         public int ReductionFactor { get; set; } = 4;
         /// <summary>The number of Lods to build</summary>
-        public int NumLod { get; set; } = 5;
+        public int NumMaxLod { get; set; } = 5;
+        /// <summary>The additional Arguments passed to the TriDecimator</summary>
+        public List<string> TriDecimatorArguments { get; set; } = new List<string>() { "-Ty", "-C" };
     }
 
     public class DebugConfiguration

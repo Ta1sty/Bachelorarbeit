@@ -79,7 +79,7 @@ namespace SceneCompiler
                 {
                     node.ForceOdd = false;
                     node.ForceEven = true;
-                    creator.CreateLevelsOfDetail(node, config.LodConfiguration.NumLod, config.LodConfiguration.ReductionFactor);
+                    creator.CreateLevelsOfDetail(node, config.LodConfiguration.NumMaxLod, config.LodConfiguration.ReductionFactor);
                 }
             }
 

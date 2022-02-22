@@ -237,7 +237,7 @@ void draw_imgui_frame(VkInfo* info, Scene* scene, SceneSelection* scene_selectio
 		ImGui::Indent(10);
 		ImGui::Checkbox("List AABBs (!FPS!)", (bool*)&scene->camera.settings.displayListAABBs);
 		ImGui::Unindent(10);
-
+		ImGui::Checkbox("LOD", (bool*)&scene->camera.settings.displayLOD);
 
 		ImGui::Checkbox("TraversalDepth", (bool*)&scene->camera.settings.displayTraversalDepth);
 		ImGui::Checkbox("TraversalCount", (bool*)&scene->camera.settings.displayTraversalCount);

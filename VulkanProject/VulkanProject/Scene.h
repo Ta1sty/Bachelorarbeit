@@ -115,6 +115,7 @@ typedef struct renderSettings {
 	// QUERY INFO
 	VkBool32 displayAABBs; // displays the AABBs
 	VkBool32 displayListAABBs; // displas the AABBs of instance Lists
+	VkBool32 displayLOD;
 	VkBool32 displayTraversalDepth; // displays the maximum Depth the traversal took
 	VkBool32 displayTraversalCount; // displays the amount of times the loop ran and executed a query (skipped due to hight T is not counted)
 	VkBool32 displayQueryCount; // displays the total number of rayqueries that were used for this
