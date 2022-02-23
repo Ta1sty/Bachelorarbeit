@@ -33,7 +33,7 @@ namespace SceneCompiler.Scene.SceneTypes
         public int Level = -1;
         public int NumTriangles = 0;
         public int IndexBufferIndex = -1;
-        public int NumChildren { get => Children.Count(); }
+        public int NumChildren => Children.Count();
         public int ChildrenIndex = -1;
         public int TlasNumber = -1;
         public bool IsInstanceList = false;

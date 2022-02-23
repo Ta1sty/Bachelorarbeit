@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Globalization;
 using SceneCompiler.Scene;
@@ -44,11 +45,25 @@ namespace SceneCompiler.MoanaConversion
             Buffers.RewriteAllParents();
 
             Textures = moana.Textures;
-            Buffers.Root = Configuration.UseFirstGeometry ? 
-                root.Children.First().Children.First().Children.First() : 
-                root;
+            if (Configuration.UseFirstSectionObject)
+            {
+                var section = root.Children.First();
+                var list = section.Children.First();
+                var listElem = list.Children.First();
+                var geometry = listElem.Children.First(x => x.NumTriangles > 0);
+                if (Configuration.UseObjectIncludes)
+                    Buffers.Root = listElem;
+                else
+                    Buffers.Root = geometry;
+            }
+            else
+            {
+                Buffers.Root = root;
+            }
+
             if(Configuration.ValidateMaterials)
                 ValidateMaterials(moana);
+
             GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true);
         }
 

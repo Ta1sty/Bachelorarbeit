@@ -56,6 +56,72 @@ namespace SceneCompiler.Scene
             return Path.GetFullPath(node.Name + ".obj");
         }
 
+        public static string CreatePly(SceneBuffers buffers, SceneNode node)
+        {
+            var indexOffset = buffers.VertexBuffer[(int)buffers.IndexBuffer[node.IndexBufferIndex]].IndexOffset;
+
+            var vertexList = buffers.IndexBuffer.GetRange(node.IndexBufferIndex, node.NumTriangles * 3)
+                .Select(x => buffers.VertexBuffer[(int)x]);
+
+            var vertices = new HashSet<Vertex>(vertexList);
+
+            var materials = vertices.Select(x => x.MaterialIndex).Distinct().ToList();
+            // write header
+            using (var textStream = new StreamWriter(node.Name + ".ply")){
+                textStream.WriteLine("ply");
+                textStream.WriteLine("format binary_little_endian 1.0");
+                textStream.WriteLine("comment VCGLIB generated");
+                textStream.WriteLine($"element vertex {vertices.Count}");
+                textStream.WriteLine("property float x");
+                textStream.WriteLine("property float y");
+                textStream.WriteLine("property float z");
+                textStream.WriteLine("property float nx");
+                textStream.WriteLine("property float ny");
+                textStream.WriteLine("property float nz");
+                textStream.WriteLine("property uchar red");
+                textStream.WriteLine("property uchar green");
+                textStream.WriteLine("property uchar blue");
+                textStream.WriteLine("property uchar alpha");
+                textStream.WriteLine("property float texture_u");
+                textStream.WriteLine("property float texture_v");
+                textStream.WriteLine($"element face {node.NumTriangles}");
+                textStream.WriteLine("property list uchar int vertex_indices");
+                textStream.WriteLine("end_header");
+            }
+            // write contents
+            using (var byteStream = File.Open(node.Name + ".ply", FileMode.Append))
+            {
+                foreach (var vertex in vertices)
+                {
+                    var pos = vertex.Position();
+                    var norm = vertex.Normal();
+                    var tex = vertex.Tex();
+                    var mat = vertex.MaterialIndex;
+                    byteStream.Write(BitConverter.GetBytes(pos.X));
+                    byteStream.Write(BitConverter.GetBytes(pos.Y));
+                    byteStream.Write(BitConverter.GetBytes(pos.Z));
+                    byteStream.Write(BitConverter.GetBytes(norm.X));
+                    byteStream.Write(BitConverter.GetBytes(norm.Y));
+                    byteStream.Write(BitConverter.GetBytes(norm.Z));
+                    byteStream.Write(BitConverter.GetBytes(mat));
+                    byteStream.Write(BitConverter.GetBytes(tex.X));
+                    byteStream.Write(BitConverter.GetBytes(tex.Y));
+                }
+
+                for (var i = 0; i < node.NumTriangles; i++)
+                {
+                    var v0 = (int)buffers.IndexBuffer[node.IndexBufferIndex + i * 3 + 0] - indexOffset;
+                    var v1 = (int)buffers.IndexBuffer[node.IndexBufferIndex + i * 3 + 1] - indexOffset;
+                    var v2 = (int)buffers.IndexBuffer[node.IndexBufferIndex + i * 3 + 2] - indexOffset;
+                    byteStream.WriteByte(3);
+                    byteStream.Write(BitConverter.GetBytes(v0));
+                    byteStream.Write(BitConverter.GetBytes(v1));
+                    byteStream.Write(BitConverter.GetBytes(v2));
+                }
+            }
+            return Path.GetFullPath(node.Name + ".ply");
+        }
+
         public class PlyFile
         {
             public float[] VertexFloats;

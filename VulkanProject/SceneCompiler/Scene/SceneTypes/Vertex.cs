@@ -92,5 +92,10 @@ namespace SceneCompiler.Scene.SceneTypes
         {
             return new Vector2(Array[6], Array[7]);
         }
+
+        public override int GetHashCode()
+        {
+            return BitConverter.ToInt32(BitConverter.GetBytes(Array[0] + Array[1] + Array[2]));
+        }
     }
 }

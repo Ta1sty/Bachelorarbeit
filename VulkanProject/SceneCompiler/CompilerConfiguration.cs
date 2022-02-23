@@ -69,8 +69,10 @@ namespace SceneCompiler
         public bool Cleanup { get; set; } = true;
         /// <summary>Merges the meshes of a geometry file into one large mesh</summary>
         public bool MergeMeshes { get; set; } = true;
-        /// <summary>takes the first geometry of the first included section as the root of the scenegraph</summary>
-        public bool UseFirstGeometry { get; set; } = false;
+        /// <summary>takes the first object of the first included section as the root of the scenegraph</summary>
+        public bool UseFirstSectionObject { get; set; } = false;
+        /// <summary>Includes the instanced geometry when using only the first geometry</summary>
+        public bool UseObjectIncludes { get; set; } = true;
         /// <summary>the sections to include</summary>
         public List<string> Includes { get; set; } = new(){"isBayCedarA1"};
         /// <summary>Validates the materials for the mona scene to check which are present or missing</summary>
@@ -110,10 +112,16 @@ namespace SceneCompiler
 
     public class LodConfiguration
     {
-        /// <summary>uses lod for large triangle meshes</summary>
+        /// <summary>Uses lod for large triangle meshes</summary>
         public bool UseLod { get; set; } = false;
-        /// <summary>the amount of triangles needed for lod to be used</summary>
+        /// <summary>Creates levels of detail based on a number of triangles</summary>
+        public bool UseTriangleLod { get; set; } = true;
+        /// <summary>The amount of triangles needed for lod to be used</summary>
         public int LodTriangleThreshold { get; set; } = 100000;
+        /// <summary>Creates Levels of detail for large Instance lists</summary>
+        public bool UseInstanceLod { get; set; } = true;
+        /// <summary>The amount of instances need for a the creation of an instance list LOD</summary>
+        public int LodInstanceThreshold { get; set; } = 500;
         /// <summary>The reduction factor per level of lod. Means factor 4 is ~25% of triangles</summary>
         public int ReductionFactor { get; set; } = 4;
         /// <summary>The number of Lods to build</summary>

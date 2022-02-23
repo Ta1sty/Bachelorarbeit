@@ -72,14 +72,28 @@ namespace SceneCompiler
 
             if (config.LodConfiguration.UseLod)
             {
-                var lodNodes = buffers.Nodes.Where(x => x.NumTriangles > config.LodConfiguration.LodTriangleThreshold)
-                    .ToList();
                 var creator = new LodCreator(buffers);
-                foreach (var node in lodNodes)
+                if (config.LodConfiguration.UseTriangleLod)
                 {
-                    node.ForceOdd = false;
-                    node.ForceEven = true;
-                    creator.CreateLevelsOfDetail(node, config.LodConfiguration.NumMaxLod, config.LodConfiguration.ReductionFactor);
+                    var lodNodes = buffers.Nodes.Where(x => x.NumTriangles > config.LodConfiguration.LodTriangleThreshold)
+                        .ToList();
+                    foreach (var node in lodNodes)
+                    {
+                        node.ForceOdd = false;
+                        node.ForceEven = true;
+                        creator.CreateTriangleLod(node, config.LodConfiguration.NumMaxLod, config.LodConfiguration.ReductionFactor);
+                    }
+                }
+
+                if (config.LodConfiguration.UseInstanceLod)
+                {
+                    var lodNodes = buffers.Nodes
+                        .Where(x => x.IsInstanceList && x.NumChildren > config.LodConfiguration.LodInstanceThreshold)
+                        .ToList();
+                    foreach (var node in lodNodes)
+                    {
+                        creator.CreateInstanceLod(node, config.LodConfiguration.NumMaxLod, config.LodConfiguration.ReductionFactor);
+                    }
                 }
             }
 

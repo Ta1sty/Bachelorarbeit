@@ -202,7 +202,9 @@ namespace SceneCompiler.MoanaConversion
             };
             buffers.Add(Node);
 
-            if(Children != null)
+            if(Children != null && 
+               CompilerConfiguration.Configuration.MoanaConfiguration.UseFirstSectionObject &&
+               CompilerConfiguration.Configuration.MoanaConfiguration.UseObjectIncludes)
             {
                 Node.Children = Children.Select(name => InstanceList.InstancedGeometry.Section.InstancedGeometries
                     .SelectMany(x => x.InstanceLists).Single(x => x.Name == name)
@@ -243,22 +245,29 @@ namespace SceneCompiler.MoanaConversion
             buffers.Add(Node);
 
             var offset = buffers.VertexBuffer.Count;
-            Node.Children = Meshes.Select(x=>x.GetSceneNode(buffers, offset)).Where(x=>x != null);
+            var children = Meshes.Select(x=>x.GetSceneNode(buffers, offset)).Where(x=>x != null);
+
+
+            // we need to do this, else programm will construct a blas for
+            // every single mesh and we exceed vkDeviceMaxAllocations (4096)
+            if (CompilerConfiguration.Configuration.MoanaConfiguration.MergeMeshes && children.Any()) // merges the meshes of the children all into one big mesh
+            {
+                Node.NumTriangles = children.Sum(x => x.NumTriangles);
+                Node.IndexBufferIndex = children.Min(x => x.IndexBufferIndex);
+                Node.ForceOdd = true;
+                Node.ForceEven = false;
+                buffers.ClearChildren(Node);
+            }
+            else
+            {
+                Node.Children = children;
+            }
 
             if (Cleanup.Enabled)
             {
                 Meshes.Clear();
             }
-            // we need to do this, else programm will construct a blas for
-            // every single mesh and we exceed vkDeviceMaxAllocations (4096)
-            if (CompilerConfiguration.Configuration.MoanaConfiguration.MergeMeshes && Node.Children.Any()) // merges the meshes of the children all into one big mesh
-            {
-                Node.NumTriangles = Node.Children.Sum(x => x.NumTriangles);
-                Node.IndexBufferIndex = Node.Children.Min(x => x.IndexBufferIndex);
-                Node.ForceOdd = true;
-                Node.ForceEven = false;
-                buffers.ClearChildren(Node);
-            }
+
             return Node;
         }
         public void SetReference(InstancedGeometry instancedGeometry)
@@ -312,7 +321,9 @@ namespace SceneCompiler.MoanaConversion
                 Name = "Mesh " + Name,
                 ForceOdd = true
             };
-            buffers.Add(Node);
+            if(!CompilerConfiguration.Configuration.MoanaConfiguration.MergeMeshes) 
+                buffers.Add(Node);
+
             buffers.IndexBuffer.AddRange(Shape.Indices.Select(x=>(uint) (x+start)));
 
             var vertices = new List<Vertex>(Shape.Positions.Count);
@@ -327,6 +338,7 @@ namespace SceneCompiler.MoanaConversion
             }
 
             buffers.VertexBuffer.AddRange(vertices);
+
             if (Cleanup.Enabled)
             {
                 Shape.Positions.Clear();

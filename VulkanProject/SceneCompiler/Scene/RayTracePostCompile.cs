@@ -69,7 +69,7 @@ namespace SceneCompiler.Scene
             var add = new List<SceneNode>();
 
             foreach (var node in _buffers.Nodes)
-                if (node.Children.Count(x => x.IsInstanceList) > 1)
+                if (node.Children.Count(x => x.IsInstanceList) > 1 && !node.IsLodSelector)
                 {
                     var merge = true;
                     // every instance list must have the same transfrom, ie all use identity(cause thats convenient)
