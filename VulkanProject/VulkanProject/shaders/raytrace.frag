@@ -244,7 +244,7 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, f
 		numTraversals++;
 		uint triangleIntersections = 0;
 		uint instanceIntersections = 0;
-
+		
 		while (rayQueryProceedEXT(ray_query)) {
 			uint type = rayQueryGetIntersectionTypeEXT(ray_query, false);
 			switch (type) {

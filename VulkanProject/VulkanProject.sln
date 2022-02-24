@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VulkanProject", "VulkanProj
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SceneCompiler", "SceneCompiler\SceneCompiler.csproj", "{AC6672A5-249E-4998-8544-72499B6E785C}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PtexTest", "PtexTest\PtexTest.vcxproj", "{47E0C110-D044-4253-9845-A530053EDEBD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,18 @@ Global
 		{AC6672A5-249E-4998-8544-72499B6E785C}.Release|x64.Build.0 = Release|Any CPU
 		{AC6672A5-249E-4998-8544-72499B6E785C}.Release|x86.ActiveCfg = Release|Any CPU
 		{AC6672A5-249E-4998-8544-72499B6E785C}.Release|x86.Build.0 = Release|Any CPU
+		{47E0C110-D044-4253-9845-A530053EDEBD}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{47E0C110-D044-4253-9845-A530053EDEBD}.Debug|Any CPU.Build.0 = Debug|x64
+		{47E0C110-D044-4253-9845-A530053EDEBD}.Debug|x64.ActiveCfg = Debug|x64
+		{47E0C110-D044-4253-9845-A530053EDEBD}.Debug|x64.Build.0 = Debug|x64
+		{47E0C110-D044-4253-9845-A530053EDEBD}.Debug|x86.ActiveCfg = Debug|Win32
+		{47E0C110-D044-4253-9845-A530053EDEBD}.Debug|x86.Build.0 = Debug|Win32
+		{47E0C110-D044-4253-9845-A530053EDEBD}.Release|Any CPU.ActiveCfg = Release|x64
+		{47E0C110-D044-4253-9845-A530053EDEBD}.Release|Any CPU.Build.0 = Release|x64
+		{47E0C110-D044-4253-9845-A530053EDEBD}.Release|x64.ActiveCfg = Release|x64
+		{47E0C110-D044-4253-9845-A530053EDEBD}.Release|x64.Build.0 = Release|x64
+		{47E0C110-D044-4253-9845-A530053EDEBD}.Release|x86.ActiveCfg = Release|Win32
+		{47E0C110-D044-4253-9845-A530053EDEBD}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

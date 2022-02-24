@@ -43,6 +43,7 @@ namespace SceneCompiler.MoanaConversion
     {
         public Moana Moana { get; set; }
         public string Name { get; set; }
+        public string Path { get; set; }
         public InstancedGeometry InstancedGeometry { get; set; }
         public List<Material> Materials { get; set; } = new();
         public ConcurrentBag<InstancedGeometry> InstancedGeometries { get; set; } = new();
@@ -287,6 +288,7 @@ namespace SceneCompiler.MoanaConversion
         public Shape Shape { get; set; }
         public string MaterialName { get; set; }
         public SceneNode Node { get; set; }
+        public string TexturePath { get; set; }
         public SceneNode GetSceneNode(SceneBuffers buffers, int offset)
         {    
             if (Node != null)

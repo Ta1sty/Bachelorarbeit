@@ -7,6 +7,7 @@ using SceneCompiler.Scene;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using SceneCompiler.Scene.SceneTypes;
 
@@ -149,9 +150,10 @@ namespace SceneCompiler.MoanaConversion
         private MoanaSection ReadFolder(string folder)
         {
             var section = new MoanaSection();
+            section.Path = folder;
             var sectionName = Path.GetFileName(folder);
             section.Name = sectionName;
-            var folders = Directory.GetDirectories(folder);
+            var folders = Directory.GetDirectories(folder).Where(x=>Path.GetFileName(x).StartsWith("xg"));
 
             var tasks = new List<Task>();
 
@@ -203,7 +205,7 @@ namespace SceneCompiler.MoanaConversion
             tasks.AddRange(Directory.GetFiles(directory)
                 .Select(Path.GetFileName).Where(x => x.Contains("_geometry.pbrt")).Select(x => Task.Run(() =>
             {
-                instancedGeometry.Geometries.Add(ParseGeometryFile(Path.Combine(directory, x)));
+                instancedGeometry.Geometries.Add(ParseGeometryFile(section.Name, Path.Combine(directory, x)));
             })));
 
             Task.WaitAll(tasks.ToArray());
@@ -211,7 +213,7 @@ namespace SceneCompiler.MoanaConversion
             return instancedGeometry;
         }
 
-        private Geometry ParseGeometryFile(string path)
+        private Geometry ParseGeometryFile(string sectionName, string path)
         {
             var info = new FileInfo(path);
             using var stream = new StreamReader(path);
@@ -252,6 +254,26 @@ namespace SceneCompiler.MoanaConversion
 
                 if (mesh != null)
                 {
+                    if (line.Contains("Texture") && line.Contains("\"color\" \"ptex\""))
+                    {
+                        line = stream.ReadLine();
+                        line = line.Replace("\"", "");
+                        line = line.Replace(" ", "");
+                        line = line.Replace("[", "");
+                        line = line.Replace("]", "");
+                        line = line.Replace("stringfilename../textures/", "");
+                        var regex = new Regex(@$"(.*\\{sectionName}).*");
+                        var sectionFolder = Path.Combine(regex.Replace(path, "$1"));
+                        regex = new Regex(@$".*\\{sectionName}");
+                        var ptxPath = regex.Replace(line, "");
+                        ptxPath = ptxPath.Replace(sectionName+"/", "");
+                        ptxPath = ptxPath.Replace("/", "\\");
+                        ptxPath = Path.Combine(sectionFolder, ptxPath);
+
+                        if (File.Exists(ptxPath))
+                            mesh.TexturePath = ptxPath;
+                    }
+
                     if (line.Contains("NamedMaterial"))
                     {
                         var start = line.IndexOf("\"", StringComparison.Ordinal) + 1;
