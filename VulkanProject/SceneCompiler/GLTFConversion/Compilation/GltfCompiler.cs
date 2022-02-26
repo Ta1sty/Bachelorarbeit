@@ -5,16 +5,16 @@ using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Text.Json;
+using Scene;
 using SceneCompiler.GLTFConversion.GltfFileTypes;
 using SceneCompiler.Scene;
-using SceneCompiler.Scene.SceneTypes;
 
 namespace SceneCompiler.GLTFConversion.Compilation
 {
-    public class GLTFCompiler : ASceneCompiler
+    public class GltfCompiler : ASceneCompiler
     {
         internal GltfFile File { get; set; }
-        public GLTFCompiler(SceneBuffers buffers) : base(buffers)
+        public GltfCompiler(SceneBuffers buffers) : base(buffers)
         {
 
         }

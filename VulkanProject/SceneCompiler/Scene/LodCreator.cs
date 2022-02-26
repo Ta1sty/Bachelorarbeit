@@ -1,5 +1,4 @@
-﻿using SceneCompiler.Scene.SceneTypes;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -7,6 +6,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using Scene;
 
 namespace SceneCompiler.Scene
 {
@@ -38,13 +38,13 @@ namespace SceneCompiler.Scene
             var lods = new SceneNode[amount];
             foreach (var parent in node.Parents)
             {
-                _buffers.SetChildren(parent, parent.Children.Where(x => x != node));
-                _buffers.AddChild(parent, selector);
-                _buffers.AddParent(selector, parent);
+                parent.Children = parent.Children.Where(x => x != node);
+                parent.AddChild(selector);
+                selector.AddParent(parent);
             }
-            _buffers.ClearParents(node);
-            _buffers.AddParent(node, selector);
-            _buffers.AddChild(selector, node);
+            node.ClearParents();
+            node.AddParent(selector);
+            selector.AddChild(node);
             var name = node.Name;
             node.Name = "LOD 0 " + name;
             lods[0] = node;
@@ -63,12 +63,12 @@ namespace SceneCompiler.Scene
                 };
                 prev = CreateLod(lod, factor, prev);
                 _buffers.Add(lod);
-                _buffers.AddParent(lod,selector);
-                _buffers.AddChild(selector, lod);
-                _buffers.SetChildren(lod, node.Children);
+                lod.AddParent(selector);
+                selector.AddChild(lod);
+                lod.Children = node.Children;
                 foreach (var child in node.Children)
                 {
-                    _buffers.AddParent(child, lod);
+                    child.AddParent(lod);
                 }
 
                 lods[i] = lod;
@@ -136,13 +136,13 @@ namespace SceneCompiler.Scene
             var lods = new SceneNode[amount];
             foreach (var parent in node.Parents)
             {
-                _buffers.SetChildren(parent, parent.Children.Where(x => x != node));
-                _buffers.AddChild(parent, selector);
-                _buffers.AddParent(selector, parent);
+                parent.Children = parent.Children.Where(x => x != node);
+                parent.AddChild(selector);
+                selector.AddParent(parent);
             }
-            _buffers.ClearParents(node);
-            _buffers.AddParent(node, selector);
-            _buffers.AddChild(selector, node);
+            node.ClearParents();
+            node.AddParent(selector);
+            selector.AddChild(node);
             var name = node.Name;
             node.Name = "LOD 0 " + name;
             lods[0] = node;
@@ -159,13 +159,13 @@ namespace SceneCompiler.Scene
                     ObjectToWorld = lods[i - 1].ObjectToWorld,
                 };
                 _buffers.Add(lod);
-                _buffers.AddParent(lod, selector);
-                _buffers.AddChild(selector, lod);
+                lod.AddParent(selector);
+                selector.AddChild(lod);
                 var children = lods[i - 1].Children.ToList();
-                _buffers.SetChildren(lod, GetRandomChildren(children, children.Count/ factor));
+                lod.Children = GetRandomChildren(children, children.Count/ factor);
                 foreach (var child in lod.Children)
                 {
-                    _buffers.AddParent(child, lod);
+                    child.AddParent(lod);
                 }
 
                 lods[i] = lod;

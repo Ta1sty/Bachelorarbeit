@@ -4,7 +4,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using SceneCompiler.Scene.SceneTypes;
+using Scene;
 
 namespace SceneCompiler.MoanaConversion
 { 
@@ -203,20 +203,21 @@ namespace SceneCompiler.MoanaConversion
             };
             buffers.Add(Node);
 
-            if(Children != null && 
-               CompilerConfiguration.Configuration.MoanaConfiguration.UseFirstSectionObject &&
-               CompilerConfiguration.Configuration.MoanaConfiguration.UseObjectIncludes)
+            if (Children != null)
             {
-                Node.Children = Children.Select(name => InstanceList.InstancedGeometry.Section.InstancedGeometries
-                    .SelectMany(x => x.InstanceLists).Single(x => x.Name == name)
-                    .GetSceneNode(buffers));
+                var config = CompilerConfiguration.Configuration.MoanaConfiguration;
+                if (!config.UseFirstSectionObject || (config.UseFirstSectionObject && config.UseObjectIncludes))
+                {
+                    Node.Children = Children.Select(name => InstanceList.InstancedGeometry.Section.InstancedGeometries
+                        .SelectMany(x => x.InstanceLists).Single(x => x.Name == name)
+                        .GetSceneNode(buffers));
+                }
             }
 
 
             if (ObjectName != null)
             {
-                buffers.AddChild(Node, 
-                    InstanceList.InstancedGeometry
+                Node.AddChild(InstanceList.InstancedGeometry
                     .Geometries.Single(x => x.Name == ObjectName)
                     .GetSceneNode(buffers));
             }
@@ -257,7 +258,7 @@ namespace SceneCompiler.MoanaConversion
                 Node.IndexBufferIndex = children.Min(x => x.IndexBufferIndex);
                 Node.ForceOdd = true;
                 Node.ForceEven = false;
-                buffers.ClearChildren(Node);
+                Node.ClearChildren();
             }
             else
             {
@@ -384,7 +385,7 @@ namespace SceneCompiler.MoanaConversion
         public float Difftrans { get; set; }
         public float Flatness { get; set; }
         public float[] Scatterdistance { get; set; }
-        public Scene.SceneTypes.Material SceneMaterial { get; set; }
+        public SceneMaterial SceneMaterial { get; set; }
         public int BufferIndex { get; set; }
 
         public void ToSceneMaterial(SceneBuffers buffers, List<Texture> textures)
@@ -394,7 +395,7 @@ namespace SceneCompiler.MoanaConversion
             {
                 Source = this
             });
-            SceneMaterial = new Scene.SceneTypes.Material
+            SceneMaterial = new SceneMaterial
             {
                 DoubleSided = true,
                 PbrMetallicRoughness = new MaterialProperties

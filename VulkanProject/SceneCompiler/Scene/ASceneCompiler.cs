@@ -1,5 +1,5 @@
 ﻿using System.IO;
-using SceneCompiler.Scene.SceneTypes;
+using Scene;
 
 namespace SceneCompiler.Scene
 {

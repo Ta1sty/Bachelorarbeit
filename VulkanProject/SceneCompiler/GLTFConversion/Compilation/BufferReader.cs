@@ -9,14 +9,14 @@ namespace SceneCompiler.GLTFConversion.Compilation
         private readonly byte[] _buffer;
         private int _currentPos;
         private readonly int _length;
-        public BufferReader(GLTFCompiler scene, Accessor acc)
+        public BufferReader(GltfCompiler scene, Accessor acc)
         {
             BufferView view = scene.File.BufferViews[acc.BufferView];
             _currentPos = view.ByteOffset;
             _buffer = scene.GltfBuffers[view.Buffer];
             _length = view.ByteLength;
         }
-        public BufferReader(GLTFCompiler scene, BufferView view)
+        public BufferReader(GltfCompiler scene, BufferView view)
         {
             _currentPos = view.ByteOffset;
             _buffer = scene.GltfBuffers[view.Buffer];

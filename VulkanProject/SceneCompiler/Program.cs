@@ -9,7 +9,7 @@ using SceneCompiler.MoanaConversion;
 using SceneCompiler.Scene;
 using System.Linq;
 using System.Numerics;
-using SceneCompiler.Scene.SceneTypes;
+using Scene;
 
 namespace SceneCompiler
 {
@@ -33,7 +33,7 @@ namespace SceneCompiler
             ASceneCompiler compiler = null;
 
             var location = Assembly.GetExecutingAssembly().Location;
-            using var buffers = new SceneBuffers();
+            var buffers = new SceneBuffers();
 
             var config = CompilerConfiguration.Configuration;
             if (config.MoanaConfiguration.ConvertMoana && config.GltfConfiguration.ConvertGltf)
@@ -181,7 +181,7 @@ namespace SceneCompiler
 
         private static ASceneCompiler ConvertGltf(string path, SceneBuffers buffers)
         {
-            ASceneCompiler compiler = new GLTFCompiler(buffers);
+            ASceneCompiler compiler = new GltfCompiler(buffers);
             compiler.CompileScene(path);
             return compiler;
         }

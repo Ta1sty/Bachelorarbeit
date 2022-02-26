@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using SceneCompiler.Scene.SceneTypes;
+using Scene;
 
 namespace SceneCompiler.GLTFConversion.GltfFileTypes
 {
@@ -12,7 +12,7 @@ namespace SceneCompiler.GLTFConversion.GltfFileTypes
         public List<Accessor> Accessors { get; set; } = new();
         public List<BufferView> BufferViews { get; set; } = new();
         public List<Buffer> Buffers { get; set; } = new();
-        public List<Material> Materials { get; set; } = new();
+        public List<SceneMaterial> Materials { get; set; } = new();
         public List<Texture> Textures { get; set; } = new();
         public List<ImagePointer> Images { get; set; } = new();
     }

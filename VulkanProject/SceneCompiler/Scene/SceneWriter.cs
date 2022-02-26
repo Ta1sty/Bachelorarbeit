@@ -3,8 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using SceneCompiler.Scene.SceneTypes;
 using System.Numerics;
+using Scene;
+using SceneCompiler.MoanaConversion;
 
 namespace SceneCompiler.Scene
 {
@@ -111,7 +112,7 @@ namespace SceneCompiler.Scene
                         }
 
                         pos = node.WriteToByteArray(nodeBuffer, pos);
-                        indices.AddRange(node.Children.Select(x => x.Index));
+                        indices.AddRange(node.Children.Select(x => x.Index()));
                     }
                     str.Write(nodeBuffer);
                     index += batchSize;
@@ -161,7 +162,7 @@ namespace SceneCompiler.Scene
             }
         }
 
-        public void WriteMaterials(List<Material> materials)
+        public void WriteMaterials(List<SceneMaterial> materials)
         {
             var materialBuffer = new byte[16 * materials.Count + 4]; // first 4 bytes is uint32 for numMaterials
             var pos = -4;

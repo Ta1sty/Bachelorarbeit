@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
-using SceneCompiler.Scene.SceneTypes;
+using Scene;
 
 namespace SceneCompiler.Scene
 {
@@ -101,17 +101,18 @@ namespace SceneCompiler.Scene
                     var children = node.Children.SelectMany(x => x.Children).ToList();
                     foreach (var child in children)
                     {
-                        _buffers.ClearParents(child);
-                        _buffers.AddParent(child, first);
+                        child.ClearParents();
+                        child.AddParent(first);
                     }
 
-                    foreach (var list in node.Children.Where(x => x.IsInstanceList)) _buffers.ClearChildren(list);
-                    _buffers.ClearChildren(first);
+                    foreach (var list in node.Children.Where(x => x.IsInstanceList))
+                        list.ClearChildren();
+                    first.ClearChildren();
                     first.Children = children;
                     foreach (var parent in parents)
                     {
                         parent.Children = parent.Children.Where(x => !x.IsInstanceList);
-                        _buffers.AddChild(parent, first);
+                        parent.AddChild(first);
                     }
 
                     first.Name += " Merge " + children.Count();
@@ -182,7 +183,7 @@ namespace SceneCompiler.Scene
             node.NumTriangles = 0;
 
             // add only the odd children
-            _buffers.SetChildren(node, oddChildren);
+            node.Children = oddChildren;
         }
 
         public void AdjustOddNode(SceneNode node, List<SceneNode> tlasAdd)
@@ -238,7 +239,7 @@ namespace SceneCompiler.Scene
                 evenChildren.Add(dummy);
 
                 // add only the even children
-                _buffers.SetChildren(node, evenChildren);
+                node.Children = evenChildren;
             }
         }
 
@@ -290,7 +291,7 @@ namespace SceneCompiler.Scene
                     }
                 }
 
-                if (node.Index < 0)
+                if (node.Index() < 0)
                     throw new Exception("Index was not set");
                 if (node.Level % 2 == 0 && node.NumTriangles > 0)
                     throw new Exception("Even node references Geometry");
@@ -380,12 +381,12 @@ namespace SceneCompiler.Scene
                 left.Name = "L" + left.Name;
                 left.Children = leftChildren;
 
-                foreach (var parent in left.Parents) _buffers.AddChild(parent, right);
+                foreach (var parent in left.Parents) parent.AddChild(right);
 
                 foreach (var child in rightChildren)
                 {
-                    _buffers.SetParents(child, child.Parents.Where(x => x != left));
-                    _buffers.AddParent(child, right);
+                    child.Parents = child.Parents.Where(x => x != left);
+                    child.AddParent(right);
                 }
 
 

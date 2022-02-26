@@ -1,4 +1,4 @@
-﻿using SceneCompiler.Scene.SceneTypes;
+﻿using Scene;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -63,7 +63,7 @@ namespace SceneCompiler.Scene
                         ForceEven = true,
                     };
                     _buffers.Add(add);
-                    _buffers.AddChild(add, root);
+                    add.AddChild(root);
                     added.Add(add);
                 }
             }
@@ -74,7 +74,7 @@ namespace SceneCompiler.Scene
                 ForceOdd = true,
             };
             _buffers.Add(dummy);
-            _buffers.AddChild(newRoot, dummy);
+            newRoot.AddChild(dummy);
             dummy.Children = added;
         }
     }

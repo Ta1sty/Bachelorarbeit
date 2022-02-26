@@ -4,8 +4,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using SceneCompiler.GLTFConversion.GltfFileTypes;
-using SceneCompiler.Scene.SceneTypes;
+using Scene;
 
 namespace SceneCompiler.Scene
 {
