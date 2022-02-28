@@ -38,6 +38,8 @@ namespace SceneCompiler
             var config = CompilerConfiguration.Configuration;
             if (config.MoanaConfiguration.ConvertMoana && config.GltfConfiguration.ConvertGltf)
                 throw new Exception("can not convert gltf and moana, only one can be true");
+            if (config.LodConfiguration.UseLod && config.OptimizationConfiguration.UseSingleLevelInstancing)
+                throw new Exception("can not use lod and single level instancing, lod selectors require traversal");
             if (config.MoanaConfiguration.ConvertMoana)
             {
                 if(config.MoanaConfiguration.MoanaRootPath == null)
@@ -119,6 +121,9 @@ namespace SceneCompiler
             }
 
             var rayTraceOptimization = new RayTracePostCompile(buffers);
+            if(config.OptimizationConfiguration.UseSingleLevelInstancing)
+                rayTraceOptimization.ToSingleLevel();
+
             rayTraceOptimization.PostCompile();
 
             if(config.OptimizationConfiguration.RootBufferRebuild)

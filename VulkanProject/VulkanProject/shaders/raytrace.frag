@@ -12,7 +12,7 @@ layout(binding = TLAS_BINDING, set = 3) uniform accelerationStructureEXT[] tlas;
 #include "math.frag"
 #endif
 
-void getHitPayload(int triangle, vec3 tuv, out vec4 color, out vec3 N, out Material material) {
+void getHitPayload(int triangle, vec3 tuv, out vec3 N, out Material material) {
 	Vertex v0 = vertices[indices[triangle * 3]];
 	Vertex v1 = vertices[indices[triangle * 3 + 1]];
 	Vertex v2 = vertices[indices[triangle * 3 + 2]];
@@ -29,23 +29,22 @@ void getHitPayload(int triangle, vec3 tuv, out vec4 color, out vec3 N, out Mater
 
 	// get material and texture properties, if there are not set use default values
 	if (v0.material_index < 0 || !renderTextures) {
-		material.k_a = 0.15f;
+		material.k_a = 0.2f;
 		material.k_d = 0.5f;
-		material.k_s = 0.35f;
+		material.k_s = 0.3f;
+		material.k_t = 0;
+		material.k_r = 0;
+		material.n = 1;
 		material.texture_index = -1;
 		if (!renderTextures)
-			color = vec4(0.8, 0.8, 0.8, 1);
+			material.color = vec4(0.8, 0.8, 0.8, 1);
 		else
-			color = vec4(0.2, 0.4, 0.8, 1);
+			material.color = vec4(0.2, 0.4, 0.8, 1);
 	}
 	else {
 		material = materials[v0.material_index];
-		if (material.texture_index < 0) {
-			color = vec4(0.2, 0.4, 0.8, 1);
-		}
-		else {
-			color = texture(sampler2D(textures[material.texture_index], samp), tex);
-		}
+		if (material.texture_index >= 0)
+			material.color = texture(sampler2D(textures[material.texture_index], samp), tex);
 	}
 
 	// debug
@@ -78,7 +77,7 @@ struct TraversalPayload {
 #ifdef RAY_QUERIES
 // use a stack because:
 // keep the list as short as possible, I.E. use a depth first search
-const int BUFFER_SIZE = 20;
+const int BUFFER_SIZE = 15;
 int stackSize = 0;
 TraversalPayload traversalBuffer[BUFFER_SIZE];
 
@@ -86,22 +85,25 @@ int traversalDepth = 0;
 uint numTraversals = 0;
 uint queryCount = 0;
 
-void instanceHitCompute(int index, vec3 rayOrigin, vec3 rayDirection, bool IsInstanceList){	
+void instanceHitCompute(SceneNode tlas, int index, vec3 rayOrigin, vec3 rayDirection){	
 	TraversalPayload nextLoad = traversalBuffer[index];
 	SceneNode directChild = nodes[nextLoad.nIdx]; // use the custom index to take a shortcut
 	mat4x3 world_to_object;
 
-	// instance list implementation
-	SceneNode next;
-	if(IsInstanceList) {
-		SceneNode instancedChild = nodes[nextLoad.sIdx];
-		next = nodes[childIndices[instancedChild.ChildrenIndex + nextLoad.pIdx]]; // this is the instance 
-																			  // - odd (absorbed as AABB in directChild)
-		world_to_object = mat4x3(mat4(inv(transforms[instancedChild.TransformIndex])) * mat4(inv(transforms[directChild.TransformIndex])));
+	// compute the blas
+	SceneNode blas;
+	if(tlas.IsInstanceList)	{
+		SceneNode instance = nodes[nextLoad.nIdx];
+		blas = nodes[nextLoad.sIdx];
+		world_to_object = mat4x3(mat4(inv(transforms[blas.TransformIndex])) * mat4(inv(transforms[instance.TransformIndex])));
 	} else {
-		next = nodes[childIndices[directChild.ChildrenIndex + nextLoad.pIdx]];
 		world_to_object = inv(transforms[directChild.TransformIndex]);
+		blas = nodes[nextLoad.nIdx];
 	}
+
+	// compute the next node
+	SceneNode next = nodes[childIndices[blas.ChildrenIndex + nextLoad.pIdx]];
+
 	// discard is not possible without either reodering the buffer or some other operation
 	// therefore to discard an instance hit, set tMax to high value
 	// to add more then one traversal load, just set the loads and the stacksize accordingly
@@ -144,8 +146,6 @@ void instanceHitCompute(int index, vec3 rayOrigin, vec3 rayDirection, bool IsIns
 		next = nodes[childIndices[dummy.ChildrenIndex + lod]];
 	}
 
-
-
 	world_to_object = mat4x3(mat4(inv(transforms[next.TransformIndex])) * mat4(world_to_object));
 	
 	// here the shader adds the next payloads
@@ -176,10 +176,9 @@ void triangleHit(rayQueryEXT ray_query, SceneNode node, float minAlpha) {
 	tuv.z = uv.x;
 
 	vec3 N;
-	vec4 color;
 	Material material;
-	getHitPayload(triangle, tuv, color, N, material);
-	if (color[3] > minAlpha)
+	getHitPayload(triangle, tuv, N, material);
+	if (material.color[3] > minAlpha)
 		rayQueryConfirmIntersectionEXT(ray_query);
 }
 
@@ -277,6 +276,12 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, f
 		}
 		int end = stackSize;
 		int added = end - start;
+		
+		for(int i = start;i < end;i++) {
+			instanceHitCompute(node, i, rayOrigin, rayDirection);
+			recordQuery(traversalBuffer[i].nIdx, node.Level, traversalBuffer[i].t, vec3(1,0,0), vec3(2,0,0), i-start ,added);
+		}
+
 		for (int i = 0; i < added / 2; i++) {
 			int i1 = start + i;
 			int i2 = end - 1 - i;
@@ -284,10 +289,6 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, f
 			TraversalPayload tmp2 = traversalBuffer[i2];
 			traversalBuffer[i1] = tmp2;
 			traversalBuffer[i2] = tmp1;
-		}
-
-		for(int i = start;i < end;i++) {
-			instanceHitCompute(i, rayOrigin, rayDirection, node.IsInstanceList);
 		}
 
 		uint commitedType = rayQueryGetIntersectionTypeEXT(ray_query, true);
@@ -326,7 +327,6 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, f
 				triangleTLAS = tlasNumber;
 			}
 		}
-		recordQuery(node.Index, node.Level, load.t, rayOrigin, rayOrigin + best_t * rayDirection, triangleIntersections ,instanceIntersections);
 	}
 	SetDebugHsv(displayTLASNumber, triangleTLAS, colorSensitivity, true);
 	if (triangle_index >= 0) {
@@ -383,8 +383,7 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 
 const float MAX_T = 100000;
 
-vec4 shadeFragment(vec3 P, vec3 V, vec3 N, vec4 color, Material material, int triangle) {
-	float n = 1; // todo phong exponent
+vec4 shadeFragment(vec3 P, vec3 V, vec3 N, Material material, int triangle) {
 	// calculate lighting for each light source
 
 	//recordQuery(999, 0, 0, P, P + N, 0 ,0);
@@ -399,11 +398,11 @@ vec4 shadeFragment(vec3 P, vec3 V, vec3 N, vec4 color, Material material, int tr
 
 		vec3 L = light.position - P;
 		float l_dst = length(L);
-
+			
 		float specular = 0;
 		float diffuse = material.k_d;
 		vec3 R = normalize(reflect(V, N));
-		vec3 POff = P + 0.01f * N;
+		vec3 POff = P + 0.005f * N;
 		if (renderShadows) {
 			TraversalPayload load;
 			vec3 tuvShadow;
@@ -417,15 +416,14 @@ vec4 shadeFragment(vec3 P, vec3 V, vec3 N, vec4 color, Material material, int tr
 				if (ray_trace_loop(POff, LN, l_dst, rootSceneNode,0.9f, tuvShadow, index, load)) { // is light source visible? shoot ray to lPos
 					continue;
 				}
-				specular = material.k_s * pow(max(0, dot(R, LN)), n);
+				specular = material.k_s * pow(max(0, dot(R, LN)), material.n);
 			}
 			else if ((light.type & LIGHT_TYPE_SUN) != 0) { // directional light, check if it is visible 
 				vec3 LN = normalize(light.direction);
-				// offset by P + eps * N
 				if (ray_trace_loop(POff, -LN, MAX_T, rootSceneNode,0.9f, tuvShadow, index, load)) { // shoot shadow ray into the light source
 					continue;
 				}
-				specular = material.k_s * pow(max(0, dot(R, -light.direction)), n);
+				specular = material.k_s * pow(max(0, dot(R, -light.direction)), material.n);
 			}
 		}
 
@@ -438,19 +436,21 @@ vec4 shadeFragment(vec3 P, vec3 V, vec3 N, vec4 color, Material material, int tr
 			sum += vec3(1);
 		else {
 			float l_mult = light.quadratic.x + light.quadratic.y / d + light.quadratic.z / (d * d);
-			sum += (specular + diffuse) * l_mult * light.intensity * color.xyz;
+			sum += (specular + diffuse) * l_mult * light.intensity * material.color.xyz;
 		}
 	}
 	if (!renderAmbient) material.k_a = 0;
-	sum += material.k_a * color.xyz;
-	return vec4(sum.xyz, color[3]);
+	sum += material.k_a * material.color.xyz;
+	return vec4(sum.xyz, material.color[3]);
 }
 
 vec4 rayTrace(vec3 rayOrigin, vec3 rayDirection, out float t) {
-	vec4 color = vec4(0, 0, 0, 1);
-	float frac = 1;
-	vec3 P = rayOrigin.xyz;
-	vec3 V = rayDirection.xyz;
+	int triangle = -1;
+	TraversalPayload load;
+	vec3 tuv;
+	Material material;
+
+	vec4 color = vec4(0, 0, 0, 0);
 	int depth = 0;
 
 	if (debug && displayTriangles) {
@@ -463,46 +463,73 @@ vec4 rayTrace(vec3 rayOrigin, vec3 rayDirection, out float t) {
 			return vec4(0, 0, 0, 1);
 	}
 
+	float Contribution[6];
+	vec3 Origin[6];
+	vec3 Direction[6];
 
-	while (depth < 800) {
-		int triangle = -1;
-		TraversalPayload load;
-		vec3 tuv;
-		vec4 fracColor;
-		if (ray_trace_loop(P, V, MAX_T, rootSceneNode,0, tuv, triangle, load)) {
-			P = P + tuv.x * V;
+	int count = 0;
+	int num = 1;
+	Contribution[0] = 1;
+	Origin[0] = rayOrigin;
+	Direction[0] = rayDirection;
+
+	while (num>0) {
+		count++;
+		num--;
+
+		vec3 P = Origin[num];
+		vec3 V = Direction[num];
+		float frac = Contribution[num];
+		bool hit = ray_trace_loop(P, V, MAX_T, rootSceneNode,0, tuv, triangle, load);
+
+		if(hit) {
+			vec3 P = P + tuv.x * V;
 			vec3 N_obj;
-			vec4 fragCol;
-			Material material;
-
-			getHitPayload(triangle, tuv, fragCol, N_obj, material);
+			getHitPayload(triangle, tuv, N_obj, material);
+			vec3 N_world = normalize(transpose(mat3(load.world_to_object)) * N_obj);
 			DebugOffIfSet();
 			if (displayAABBs)
 				debugSetEnabled = false;
-
-			mat3 world_to_object = mat3(load.world_to_object);
-			mat3 object_to_world = inverse(world_to_object);
-			mat3 NormalTransform = transpose(inverse(object_to_world));
-			vec3 N_world = NormalTransform * N_obj;
-
-			fracColor = shadeFragment(P, V, N_world, fragCol, material, triangle);
-			if (depth == 0)
+			if (count == 1)
 				t = tuv.x;
-			depth++;
-			if (depth >= rayMaxDepth)
-				fracColor[3] = 1; // cancel recursion by setting alpha to one
-			// compute transparent component
-			float alpha = fracColor[3];
-			color += frac * alpha * fracColor;
-			frac *= (1 - alpha);
-			if (alpha >= 0.99f || frac < 0.05f) break;
-		}
-		else {
+
+			vec4 fracColor = shadeFragment(P, V, N_world, material, triangle);
+			color += frac * fracColor[3] * fracColor;
+
+			float tr = material.k_t + (1-fracColor[3]);
+			float rf = material.k_r;
+
+
+			if(false && rf>0 && tr > 0 && num<=4) {
+				Contribution[num] = tr * frac;
+				Origin[num] = P;
+				Direction[num] = V;
+				Contribution[num+1] = rf * frac;
+				Origin[num+1] = P;
+				Direction[num+1] = reflect(V,N_world);
+				num+=2;
+			}
+
+			if(false && rf>0 && tr <= 0 && num<=5) {
+				Contribution[num] = rf * frac;
+				Origin[num] = P;
+				Direction[num] = reflect(V,N_world);
+				num++;
+			}
+
+			if(false && tr>0 && rf <= 0 && num<=5) {
+				Contribution[num] = tr * frac;
+				Origin[num] = P;
+				Direction[num] = V;
+				num++;
+			}
+		} else {
+			if(count==1) {
+				SetDebugCol(true, vec4(0,0,0,0));
+				t = MAX_T;
+			}
 			// maybe environment map
-			t = MAX_T;
-			fracColor = vec4(3, 215, 252, 255) / 255;
-			color += frac * 1 * fracColor;
-			break;
+			color += frac * vec4(3, 215, 252, 255) / 255;
 		}
 	}
 	return color;

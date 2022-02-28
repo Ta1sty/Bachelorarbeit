@@ -148,11 +148,15 @@ typedef struct frameData {
 
 typedef struct material
 {
-	float k_a;
-	float k_d;
-	float k_s;
-	// TODO Phong exponent
-	int32_t texture_index;
+	float color[4];				  //16
+	float k_a; // ambient			20
+	float k_d; // diffuse			24
+	float k_s; // specular			28
+	float k_r; // reflection		32
+	float k_t; // transmission		36
+	float n;   // phong exponent	40
+	int32_t texture_index;		  //44
+	float pad;					  //48
 } Material;
 
 typedef struct texture

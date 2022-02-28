@@ -19,6 +19,7 @@ void startTraceRecord() {
 	if (recordQueryTrace && xy.x == pixelX && xy.y == pixelY) {
 		recordTrace = true;
 		nextRecord = 0;
+		queryTraces[0].isValid = 1;
 	}
 }
 void recordQuery(uint nodeNumber, int nodeLevel, float t, vec3 start, vec3 end, uint triangleIntersections, uint instanceIntersections) { // records the 

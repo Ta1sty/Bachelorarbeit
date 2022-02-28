@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Scene;
+using SceneCompiler.GLTFConversion.GltfFileTypes;
 
 namespace SceneCompiler.MoanaConversion
 { 
@@ -390,24 +391,13 @@ namespace SceneCompiler.MoanaConversion
 
         public void ToSceneMaterial(SceneBuffers buffers, List<Texture> textures)
         {
-            var index = textures.Count;
-            textures.Add(new Texture
-            {
-                Source = this
-            });
             SceneMaterial = new SceneMaterial
             {
-                DoubleSided = true,
-                PbrMetallicRoughness = new MaterialProperties
-                {
-                    BaseColorTexture = new ColorTexture
-                    {
-                        Index = index
-                    },
-                    MetallicFactor = Metallic,
-                    RoughnessFactor = Roughness
-                },
-                Name = Name
+                Name = Name,
+                DefaultColor = new Vector4(Color[0],Color[1],Color[2],1),
+                Diffuse = Roughness,
+                Specular = Spectrans,
+                PhongExponent = Eta
             };
             BufferIndex = buffers.MaterialBuffer.Count;
             buffers.MaterialBuffer.Add(SceneMaterial);

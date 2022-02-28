@@ -91,6 +91,8 @@ namespace SceneCompiler
         public int InstanceZ { get; set; } = 16;
         /// <summary>instances the scene multiple times - for example: root x (16x16) x (16x16) => InstanceCount is 2</summary>
         public int InstanceCount { get; set; } = 1;
+        /// <summary>instances the scene randomly, with a small offset and rotation</summary>
+        public bool Randomize { get; set; } = false;
     }
 
     public class OptimizationConfiguration
@@ -144,5 +146,7 @@ namespace SceneCompiler
         public bool ValidateSceneGraph { get; set; } = true;
         /// <summary>validate parents and children, checks that the bidirectional relation is correct, can impact performance heavily</summary>
         public bool ValidateParentsAndChildren { get; set; } = false;
+        /// <summary></summary>
+        public bool InsertGround { get; set; } = false;
     }
 }

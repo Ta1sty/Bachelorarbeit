@@ -164,15 +164,23 @@ namespace SceneCompiler.Scene
 
         public void WriteMaterials(List<SceneMaterial> materials)
         {
-            var materialBuffer = new byte[16 * materials.Count + 4]; // first 4 bytes is uint32 for numMaterials
+            var materialBuffer = new byte[SceneMaterial.Size * materials.Count + 4]; // first 4 bytes is uint32 for numMaterials
             var pos = -4;
             BitConverter.GetBytes((uint)materials.Count).CopyTo(materialBuffer.AsSpan(pos += 4));
             foreach (var material in materials)
             {
-                BitConverter.GetBytes(0.2f).CopyTo(materialBuffer.AsSpan(pos += 4)); // ka
-                BitConverter.GetBytes(0.4f).CopyTo(materialBuffer.AsSpan(pos += 4)); // kd
-                BitConverter.GetBytes(0.6f).CopyTo(materialBuffer.AsSpan(pos += 4)); // ks
-                BitConverter.GetBytes(material.PbrMetallicRoughness?.BaseColorTexture?.Index ?? -1).CopyTo(materialBuffer.AsSpan(pos += 4)); // textureIndex
+                BitConverter.GetBytes(material.DefaultColor.X).CopyTo(materialBuffer.AsSpan(pos += 4)); // color r
+                BitConverter.GetBytes(material.DefaultColor.Y).CopyTo(materialBuffer.AsSpan(pos += 4)); // color g
+                BitConverter.GetBytes(material.DefaultColor.Z).CopyTo(materialBuffer.AsSpan(pos += 4)); // color b
+                BitConverter.GetBytes(material.DefaultColor.W).CopyTo(materialBuffer.AsSpan(pos += 4)); // color a
+                BitConverter.GetBytes(material.Ambient).CopyTo(materialBuffer.AsSpan(pos += 4)); // ka
+                BitConverter.GetBytes(material.Diffuse).CopyTo(materialBuffer.AsSpan(pos += 4)); // kd
+                BitConverter.GetBytes(material.Specular).CopyTo(materialBuffer.AsSpan(pos += 4)); // ks
+                BitConverter.GetBytes(material.Reflection).CopyTo(materialBuffer.AsSpan(pos += 4)); // kr
+                BitConverter.GetBytes(material.Transmission).CopyTo(materialBuffer.AsSpan(pos += 4)); // kt
+                BitConverter.GetBytes(material.PhongExponent).CopyTo(materialBuffer.AsSpan(pos += 4)); // phong
+                BitConverter.GetBytes(material.TextureIndex).CopyTo(materialBuffer.AsSpan(pos += 4)); // textureIndex
+                BitConverter.GetBytes(0).CopyTo(materialBuffer.AsSpan(pos += 4)); // pad1
             }
             str.Write(materialBuffer);
         }

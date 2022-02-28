@@ -10,6 +10,8 @@ namespace SceneCompiler.Scene
 {
     class InstancePostCompile
     {
+        private static Random _random = new(21092000);
+        private static float Rand => (float)_random.NextDouble();
         private readonly SceneBuffers _buffers;
         public InstancePostCompile(SceneBuffers buffers)
         {
@@ -37,8 +39,21 @@ namespace SceneCompiler.Scene
 
             var offsetX = -min.X;
             var offsetZ = -min.Z;
+            var offsetY = -min.Y;
             var extentX = max.X - min.X;
+            var extentY = max.Y - min.Y;
             var extentZ = max.Z - min.Z;
+
+            var varianceX = 0f;
+            var varianceZ = 0f;
+            var randomize = CompilerConfiguration.Configuration.InstanceConfiguration.Randomize;
+            if (randomize)
+            {
+                varianceX = extentX;
+                varianceZ = extentZ;
+                extentX *= 0.4f;
+                extentZ += 0.4f;
+            }
 
             // construct a new instanceList, we also use this as the root
             var newRoot = new SceneNode
@@ -54,28 +69,43 @@ namespace SceneCompiler.Scene
             {
                 for(var z = 0; z < numZ; z++)
                 {
-                    var xTranslation = offsetX + (x-numX/2) * extentX; // center around 0,0 and in all 4 directions
-                    var zTranslation = offsetZ + (z-numZ/2) * extentZ;
                     var add = new SceneNode
                     {
-                        ObjectToWorld = Matrix4x4.CreateTranslation(xTranslation, 0, zTranslation),
                         Name = "Inst ROOT",
                         ForceEven = true,
                     };
+
+                    if (randomize)
+                    {
+                        var scaleVector = new Vector3(.8f + Rand*0.5f, .8f + Rand * 0.5f, .8f + Rand * 0.5f);
+                        var scale = Matrix4x4.CreateScale(scaleVector);
+                        var rot = Matrix4x4.CreateRotationY((float) (Rand * 2 * Math.PI));
+
+
+                        var xTranslation = offsetX + (x - numX / 2) * extentX;
+                        var zTranslation = offsetZ + (z - numZ / 2) * extentZ;
+                        xTranslation += varianceX * (Rand - 0.5f);
+                        zTranslation += varianceZ * (Rand - 0.5f);
+                        
+                        var yTranslation = offsetY;
+
+                        var trans = Matrix4x4.CreateTranslation(xTranslation, yTranslation, zTranslation);
+
+                        add.ObjectToWorld = trans * rot * scale;
+                    }
+                    else
+                    {
+                        var xTranslation = offsetX + (x - numX / 2) * extentX;
+                        var zTranslation = offsetZ + (z - numZ / 2) * extentZ;
+                        add.ObjectToWorld = Matrix4x4.CreateTranslation(xTranslation, 0, zTranslation);
+                    }
+
                     _buffers.Add(add);
                     add.AddChild(root);
                     added.Add(add);
                 }
             }
-
-            var dummy = new SceneNode
-            {
-                Name = "DummyBLAS",
-                ForceOdd = true,
-            };
-            _buffers.Add(dummy);
-            newRoot.AddChild(dummy);
-            dummy.Children = added;
+            newRoot.Children = added;
         }
     }
 }

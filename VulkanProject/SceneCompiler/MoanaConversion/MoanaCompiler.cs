@@ -70,15 +70,6 @@ namespace SceneCompiler.MoanaConversion
 
         private void ValidateMaterials(Moana moana)
         {
-            foreach (var vertex in Buffers.VertexBuffer)
-            {
-                if(vertex.MaterialIndex == -1)
-                    continue;
-                var material = Buffers.MaterialBuffer[vertex.MaterialIndex];
-                var texture = Textures[material.PbrMetallicRoughness.BaseColorTexture.Index];
-                if (texture == null)
-                    throw new Exception("Texture does not exist");
-            }
         }
 
         private void ValidateMoana(Moana moana)
@@ -459,7 +450,7 @@ namespace SceneCompiler.MoanaConversion
 
                     object value = default;
                     if (varType.Contains("float"))
-                        value = float.Parse(varValue);
+                        value = float.Parse(varValue, CultureInfo.InvariantCulture);
                     if (varType.Contains("rgb"))
                         value = varValue.Split(" ").Select(x => float.Parse(x, CultureInfo.InvariantCulture)).ToArray();
                     if (varType.Contains("bool"))
@@ -480,7 +471,8 @@ namespace SceneCompiler.MoanaConversion
         public override void WriteTextures(FileStream str)
         {
             Console.WriteLine("Writing Textures: " + Textures.Count);
-            str.Write(BitConverter.GetBytes(Textures.Count));
+            str.Write(BitConverter.GetBytes(0));
+            return; // moana does not use textures (uses ptex), color is specified in pbrt via material
             foreach (var texture in Textures)
             {
                 var width = 2;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design.Serialization;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
@@ -22,6 +23,16 @@ namespace SceneCompiler.Scene
         {
             Console.WriteLine("Adjusting Scene Graph");
 
+            var root = _buffers.Root;
+            root.Level = 0;
+            root.ObjectToWorld = Matrix4x4.Identity;
+
+            if (Configuration.DebugConfiguration.InsertGround)
+            {
+                Console.WriteLine("Inserting ground");
+                InsertGround();
+            }
+
             if (Configuration.OptimizationConfiguration.MergeInstanceLists)
             {
                 Console.WriteLine("Merge instance Lists");
@@ -34,9 +45,6 @@ namespace SceneCompiler.Scene
                 CapInstanceLists();
             }
 
-
-            var root = _buffers.Root;
-            root.Level = 0;
             Console.WriteLine("Writing Levels");
             DepthRecursion(root);
             Console.WriteLine("Number of Triangles: " + root.TotalPrimitiveCount);
@@ -61,6 +69,85 @@ namespace SceneCompiler.Scene
             foreach (var node in _buffers.Nodes)
                 node.ResetAABB();
             root.ComputeAABBs(_buffers);
+        }
+
+        private void InsertGround()
+        {
+            var root = _buffers.Root;
+            root.ComputeAABBs(_buffers);
+
+            var add = new SceneNode
+            {
+                NumTriangles = 2,
+                IndexBufferIndex = _buffers.IndexBuffer.Count,
+                ForceOdd = true,
+                Name = "Ground"
+            };
+            _buffers.Add(add);
+
+            var extent = root.AABB_max - root.AABB_min;
+            var offset = root.AABB_min;
+
+            var start = (uint) _buffers.VertexBuffer.Count;
+
+            float[] vf0 = { 0, 0, 0, 0, 1, 0, 0, 0};
+            float[] vf1 = { 1, 0, 0, 0, 1, 0, 1, 0 };
+            float[] vf2 = { 0, 0, 1, 0, 1, 0, 0, 1 };
+            float[] vf3 = { 1, 0, 1, 0, 1, 0, 1, 1 };
+
+            var material = new SceneMaterial
+            {
+                Ambient = 0,
+                Diffuse = 0,
+                Specular = 0,
+                PhongExponent = 1,
+                Transmission = 0.5f,
+                Reflection = 0.5f,
+            };
+            var materialIndex = _buffers.MaterialBuffer.Count;
+            _buffers.MaterialBuffer.Add(material);
+
+            var v0 = new Vertex(0, vf0, materialIndex, (int) start);
+            var v1 = new Vertex(0, vf1, materialIndex, (int) start);
+            var v2 = new Vertex(0, vf2, materialIndex, (int) start);
+            var v3 = new Vertex(0, vf3, materialIndex, (int) start);
+
+            _buffers.VertexBuffer.Add(v0);
+            _buffers.VertexBuffer.Add(v1);
+            _buffers.VertexBuffer.Add(v2);
+            _buffers.VertexBuffer.Add(v3);
+
+            _buffers.IndexBuffer.Add(start + 0);
+            _buffers.IndexBuffer.Add(start + 1);
+            _buffers.IndexBuffer.Add(start + 3);
+
+            _buffers.IndexBuffer.Add(start + 0);
+            _buffers.IndexBuffer.Add(start + 2);
+            _buffers.IndexBuffer.Add(start + 3);
+
+            var scale = Matrix4x4.CreateScale(extent.X, 1, extent.Z);
+            var trans = Matrix4x4.CreateTranslation(offset);
+
+            add.ObjectToWorld = scale * trans;
+
+            if (root.IsLodSelector)
+                throw new Exception("Can not insert ground if ROOT is LOD selector");
+            if (root.IsInstanceList) {
+                var inst = new SceneNode
+                {
+                    ObjectToWorld = add.ObjectToWorld,
+                    ForceEven = true,
+                    Name = "Inst Ground"
+                };
+                add.ObjectToWorld = Matrix4x4.Identity;
+                _buffers.Add(inst); 
+                inst.AddChild(add);
+                root.AddChild(inst);
+            }
+            else
+            {
+                root.AddChild(add);
+            }
         }
 
         private void MergeInstanceList()
@@ -138,7 +225,7 @@ namespace SceneCompiler.Scene
 
             bool Selector(SceneNode x)
             {
-                if (x.Children.Count() != evenChildren.Count)
+                if (x.NumChildren != evenChildren.Count)
                     return false;
                 if (evenChildren.Any(child => !x.Children.Contains(child)))
                 {
@@ -203,7 +290,7 @@ namespace SceneCompiler.Scene
                 // so if possible we want to reuse the tlas
                 var dummy = tlasAdd.Where(x =>
                 {
-                    if (x.Children.Count() != oddChildren.Count)
+                    if (x.NumChildren != oddChildren.Count)
                         return false;
                     foreach (var child in oddChildren)
                     {
@@ -333,6 +420,7 @@ namespace SceneCompiler.Scene
         private void DepthRecursion(SceneNode node)
         {
             foreach (var child in node.Children)
+            {
                 if (node.Level >= child.Level)
                 {
                     child.Level = node.Level + 1;
@@ -342,13 +430,10 @@ namespace SceneCompiler.Scene
                         child.Level++;
                     DepthRecursion(child);
                 }
+            }
+
 
             node.TotalPrimitiveCount = node.NumTriangles + node.Children.Sum(x => x.TotalPrimitiveCount);
-        }
-
-        private void SingleLevel()
-        {
-            // collapse parent nodes
         }
 
         public void CapInstanceLists()
@@ -358,6 +443,10 @@ namespace SceneCompiler.Scene
             var toSplit = _buffers.Nodes
                 .Where(node => node.IsInstanceList && node.Children.Skip(max).Any())
                 .ToList();
+
+            if (toSplit.Any() && Configuration.OptimizationConfiguration.UseSingleLevelInstancing)
+                throw new Exception("Capping instance lists is not possible with single level" +
+                                    ", as it requires traversal");
 
             while (toSplit.Any())
             {
@@ -455,6 +544,52 @@ namespace SceneCompiler.Scene
             }
 
             return (left, right);
+        }
+
+        public void ToSingleLevel()
+        {
+            var root = _buffers.Root;
+            var newRoot = new SceneNode
+            {
+                IsInstanceList = true,
+                Name = "ROOT-SingleLevel"
+            };
+            var children = new List<SceneNode>();
+            Recursion(root, Matrix4x4.Identity, children);
+            _buffers.Add(newRoot);
+            newRoot.Children = children;
+            _buffers.Root = newRoot;
+            foreach (var node in _buffers.Nodes)
+            {
+                if(node.NumTriangles>0)
+                    node.ClearChildren();
+            }
+        }
+
+        private void Recursion(SceneNode node, Matrix4x4 parentTransform, List<SceneNode> nodes)
+        {
+            var transform = Matrix4x4.Multiply(node.ObjectToWorld, parentTransform);
+            if (node.NumTriangles > 0)
+                node.ForceOdd = true;
+            foreach (var child in node.Children)
+            {
+                if (child.NumTriangles > 0)
+                {
+                    var add = new SceneNode
+                    {
+                        Name = "Inst-Single",
+                        ObjectToWorld = transform,
+                        ForceEven = true
+                    };
+                    nodes.Add(add);
+                    _buffers.Add(add);
+                    add.AddChild(child);
+                }
+                if (child.NumChildren > 0)
+                {
+                    Recursion(child, transform, nodes);
+                }
+            }
         }
     }
 }

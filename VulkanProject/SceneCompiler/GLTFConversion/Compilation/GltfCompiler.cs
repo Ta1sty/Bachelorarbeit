@@ -215,7 +215,11 @@ namespace SceneCompiler.GLTFConversion.Compilation
             DecodeBuffers();
             ParseMeshes();
             BuildSceneGraph(); 
-            Buffers.MaterialBuffer = File.Materials;
+            Buffers.MaterialBuffer.AddRange(File.Materials.Select(x=>new SceneMaterial
+            {
+                Name = x.Name,
+                TextureIndex = x.PbrMetallicRoughness?.BaseColorTexture?.Index ?? -1,
+            }));
         }
         public override void WriteTextures(FileStream str)
         {

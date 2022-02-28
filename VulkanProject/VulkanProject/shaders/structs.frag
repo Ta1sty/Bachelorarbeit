@@ -8,10 +8,15 @@ struct Vertex {
 	float pad3;
 };
 struct Material {
+	vec4 color;
 	float k_a;
 	float k_d;
 	float k_s;
+	float k_r;
+	float k_t;
+	float n;
 	int texture_index;
+	float pad;
 };
 struct SceneNode {
 	vec3 AABB_min;				// 12
