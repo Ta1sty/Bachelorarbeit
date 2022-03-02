@@ -41,6 +41,7 @@ void error(char* err) {
 #endif
 	if (c == 'c')
 	{
+		c = getchar();
 		int b = 0;
 		int a = 1 / b;
 	}

@@ -20,6 +20,7 @@ void init_vulkan(VkInfo* info, GLFWwindow** window, Scene* scene)
 #ifdef NDEBUG
 #else
 	create_validation_layer(info);
+
 #endif
 	create_device(info);
 }

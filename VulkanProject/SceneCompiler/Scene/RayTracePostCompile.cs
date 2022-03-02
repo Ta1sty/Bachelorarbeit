@@ -51,6 +51,8 @@ namespace SceneCompiler.Scene
             Console.WriteLine("Removing empty children");
             foreach (var node in _buffers.Nodes) node.Children = node.Children.Where(x => x.TotalPrimitiveCount > 0);
 
+            _buffers.SetSceneNodes(_buffers.Nodes.Where(x=>x.TotalPrimitiveCount > 0));
+
             Console.WriteLine("inserting dummys");
             List<SceneNode> blasAdd = new();
             List<SceneNode> tlasAdd = new();
@@ -348,29 +350,29 @@ namespace SceneCompiler.Scene
 
                 if (node.IsInstanceList)
                 {
-                    if (node.Level % 2 == 1)
-                        throw new Exception("instance List must have even level");
                     if (node.NumTriangles > 0)
                         throw new Exception("instance List can not contain geometry");
 
                     if (node.Children.Count() != 1)
-                        throw new Exception("instance List must have exactly one child (DummyBLAS)");
+                        throw new Exception("instance List must have exactly one child (DummyBLAS/DummyTLAS)");
 
-                    var dummyBlas = node.Children.First();
+                    var dummy = node.Children.First();
 
-                    if (dummyBlas.Name != "DummyBLAS")
-                        throw new Exception("child of instance List is not a dummy BLAS");
+                    if (!dummy.Name.StartsWith("Dummy"))
+                        throw new Exception("child of instance List is not a dummy");
 
-                    foreach (var child in dummyBlas.Children)
+                    foreach (var child in dummy.Children)
                     {
-                        if (child.Level % 2 == 1)
-                            throw new Exception("Instance list elements must have an even level");
+                        if (child.Level % 2 != node.Level % 2)
+                            throw new Exception("Instance list elements must have the same parity as the instance list");
                         if (child.NumTriangles > 0)
                             throw new Exception("Instance list elements can not reference triangles");
+                        if (node.Level % 2 == 1 && child.NumChildren > 1)
+                            throw new Exception("Children of odd instance lists can only have 1 child");
                         foreach (var parent in child.Parents)
                         {
-                            if (parent.Name != "DummyBLAS")
-                                throw new Exception("Parent of instance list element must be DummyBLAS");
+                            if (!parent.Name.StartsWith("Dummy"))
+                                throw new Exception("Parent of instance list element must be a Dummy");
                             foreach (var grandParent in parent.Parents)
                                 if (!grandParent.IsInstanceList)
                                     throw new Exception("Grandparent of instance list element must be instance list");
@@ -405,12 +407,7 @@ namespace SceneCompiler.Scene
                 var str = node.ToString();
                 if (!printAll)
                 {
-                    if (node.Name.Contains("Dummy") && node.Parents.First().IsInstanceList)
-                        continue;
-                    if (str.Contains("Mesh"))
-                        continue;
-                    if (str.Contains("Inst") && !str.Contains("List"))
-                        continue;
+                    if (!node.IsLodSelector && !node.NeedsBlas && !node.NeedsTlas) continue;
                 }
 
                 Console.WriteLine(str);
@@ -419,16 +416,32 @@ namespace SceneCompiler.Scene
 
         private void DepthRecursion(SceneNode node)
         {
-            foreach (var child in node.Children)
+            if (node.IsInstanceList)
             {
-                if (node.Level >= child.Level)
+                foreach (var child in node.Children)
                 {
-                    child.Level = node.Level + 1;
-                    if (child.ForceOdd && child.Level % 2 == 0)
-                        child.Level++;
-                    if (child.ForceEven && child.Level % 2 == 1)
-                        child.Level++;
+                    if (node.Level + 1 < child.Level) continue;
+                    if (child.ForceOdd != node.ForceOdd)
+                        throw new Exception("Forcing a list to be odd requires forcing all instances to be odd themselfs");
+                    if (child.ForceEven != node.ForceEven)
+                        throw new Exception("Forcing a list to be even requires forcing all instances to be even themselfs");
+                    child.Level = node.Level + 2;
                     DepthRecursion(child);
+                }
+            }
+            else
+            {
+                foreach (var child in node.Children)
+                {
+                    if (node.Level >= child.Level)
+                    {
+                        child.Level = node.Level + 1;
+                        if (child.ForceOdd && child.Level % 2 == 0)
+                            child.Level++;
+                        if (child.ForceEven && child.Level % 2 == 1)
+                            child.Level++;
+                        DepthRecursion(child);
+                    }
                 }
             }
 

@@ -171,32 +171,12 @@ int main()
     app.vk_info.rasterize = VK_TRUE;
     app.vk_info.vsync = 1;
     load_scene(&app.scene, app.sceneSelection.availableScenes[app.sceneSelection.nextScene]);
-
     init_window(&app.window);
     init_vulkan(&app.vk_info, &app.window, &app.scene);
+
 	glfwSetFramebufferSizeCallback(app.window, resize_callback);
 	glfwSetCursorPosCallback(app.window, mouse__move_callback);
 	glfwSetMouseButtonCallback(app.window, mouse_button_callback);
-
-    VkBool32 useMutliLevel = VK_TRUE;
-
-    /*GET_ROOT((&app.scene));
-    root->NumChildren = 1;
-    root->NumOdd = 1;
-    root->NumEven = 0;*/
-    /*GET_CHILD_IDX((&app.scene), root, 2);
-    SceneNode* node = &app.scene.scene_nodes[childIdx];
-    app.scene.node_indices[root->ChildrenIndex] = childIdx;
-    GET_CHILD((&app.scene), node, 0);
-    SceneNode* grandChild = &app.scene.scene_nodes[app.scene.node_indices[child->ChildrenIndex]];*/
-    if (app.vk_info.ray_tracing) {
-        // flatten_scene(&app.scene);
-        // prepare_scene(&app.scene, useMutliLevel);
-    }
-    else {
-        //flatten_scene(&app.scene);
-    }
-
 
     // everything else needs to be build before creating the swapchain
     create_or_resize_swapchain(&app.vk_info, &app.window, WINDOW_WIDTH, WINDOW_HEIGHT, &app.scene);

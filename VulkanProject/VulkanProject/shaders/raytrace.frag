@@ -102,7 +102,15 @@ void instanceHitCompute(SceneNode tlas, int index, vec3 rayOrigin, vec3 rayDirec
 	}
 
 	// compute the next node
-	SceneNode next = nodes[childIndices[blas.ChildrenIndex + nextLoad.pIdx]];
+	SceneNode next;
+	if(blas.IsInstanceList){
+		SceneNode dummy = nodes[childIndices[blas.ChildrenIndex]];
+		SceneNode instance = nodes[childIndices[dummy.ChildrenIndex+nextLoad.pIdx]];
+		next = nodes[childIndices[instance.ChildrenIndex]];
+		world_to_object = mat4x3(mat4(inv(transforms[instance.TransformIndex])) * mat4(world_to_object));
+	} else {
+		next = nodes[childIndices[blas.ChildrenIndex + nextLoad.pIdx]];
+	}
 
 	// discard is not possible without either reodering the buffer or some other operation
 	// therefore to discard an instance hit, set tMax to high value
@@ -209,7 +217,7 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, f
 	while (stackSize > 0) {
 		stackSize--; // remove last element
 		TraversalPayload load = traversalBuffer[stackSize];
-		if (load.t > best_t) continue;// there was already a closer hit, we can skip this one
+		if (load.t >= best_t) continue;// there was already a closer hit, we can skip this one
 
 		int start = stackSize;
 		SceneNode node = nodes[load.nIdx]; // retrieve scene Node
@@ -243,7 +251,6 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, f
 		numTraversals++;
 		uint triangleIntersections = 0;
 		uint instanceIntersections = 0;
-		
 		while (rayQueryProceedEXT(ray_query)) {
 			uint type = rayQueryGetIntersectionTypeEXT(ray_query, false);
 			switch (type) {
@@ -279,7 +286,7 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, f
 		
 		for(int i = start;i < end;i++) {
 			instanceHitCompute(node, i, rayOrigin, rayDirection);
-			recordQuery(traversalBuffer[i].nIdx, node.Level, traversalBuffer[i].t, vec3(1,0,0), vec3(2,0,0), i-start ,added);
+			//recordQuery(traversalBuffer[i].nIdx, node.Level, traversalBuffer[i].t, vec3(1,0,0), vec3(2,0,0), i-start ,added);
 		}
 
 		for (int i = 0; i < added / 2; i++) {
@@ -327,6 +334,7 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, f
 				triangleTLAS = tlasNumber;
 			}
 		}
+		recordQuery(node.Index, node.Level, load.t, rayOrigin, rayOrigin + best_t * rayDirection, triangleIntersections ,instanceIntersections);
 	}
 	SetDebugHsv(displayTLASNumber, triangleTLAS, colorSensitivity, true);
 	if (triangle_index >= 0) {

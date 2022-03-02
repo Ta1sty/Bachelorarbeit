@@ -19,7 +19,9 @@ void init_ray_descriptors(VkInfo* info, Scene* scene);
 
 void build_all_acceleration_structures(VkInfo* info, Scene* scene);
 void build_node_acceleration_structure(VkInfo* info, Scene* scene, SceneNode* node);
-void build_node_instance_list(VkInfo* info, Scene* scene, SceneNode* list);
+
+void build_tlas_instance_list(VkInfo* info, Scene* scene, SceneNode* list);
+void build_blas_instance_list(VkInfo* info, Scene* scene, SceneNode* list);
 
 void build_tlas(VkInfo* info, Scene* scene, SceneNode* node);
 void build_blas(VkInfo* info, Scene* scene, SceneNode* node);

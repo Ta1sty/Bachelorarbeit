@@ -130,7 +130,7 @@ namespace SceneCompiler.MoanaConversion
 
             Node = new SceneNode();
             Node.Name = "List " + Name;
-            Node.ForceEven = true;
+            //Node.ForceEven = true;
             Node.IsInstanceList = true;
             buffers.Add(Node);
             Node.Children = Instances.Select(x=>x.GetSceneNode(buffers));
@@ -200,7 +200,7 @@ namespace SceneCompiler.MoanaConversion
             {
                 ObjectToWorld = objectToWorld,
                 Name = "Inst " + ObjectName,
-                ForceEven = true
+                //ForceEven = true
             };
             buffers.Add(Node);
 

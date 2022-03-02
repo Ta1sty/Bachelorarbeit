@@ -31,7 +31,10 @@ void build_node_acceleration_structure(VkInfo* info, Scene* scene, SceneNode* no
 		return;
 
 	if (node->IsInstanceList) {
-		build_node_instance_list(info, scene, node);
+		if (node->Level % 2 == 0)
+			build_tlas_instance_list(info, scene, node);
+		else
+			build_blas_instance_list(info, scene, node);
 		return;
 	}
 
@@ -65,7 +68,7 @@ void build_node_acceleration_structure(VkInfo* info, Scene* scene, SceneNode* no
 	}
 }
 
-void build_node_instance_list(VkInfo* info, Scene* scene, SceneNode* list)
+void build_tlas_instance_list(VkInfo* info, Scene* scene, SceneNode* list)
 {
 	SceneNode* node = &scene->scene_nodes[scene->node_indices[list->ChildrenIndex]];
 
@@ -252,7 +255,6 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 	// if node references children call buildBLAS for every child node
 
 	uint32_t instance_count = node->NumChildren; // regular odd level BLAS children
-	uint32_t instanceOffset = 0;
 
 	VkBuffer stagingBuffer = 0;
 	VkDeviceMemory stagingMemory = 0;
@@ -265,24 +267,15 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 	check(vkMapMemory(info->device, stagingMemory, 0, sizeof(VkAccelerationStructureInstanceKHR) * instance_count, 0,
 					  (void**) & staging_data), "");
 
-	SceneNode* children = malloc(sizeof(SceneNode) * instance_count);
-
-	for (uint32_t i = 0; i < node->NumChildren; i++)
-	{
-		GET_CHILD(scene, node, i);
-		// since this is depth first the BLAS should already be built
-		children[instanceOffset + i] = *child;
-	}
-
 	// now build the instance geometry
 
 	for (uint32_t i = 0; i < instance_count; i++)
 	{
-		SceneNode child = children[i];
+		GET_CHILD(scene, node, i);
 		// Specify the only instance
 		VkAccelerationStructureDeviceAddressInfoKHR address_request = {
 			.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR,
-			.accelerationStructure = scene->acceleration_structures[child.Index].structure,
+			.accelerationStructure = scene->acceleration_structures[child->Index].structure,
 		};
 		VkAccelerationStructureInstanceKHR instance = {
 			.transform = {
@@ -297,16 +290,14 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 			VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR,
 			.accelerationStructureReference = pvkGetAccelerationStructureDeviceAddressKHR(
 				info->device, &address_request),
-			.instanceCustomIndex = child.Index >= 0 ? child.Index : 0xFFFFFFFF
+			.instanceCustomIndex = child->Index >= 0 ? child->Index : 0xFFFFFFFF
 			// this is the reference to use in case this is an odd level node
 		};
 
-		memcpy(&instance.transform.matrix, TRANSFORM(scene, (&child)).mat, sizeof(float) * 4 * 3);
+		memcpy(&instance.transform.matrix, TRANSFORM(scene, child).mat, sizeof(float) * 4 * 3);
 
 		memcpy(&staging_data[i], &instance, sizeof(VkAccelerationStructureInstanceKHR));
 	}
-
-	free(children);
 
 	VkAccelerationStructureBuildSizesInfoKHR top_sizes = {
 		.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR,
@@ -409,6 +400,170 @@ void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 	scene->TLASs[scene->numTLAS] = acceleration_structure.structure;
 	node->TlasNumber = scene->numTLAS;
 	scene->numTLAS++;
+}
+
+void build_blas_instance_list(VkInfo* info, Scene* scene, SceneNode* list)
+{
+	SceneNode* node = &scene->scene_nodes[scene->node_indices[list->ChildrenIndex]];
+
+	uint32_t primitive_count = node->NumChildren; // even level instancing
+	for (uint32_t i = 0; i < node->NumChildren; i++) {
+		GET_CHILD(scene, node, i);
+		GET_GRANDCHILD(scene, child, 0);
+		build_node_acceleration_structure(info, scene, grandChild);
+	}
+
+	// 2 things to do
+	// if node references geometry add relevant geometry
+	// if node references children recursively create new TLAS
+	// and add traversalNodes
+
+	// credits to christopher
+	VK_LOAD(vkGetAccelerationStructureBuildSizesKHR);
+	VK_LOAD(vkCreateAccelerationStructureKHR);
+	VK_LOAD(vkGetAccelerationStructureDeviceAddressKHR);
+	VK_LOAD(vkCmdBuildAccelerationStructuresKHR);
+
+	VkBuffer aabbBuffer = 0;
+	VkDeviceMemory aabbMemory = 0;
+
+	// Handle node children
+		VkAabbPositionsKHR* aabbData;
+		createBuffer(info, sizeof(VkAabbPositionsKHR) * node->NumChildren,
+			VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
+			VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &aabbBuffer, &aabbMemory);
+		check(vkMapMemory(info->device, aabbMemory, 0, sizeof(VkAabbPositionsKHR) * node->NumChildren, 0,
+			(void**)&aabbData), "error Mapping memory");
+
+		for (int32_t i = 0; i < node->NumChildren; i++)
+		{
+			GET_CHILD(scene, node, i);
+
+			VkAabbPositionsKHR position = {
+				.maxX = child->AABB_max[0],
+				.maxY = child->AABB_max[1],
+				.maxZ = child->AABB_max[2],
+				.minX = child->AABB_min[0],
+				.minY = child->AABB_min[1],
+				.minZ = child->AABB_min[2]
+			};
+
+			memcpy(&aabbData[i], &position, sizeof(VkAabbPositionsKHR));
+		}
+
+
+		// now every child we reference has a TLAS, if the child is odd we then just use the identity transform
+		// Now build AABB geometry, remember to NOT transform the ray if the child was odd
+
+		VkBufferDeviceAddressInfo aabb_address = {
+			.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+			.buffer = aabbBuffer
+		};
+
+		VkAccelerationStructureGeometryKHR bottom_geometry = {
+			.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR,
+			.geometryType = VK_GEOMETRY_TYPE_AABBS_KHR,
+			.geometry = {
+				.aabbs = {
+					.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_AABBS_DATA_KHR,
+					.data = {vkGetBufferDeviceAddress(info->device, &aabb_address)},
+					.stride = sizeof(VkAabbPositionsKHR)
+				}
+			},
+			.flags = VK_GEOMETRY_OPAQUE_BIT_KHR,
+		};
+
+	VkAccelerationStructureBuildSizesInfoKHR bottom_size = {
+		.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR,
+	};
+
+	VkAccelerationStructureBuildGeometryInfoKHR bottom_build_info = {
+		.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR,
+		.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR,
+		.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR,
+		.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR,
+		.geometryCount = 1, .pGeometries = &bottom_geometry,
+	};
+	pvkGetAccelerationStructureBuildSizesKHR(
+		info->device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
+		&bottom_build_info, &primitive_count, &bottom_size);
+
+	// Create buffers for the acceleration structures
+
+	VkDeviceSize size = bottom_size.accelerationStructureSize;
+	printf("Build BLAS\tI:%d\tL:%d\tC:%d\tT:%d\tS:%llumb\n", node->Index, node->Level, node->NumChildren, node->NumTriangles, size / 1048576);
+
+
+	VkBuffer blasBuffer = 0;
+	VkDeviceMemory blasMemory = 0;
+	createBuffer(info, bottom_size.accelerationStructureSize,
+		VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR |
+		VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &blasBuffer, &blasMemory);
+
+	// Create the acceleration structures
+	VkAccelerationStructureCreateInfoKHR create_info = {
+		.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR,
+		.buffer = blasBuffer,
+		.offset = 0, .size = bottom_size.accelerationStructureSize,
+		.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR,
+	};
+
+	VkAccelerationStructureKHR structure;
+
+	check(pvkCreateAccelerationStructureKHR(info->device, &create_info, NULL, &structure), "");
+
+
+	// Allocate scratch memory for the build
+	VkBuffer scratchBuffer = 0;
+	VkDeviceMemory scratchBufferMemeory = 0;
+
+	createBuffer(info, bottom_size.buildScratchSize,
+		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+		VK_MEMORY_HEAP_DEVICE_LOCAL_BIT, &scratchBuffer, &scratchBufferMemeory);
+
+	// Specify the only instance
+	VkCommandBuffer cmd = beginSingleTimeCommands(info);
+	// Build bottom- and top-level acceleration structures in this order
+	VkAccelerationStructureBuildRangeInfoKHR build_ranges[] = {
+		{.primitiveCount = primitive_count}
+	};
+	VkBufferDeviceAddressInfo scratch_adress_info = {
+		.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+		.buffer = scratchBuffer
+	};
+	bottom_build_info.scratchData.deviceAddress = vkGetBufferDeviceAddress(info->device, &scratch_adress_info);
+	bottom_build_info.dstAccelerationStructure = structure;
+	const VkAccelerationStructureBuildRangeInfoKHR* build_range = &build_ranges[0];
+	pvkCmdBuildAccelerationStructuresKHR(cmd, 1, &bottom_build_info, &build_range);
+	// Enforce synchronization
+	VkMemoryBarrier after_build_barrier = {
+		.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER,
+		.srcAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR |
+		VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR,
+		.dstAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR |
+		VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR,
+	};
+	vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR,
+		VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, 0,
+		1, &after_build_barrier, 0, NULL, 0, NULL);
+
+	endSingleTimeCommands(info, cmd);
+
+	vkDestroyBuffer(info->device, scratchBuffer, NULL);
+	vkDestroyBuffer(info->device, aabbBuffer, NULL);
+	vkFreeMemory(info->device, scratchBufferMemeory, NULL);
+	vkFreeMemory(info->device, aabbMemory, NULL);
+
+
+	AccelerationStructure acceleration_structure = {
+		.buffer = blasBuffer,
+		.memory = blasMemory,
+		.structure = structure,
+		.size = bottom_size.accelerationStructureSize
+	};
+	scene->acceleration_structures[list->Index] = acceleration_structure;
 }
 
 // for the basic creation of acceleration structures you may also

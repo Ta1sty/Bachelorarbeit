@@ -128,10 +128,11 @@ namespace SceneCompiler
 
             if(config.OptimizationConfiguration.RootBufferRebuild)
                 buffers.RebuildNodeBufferFromRoot();
-            if(config.DebugConfiguration.ValidateSceneGraph)
-                rayTraceOptimization.Validate();
-            if(config.DebugConfiguration.PrintScene)
+            if (config.DebugConfiguration.PrintScene)
                 rayTraceOptimization.PrintScene();
+            if (config.DebugConfiguration.ValidateSceneGraph)
+                rayTraceOptimization.Validate();
+
 
             var writer = new SceneWriter();
 

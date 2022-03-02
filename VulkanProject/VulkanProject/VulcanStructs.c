@@ -173,6 +173,8 @@ void create_device(VkInfo* vk_info) // see https://github.com/MomentsInGraphics/
 	};
 	if (vkCreateDevice(vk_info->physical_device, &device_info, NULL, &vk_info->device))
 	{
+		printf("create device failed");
+
 		printf("Failed to create a Vulkan device with the following extensions:\n");
 		for (uint32_t i = 0; i != device_info.enabledExtensionCount; ++i)
 		{
@@ -180,6 +182,7 @@ void create_device(VkInfo* vk_info) // see https://github.com/MomentsInGraphics/
 		}
 		error("");
 	}
+
 	// Create a command pool for each queue
 	VkCommandPoolCreateInfo command_pool_info = {
 		.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
@@ -195,7 +198,6 @@ void create_device(VkInfo* vk_info) // see https://github.com/MomentsInGraphics/
 		printf("Ray tracing is available.\n");
 	else
 		printf("No ray tracing for u\n");
-
 	VkPhysicalDeviceProperties2 prop2 = {
 		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 
 	};
@@ -204,7 +206,6 @@ void create_device(VkInfo* vk_info) // see https://github.com/MomentsInGraphics/
 	};
 	prop2.pNext = &accProp;
 	vkGetPhysicalDeviceProperties2(vk_info->physical_device, &prop2);
-	int a = 0;
 }
 
 void create_validation_layer(VkInfo* vk_info)

@@ -52,8 +52,9 @@ namespace Scene
             {
                 if (Level % 2 != 0)
                     return false;
-                var grandparent = Parents.FirstOrDefault()?.Parents.FirstOrDefault();
-                if (grandparent is { IsInstanceList: true })
+                var parent = Parents.FirstOrDefault();
+                var grandparent = parent?.Parents.FirstOrDefault();
+                if (parent is { IsInstanceList: true } || grandparent is { IsInstanceList: true})
                     return false;
                 if (IsLodSelector)
                     return false;
@@ -67,9 +68,11 @@ namespace Scene
             {
                 if (Level % 2 != 1)
                     return false;
-                if (Parents.FirstOrDefault()?.IsInstanceList ?? false)
+                var parent = Parents.FirstOrDefault();
+                var grandparent = parent?.Parents.FirstOrDefault();
+                if (parent is { IsInstanceList: true } || grandparent is { IsInstanceList: true })
                     return false;
-                if (Parents.FirstOrDefault()?.IsLodSelector ?? false)
+                if (parent is { IsLodSelector: true })
                     return false;
                 return true;
             }

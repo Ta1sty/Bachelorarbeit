@@ -27,8 +27,6 @@ namespace SceneCompiler.Scene
                 node.ResetAABB();
             }
             root.ComputeAABBs(_buffers);
-            // we want root to be instanced, therefore root must be odd
-            root.ForceOdd = true;
 
             var min = root.AABB_min;
             var max = root.AABB_max;
@@ -59,8 +57,7 @@ namespace SceneCompiler.Scene
             var newRoot = new SceneNode
             {
                 IsInstanceList = true,
-                Name = "List ROOT",
-                ForceEven = true,
+                Name = "List ROOT"
             };
             _buffers.Add(newRoot);
             _buffers.Root = newRoot;
@@ -72,7 +69,6 @@ namespace SceneCompiler.Scene
                     var add = new SceneNode
                     {
                         Name = "Inst ROOT",
-                        ForceEven = true,
                     };
 
                     if (randomize)
