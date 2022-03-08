@@ -59,18 +59,16 @@ namespace SceneCompiler.Scene
         {
             var indexOffset = buffers.VertexBuffer[(int)buffers.IndexBuffer[node.IndexBufferIndex]].IndexOffset;
 
-            var vertexList = buffers.IndexBuffer.GetRange(node.IndexBufferIndex, node.NumTriangles * 3)
-                .Select(x => buffers.VertexBuffer[(int)x]);
+            var indices = buffers.IndexBuffer.GetRange(node.IndexBufferIndex, node.NumTriangles * 3);
 
-            var vertices = new HashSet<Vertex>(vertexList);
+            var numVertices = indices.Max() - indexOffset + 1;
 
-            var materials = vertices.Select(x => x.MaterialIndex).Distinct().ToList();
             // write header
             using (var textStream = new StreamWriter(node.Name + ".ply")){
                 textStream.WriteLine("ply");
                 textStream.WriteLine("format binary_little_endian 1.0");
                 textStream.WriteLine("comment VCGLIB generated");
-                textStream.WriteLine($"element vertex {vertices.Count}");
+                textStream.WriteLine($"element vertex {numVertices}");
                 textStream.WriteLine("property float x");
                 textStream.WriteLine("property float y");
                 textStream.WriteLine("property float z");
@@ -90,8 +88,9 @@ namespace SceneCompiler.Scene
             // write contents
             using (var byteStream = File.Open(node.Name + ".ply", FileMode.Append))
             {
-                foreach (var vertex in vertices)
+                for (var i = indexOffset;i < indexOffset+numVertices;i++)
                 {
+                    var vertex = buffers.VertexBuffer[i];
                     var pos = vertex.Position();
                     var norm = vertex.Normal();
                     var tex = vertex.Tex();

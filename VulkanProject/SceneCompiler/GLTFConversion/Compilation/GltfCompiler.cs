@@ -57,11 +57,11 @@ namespace SceneCompiler.GLTFConversion.Compilation
                     usedReaders.Add(norReader);
                     usedReaders.Add(texReader);
 
-                    uint vertexStart = (uint)vertexBuffer.Count;
+                    int vertexStart = vertexBuffer.Count;
 
                     for (var i = 0; i < numElements; i++)
                     {
-                        var ver = new Vertex(posReader.GetVec3(), norReader.GetVec3(), texReader.GetVec2(), arr.Material, start);
+                        var ver = new Vertex(posReader.GetVec3(), norReader.GetVec3(), texReader.GetVec2(), arr.Material, vertexStart);
                         vertexBuffer.Add(ver);
                     }
                     var faceAccessor = File.Accessors[arr.Indices];
@@ -70,15 +70,27 @@ namespace SceneCompiler.GLTFConversion.Compilation
                     usedReaders.Add(faceReader);
                     if (true) // vertex array
                     {
+                        uint v1, v2, v3;
                         for (var i = 0; i < faceAccessor.Count; i+=3)
                         {
-                            uint v1 = faceReader.GetUshort();
-                            uint v2 = faceReader.GetUshort();
-                            uint v3 = faceReader.GetUshort();
+                            if (faceAccessor.ComponentType == 5123)
+                            {
+                                v1 = faceReader.GetUshort();
+                                v2 = faceReader.GetUshort();
+                                v3 = faceReader.GetUshort();
+                            }
+                            else if (faceAccessor.ComponentType == 5125)
+                            {
+                                v1 = faceReader.GetUint();
+                                v2 = faceReader.GetUint();
+                                v3 = faceReader.GetUint();
+                            }
+                            else throw new Exception("Component type not implemented");
+
                             if (v1 == v2 || v2 == v3 || v3 == v1) continue; // just a line
-                            indexBuffer.Add(v1 + vertexStart);
-                            indexBuffer.Add(v2 + vertexStart);
-                            indexBuffer.Add(v3 + vertexStart);
+                            indexBuffer.Add((uint)(v1 + vertexStart));
+                            indexBuffer.Add((uint)(v2 + vertexStart));
+                            indexBuffer.Add((uint)(v3 + vertexStart));
                         }
                     }
                 }

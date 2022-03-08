@@ -65,5 +65,12 @@ namespace SceneCompiler.GLTFConversion.Compilation
             _currentPos += 2;
             return x;
         }
+
+        public uint GetUint()
+        {
+            uint x = BitConverter.ToUInt32(_buffer.AsSpan(_currentPos, 4));
+            _currentPos += 4;
+            return x;
+        }
     }
 }

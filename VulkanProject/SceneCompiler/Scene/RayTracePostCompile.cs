@@ -87,24 +87,28 @@ namespace SceneCompiler.Scene
             };
             _buffers.Add(add);
 
+
             var extent = root.AABB_max - root.AABB_min;
-            var offset = root.AABB_min;
+            var middle = root.AABB_max - extent/2;
+            middle.Y = root.AABB_min.Y;
+            extent.X = Math.Max(extent.X, extent.Z);
+            extent.Z = Math.Max(extent.X, extent.Z);
 
             var start = (uint) _buffers.VertexBuffer.Count;
 
-            float[] vf0 = { 0, 0, 0, 0, 1, 0, 0, 0};
-            float[] vf1 = { 1, 0, 0, 0, 1, 0, 1, 0 };
-            float[] vf2 = { 0, 0, 1, 0, 1, 0, 0, 1 };
+            float[] vf0 = { -1, 0, -1, 0, 1, 0, 0, 0};
+            float[] vf1 = { 1, 0, -1, 0, 1, 0, 1, 0 };
+            float[] vf2 = { -1, 0, 1, 0, 1, 0, 0, 1 };
             float[] vf3 = { 1, 0, 1, 0, 1, 0, 1, 1 };
 
             var material = new SceneMaterial
             {
-                Ambient = 0,
-                Diffuse = 0,
-                Specular = 0,
+                Ambient = 0.1f,
+                Diffuse = 0.2f,
+                Specular = 0.2f,
                 PhongExponent = 1,
-                Transmission = 0.5f,
-                Reflection = 0.5f,
+                Transmission = 0.2f,
+                Reflection = 0.3f,
             };
             var materialIndex = _buffers.MaterialBuffer.Count;
             _buffers.MaterialBuffer.Add(material);
@@ -128,7 +132,7 @@ namespace SceneCompiler.Scene
             _buffers.IndexBuffer.Add(start + 3);
 
             var scale = Matrix4x4.CreateScale(extent.X, 1, extent.Z);
-            var trans = Matrix4x4.CreateTranslation(offset);
+            var trans = Matrix4x4.CreateTranslation(middle);
 
             add.ObjectToWorld = scale * trans;
 
@@ -138,9 +142,10 @@ namespace SceneCompiler.Scene
                 var inst = new SceneNode
                 {
                     ObjectToWorld = add.ObjectToWorld,
-                    ForceEven = true,
                     Name = "Inst Ground"
                 };
+                if(root.ForceEven)
+                    inst.ForceEven = true;
                 add.ObjectToWorld = Matrix4x4.Identity;
                 _buffers.Add(inst); 
                 inst.AddChild(add);
@@ -565,7 +570,8 @@ namespace SceneCompiler.Scene
             var newRoot = new SceneNode
             {
                 IsInstanceList = true,
-                Name = "ROOT-SingleLevel"
+                Name = "ROOT-SingleLevel",
+                ForceEven = true
             };
             var children = new List<SceneNode>();
             Recursion(root, Matrix4x4.Identity, children);
@@ -574,8 +580,11 @@ namespace SceneCompiler.Scene
             _buffers.Root = newRoot;
             foreach (var node in _buffers.Nodes)
             {
-                if(node.NumTriangles>0)
+                if (node.NumTriangles > 0)
+                {
                     node.ClearChildren();
+                    node.ObjectToWorld = Matrix4x4.Identity;
+                }
             }
         }
 
@@ -591,7 +600,7 @@ namespace SceneCompiler.Scene
                     var add = new SceneNode
                     {
                         Name = "Inst-Single",
-                        ObjectToWorld = transform,
+                        ObjectToWorld = child.ObjectToWorld * transform,
                         ForceEven = true
                     };
                     nodes.Add(add);

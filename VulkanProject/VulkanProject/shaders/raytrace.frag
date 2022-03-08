@@ -85,6 +85,8 @@ int traversalDepth = 0;
 uint numTraversals = 0;
 uint queryCount = 0;
 
+int usedLod = -1;
+bool keepLod = false;
 void instanceHitCompute(SceneNode tlas, int index, vec3 rayOrigin, vec3 rayDirection){	
 	TraversalPayload nextLoad = traversalBuffer[index];
 	SceneNode directChild = nodes[nextLoad.nIdx]; // use the custom index to take a shortcut
@@ -130,27 +132,30 @@ void instanceHitCompute(SceneNode tlas, int index, vec3 rayOrigin, vec3 rayDirec
 
 	if(next.IsLodSelector) {
 		SceneNode dummy = nodes[childIndices[next.ChildrenIndex]];
-		int N = dummy.NumChildren;
+		int lod;
+		if(usedLod >= 0) {
+			lod = usedLod;
+		} else {
+			int N = dummy.NumChildren;
+			mat3 tr = mat3(world_to_object * mat4(nextLoad.world_to_object));
 
-		mat3 tr = mat3(world_to_object * mat4(nextLoad.world_to_object));
+			float eigMax = determinant(tr);
+			// computes the biggest eigenvalue of the object_to_world transform
 
-		float eigMax = 1/length(tr[0]);
-		eigMax = max(eigMax, 1/length(tr[1]));
-		eigMax = max(eigMax, 1/length(tr[2])); // computes the biggest eigenvalue of the object_to_world transform
+			float rObject = length(next.AABB_max-next.AABB_min)/2;
+			float rWorld = eigMax * rObject;
+			
+			float rMax = 3000;
+			float t = max(0,tNear);
+			float rPixel = rWorld * height / (tan(PI / 180 * fov) * 2 * t);
+			lod = -int(log2(pow(2,N-1) * rPixel/rMax));
 
-		float rObject = length(next.AABB_max-next.AABB_min)/2;
-		float rWorld = eigMax * rObject;
-
-		float rMax = 1000;
-		float t = max(0,tNear);
-		float rPixel = rWorld * height / (tan(PI / 180 * fov) * 2 * t);
-		int lod = -int(log2(pow(2,N-1) * rPixel/rMax));
-		
-		lod = max(lod, 0);
-		lod = min(lod, N-1);
+			lod = max(lod, 0);
+			lod = min(lod, N-1);
+			usedLod = lod;
+		}
 
 		//recordLODSelect(next.Index, mat4(tr), tNear, rObject, rWorld, rPixel, eigMax, lod);
-		SetDebugHsv(displayLOD, lod, N, true);
 		next = nodes[childIndices[dummy.ChildrenIndex + lod]];
 	}
 
@@ -485,30 +490,40 @@ vec4 rayTrace(vec3 rayOrigin, vec3 rayDirection, out float t) {
 		count++;
 		num--;
 
-		vec3 P = Origin[num];
+		vec3 P = Origin[num];s
 		vec3 V = Direction[num];
 		float frac = Contribution[num];
 		bool hit = ray_trace_loop(P, V, MAX_T, rootSceneNode,0, tuv, triangle, load);
+
+		SetDebugHsv(displayLOD, usedLod, 7, true);
 
 		if(hit) {
 			vec3 P = P + tuv.x * V;
 			vec3 N_obj;
 			getHitPayload(triangle, tuv, N_obj, material);
 			vec3 N_world = normalize(transpose(mat3(load.world_to_object)) * N_obj);
-			DebugOffIfSet();
 			if (displayAABBs)
 				debugSetEnabled = false;
 			if (count == 1)
 				t = tuv.x;
 
 			vec4 fracColor = shadeFragment(P, V, N_world, material, triangle);
+			if(debug && displayLOD){
+				fracColor = 0.8f * fracColor + 0.2f * debugColor;
+				debugColor = vec4(0,0,0,0);
+			}
+			DebugOffIfSet();
 			color += frac * fracColor[3] * fracColor;
 
 			float tr = material.k_t + (1-fracColor[3]);
 			float rf = material.k_r;
 
+			if(count>10){
+				tr = 0;
+				rf = 0;
+			}
 
-			if(false && rf>0 && tr > 0 && num<=4) {
+			if(rf>0 && tr > 0 && num<=4) {
 				Contribution[num] = tr * frac;
 				Origin[num] = P;
 				Direction[num] = V;
@@ -518,14 +533,14 @@ vec4 rayTrace(vec3 rayOrigin, vec3 rayDirection, out float t) {
 				num+=2;
 			}
 
-			if(false && rf>0 && tr <= 0 && num<=5) {
+			if(rf>0 && tr <= 0 && num<=5) {
 				Contribution[num] = rf * frac;
 				Origin[num] = P;
 				Direction[num] = reflect(V,N_world);
 				num++;
 			}
 
-			if(false && tr>0 && rf <= 0 && num<=5) {
+			if(tr>0 && rf <= 0 && num<=5) {
 				Contribution[num] = tr * frac;
 				Origin[num] = P;
 				Direction[num] = V;
