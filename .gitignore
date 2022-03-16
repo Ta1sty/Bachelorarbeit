@@ -367,3 +367,6 @@ FodyWeavers.xsd
 /island
 /TriDecimator
 /Models/Gallic_warrior_1_OBJ
+/Test/LOD test scenes
+/Test/SL-ML test scenes
+*.ngfx-gputrace
