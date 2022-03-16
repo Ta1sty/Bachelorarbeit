@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
+using Accessibility;
 
 namespace SceneCompiler
 {
@@ -63,6 +64,8 @@ namespace SceneCompiler
     {
         /// <summary>Converts the .pbrt-Moana Scene to a scenegraph - exclusive with ConvertGltf</summary>
         public bool ConvertMoana { get; set; } = true;
+        /// <summary>Uses Compiler V2</summary>
+        public bool UseCompilerVersion2 { get; set; } = true;
         /// <summary>if this is not null, the compiler loads the moana scene from this directory. Should end with .../island/pbrt</summary>
         public string MoanaRootPath { get; set; } = null;
         /// <summary>cleans up the parsed moana file once the scenenodes are made. Preserves memory during compilation</summary>
@@ -91,6 +94,8 @@ namespace SceneCompiler
         public int InstanceZ { get; set; } = 16;
         /// <summary>instances the scene multiple times - for example: root x (16x16) x (16x16) => InstanceCount is 2</summary>
         public int InstanceCount { get; set; } = 1;
+        /// <summary>inserts space inbetween the nodes based on the size</summary>
+        public float SpacingFactor { get; set; } = 1;
         /// <summary>instances the scene randomly, with a small offset and rotation</summary>
         public bool Randomize { get; set; } = false;
     }
@@ -102,6 +107,10 @@ namespace SceneCompiler
         /// collapsed into a large array and an instance list is put over them
         /// </summary>
         public bool UseSingleLevelInstancing { get; set; } = true;
+        /// <summary>Reduces instancing in the same way as single level but stops at nodes that reference a node with geometry</summary>
+        public int ReduceInstanceListCount { get; set; } = 2;
+        /// <summary>Forces all instance lists to even levels to prevent TraversalStack overload</summary>
+        public bool ForceInstanceListEven { get; set; } = true;
         /// <summary>merges instance lists if nodes reference many, reduces AABB overlap</summary>
         public bool MergeInstanceLists { get; set; } = true;
         /// <summary>caps instance lists if they exceed MaxInstances and splits them spatially</summary>
@@ -121,13 +130,15 @@ namespace SceneCompiler
         /// <summary>The amount of triangles needed for lod to be used</summary>
         public int LodTriangleThreshold { get; set; } = 100000;
         /// <summary>Creates Levels of detail for large Instance lists</summary>
-        public bool UseInstanceLod { get; set; } = true;
+        public bool UseInstanceLod { get; set; } = false;
+        /// <summary>Removes the excess instead of splitting it</summary>
+        public bool CutExcess { get; set; } = false;
         /// <summary>The amount of instances need for a the creation of an instance list LOD</summary>
         public int LodInstanceThreshold { get; set; } = 500;
         /// <summary>The reduction factor per level of lod. Means factor 4 is ~25% of triangles</summary>
         public int ReductionFactor { get; set; } = 4;
         /// <summary>The number of Lods to build</summary>
-        public int NumMaxLod { get; set; } = 5;
+        public int NumMaxLod { get; set; } = 6;
         /// <summary>The additional Arguments passed to the TriDecimator</summary>
         public List<string> TriDecimatorArguments { get; set; } = new List<string>() { "-Ty", "-C" };
     }

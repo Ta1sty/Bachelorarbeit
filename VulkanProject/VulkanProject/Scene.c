@@ -22,6 +22,8 @@ void init_scene(Scene* scene)
 	scene->camera.settings.diffuse = 1;
 	scene->camera.settings.specular = 1;
 	scene->camera.settings.shadows = 1;
+	scene->camera.settings.reflection = 1;
+	scene->camera.settings.transmission = 1;
 	scene->camera.settings.maxDepth = 5;
 	scene->camera.settings.traceMax = 100;
 	scene->camera.settings.pixelX = WINDOW_WIDTH/2;
@@ -81,7 +83,7 @@ void load_scene(Scene* scene, char* path)
 	Light light1 = {
 		.position = {0,3,2},
 		.type = LIGHT_ON | LIGHT_TYPE_SUN,
-		.intensity = {1,1,1},
+		.intensity = {1,1,0.7f},
 		.maxDst = 30,
 		.quadratic = {2,0,0},
 		.direction = {1,-2,1},

@@ -38,8 +38,6 @@ namespace SceneCompiler
             var config = CompilerConfiguration.Configuration;
             if (config.MoanaConfiguration.ConvertMoana && config.GltfConfiguration.ConvertGltf)
                 throw new Exception("can not convert gltf and moana, only one can be true");
-            if (config.LodConfiguration.UseLod && config.OptimizationConfiguration.UseSingleLevelInstancing)
-                throw new Exception("can not use lod and single level instancing, lod selectors require traversal");
             if (config.MoanaConfiguration.ConvertMoana)
             {
                 if(config.MoanaConfiguration.MoanaRootPath == null)
@@ -124,6 +122,9 @@ namespace SceneCompiler
             if(config.OptimizationConfiguration.UseSingleLevelInstancing)
                 rayTraceOptimization.ToSingleLevel();
 
+            if (config.OptimizationConfiguration.ReduceInstanceListCount > 0)
+                rayTraceOptimization.ReduceHeight();
+
             rayTraceOptimization.PostCompile();
 
             if(config.OptimizationConfiguration.RootBufferRebuild)
@@ -180,7 +181,11 @@ namespace SceneCompiler
 
         private static ASceneCompiler ConvertMoana(string path, SceneBuffers buffers)
         {
-            ASceneCompiler compiler = new MoanaCompiler(buffers);
+            ASceneCompiler compiler;
+            if (CompilerConfiguration.Configuration.MoanaConfiguration.UseCompilerVersion2)
+                compiler = new MoanaCompilerV2(buffers);
+            else
+                compiler = new MoanaCompiler(buffers);
             compiler.CompileScene(path);
             return compiler;
         }

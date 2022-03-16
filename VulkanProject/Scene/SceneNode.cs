@@ -43,7 +43,7 @@ namespace Scene
 
         public bool ForceOdd = false;
         public bool ForceEven = false;
-        public long TotalPrimitiveCount = 0;
+        public BigInteger TotalPrimitiveCount = 0;
         public bool isAABBComputed = false;
 
         public bool NeedsTlas

@@ -99,6 +99,8 @@ typedef struct renderSettings {
 	VkBool32 diffuse;
 	VkBool32 specular;
 	VkBool32 shadows;
+	VkBool32 reflection;
+	VkBool32 transmission;
 	uint32_t maxDepth;
 	VkBool32 debug; // if this is disabled the image is rendered normally
 	int32_t colorSensitivity;

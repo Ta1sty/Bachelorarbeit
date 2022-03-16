@@ -33,11 +33,18 @@ namespace Scene
             Array[0] = pos[index * 3 + 0];
             Array[1] = pos[index * 3 + 1];
             Array[2] = pos[index * 3 + 2];
-            Array[3] = norm[index * 3 + 0];
-            Array[4] = norm[index * 3 + 1];
-            Array[5] = norm[index * 3 + 2];
-            Array[6] = tex[index * 2 + 0];
-            Array[7] = tex[index * 2 + 1];
+            if (norm.Count > 0)
+            {
+                Array[3] = norm[index * 3 + 0];
+                Array[4] = norm[index * 3 + 1];
+                Array[5] = norm[index * 3 + 2];
+            }
+
+            if (tex.Count > 0)
+            {
+                Array[6] = tex[index * 2 + 0];
+                Array[7] = tex[index * 2 + 1];
+            }
             MaterialIndex = materialIndex;
             IndexOffset = indexOffset;
         }

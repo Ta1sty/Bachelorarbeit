@@ -133,18 +133,12 @@ void changeScene(App* app)
     printf(app->sceneSelection.availableScenes[app->sceneSelection.nextScene]);
     printf("\n");
     vkDeviceWaitIdle(app->vk_info.device);
+
+    Camera oldCam = app->scene.camera;
+
     destroy_shaders(&app->vk_info, &app->scene);
     destroy_scene(&app->scene);
     load_scene(&app->scene, app->sceneSelection.availableScenes[app->sceneSelection.nextScene]);
-
-    VkBool32 useMutliLevel = VK_TRUE;
-    if (app->vk_info.ray_tracing) {
-        // flatten_scene(&app->scene);
-        // prepare_scene(&app->scene, useMutliLevel);
-    }
-    else {
-        //flatten_scene(&app->scene);
-    }
 
     destroy_imgui_buffers(&app->vk_info);
     create_or_resize_swapchain(&app->vk_info, &app->window, WINDOW_WIDTH, WINDOW_HEIGHT, &app->scene);
@@ -152,6 +146,7 @@ void changeScene(App* app)
 
     set_global_buffers(&app->vk_info, &app->scene);
     printSceneSizes(&app->scene);
+    app->scene.camera = oldCam;
     app->sceneSelection.currentScene = app->sceneSelection.nextScene;
 
 }

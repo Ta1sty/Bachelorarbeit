@@ -24,7 +24,7 @@ struct SceneNode {
 	vec3 AABB_max;				// 12
 	int Level;					// 0
 	int NumTriangles;			// 4
-	int IndexBuferIndex;		// 8
+	int IndexBufferIndex;		// 8
 	int NumChildren;			// 12
 	int ChildrenIndex;			// 0
 	int TlasNumber;				// 4
@@ -94,6 +94,8 @@ layout(binding = FRAME_DATA_BINDING, set = 2) uniform FrameData{
 	bool renderDiffuse;
 	bool renderSpecular;
 	bool renderShadows;
+	bool renderReflection;
+	bool renderTransmission;
 	uint rayMaxDepth;
 	bool debug; // if this is disabled the image is rendered normally
 	int colorSensitivity;

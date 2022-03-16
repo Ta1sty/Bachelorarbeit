@@ -119,9 +119,8 @@ namespace SceneCompiler.Scene
 
         public void CreateInstanceLod(SceneNode node, int amount, int factor)
         {
-            if (!node.ForceEven)
-                throw new Exception("can only create LOD selector for even nodes (a TLAS)"); // since InstanceHitCompute is exectued for even nodes
-
+            if (Configuration.CutExcess)
+                amount = 2;
             var selector = new SceneNode
             {
                 ForceEven = true,
@@ -162,7 +161,9 @@ namespace SceneCompiler.Scene
                 lod.AddParent(selector);
                 selector.AddChild(lod);
                 var children = lods[i - 1].Children.ToList();
-                lod.Children = GetRandomChildren(children, children.Count/ factor);
+                lod.Children = GetRandomChildren(children, Configuration.CutExcess ? // if the excess is cut there is only one lod
+                    Configuration.LodInstanceThreshold :
+                    children.Count/ factor);
                 foreach (var child in lod.Children)
                 {
                     child.AddParent(lod);
@@ -170,9 +171,22 @@ namespace SceneCompiler.Scene
 
                 lods[i] = lod;
 
-                if (lod.NumChildren < CompilerConfiguration.Configuration.LodConfiguration.LodInstanceThreshold)
+                if (lod.NumChildren < Configuration.LodInstanceThreshold)
+                    break;
+                if(Configuration.CutExcess)
                     break;
             }
+
+            if (!Configuration.CutExcess) return;
+
+            // if we cut the excess this is not LOD, but just removal of excess
+            foreach (var parent in selector.Parents)
+            {
+                parent.Children = parent.Children.Where(x => x != selector);
+                parent.AddChild(lods[1]);
+            }
+            selector.ClearChildren();
+            _buffers.RewriteAllParents();
         }
 
         public IEnumerable<SceneNode> GetRandomChildren(List<SceneNode> children, int targetNum)

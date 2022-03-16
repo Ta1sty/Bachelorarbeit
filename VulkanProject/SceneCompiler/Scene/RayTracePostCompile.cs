@@ -21,11 +21,12 @@ namespace SceneCompiler.Scene
 
         public void PostCompile()
         {
+            _buffers.Root.ObjectToWorld = Matrix4x4.Identity;
             Console.WriteLine("Adjusting Scene Graph");
 
-            var root = _buffers.Root;
-            root.Level = 0;
-            root.ObjectToWorld = Matrix4x4.Identity;
+
+            if (Configuration.OptimizationConfiguration.ForceInstanceListEven)
+                ForceEvenIstanceLists();
 
             if (Configuration.DebugConfiguration.InsertGround)
             {
@@ -46,8 +47,9 @@ namespace SceneCompiler.Scene
             }
 
             Console.WriteLine("Writing Levels");
-            DepthRecursion(root);
-            Console.WriteLine("Number of Triangles: " + root.TotalPrimitiveCount);
+            _buffers.Root.Level = 0;
+            DepthRecursion(_buffers.Root);
+            Console.WriteLine("Number of Triangles: " + _buffers.Root.TotalPrimitiveCount);
             Console.WriteLine("Removing empty children");
             foreach (var node in _buffers.Nodes) node.Children = node.Children.Where(x => x.TotalPrimitiveCount > 0);
 
@@ -70,7 +72,24 @@ namespace SceneCompiler.Scene
             Console.WriteLine("computing AABBs");
             foreach (var node in _buffers.Nodes)
                 node.ResetAABB();
-            root.ComputeAABBs(_buffers);
+            _buffers.Root.ComputeAABBs(_buffers);
+        }
+
+        private void ForceEvenIstanceLists()
+        {
+            foreach (var node in _buffers.Nodes)
+            {
+                if (node.IsInstanceList)
+                {
+                    node.ForceOdd = false;
+                    node.ForceEven = true;
+                    foreach (var child in node.Children)
+                    {
+                        child.ForceEven = true;
+                        child.ForceOdd = false;
+                    }
+                }
+            }
         }
 
         private void InsertGround()
@@ -105,9 +124,9 @@ namespace SceneCompiler.Scene
             {
                 Ambient = 0.1f,
                 Diffuse = 0.2f,
-                Specular = 0.2f,
+                Specular = 0.1f,
                 PhongExponent = 1,
-                Transmission = 0.2f,
+                Transmission = 0.3f,
                 Reflection = 0.3f,
             };
             var materialIndex = _buffers.MaterialBuffer.Count;
@@ -450,26 +469,45 @@ namespace SceneCompiler.Scene
                 }
             }
 
+            node.TotalPrimitiveCount = node.NumTriangles;
 
-            node.TotalPrimitiveCount = node.NumTriangles + node.Children.Sum(x => x.TotalPrimitiveCount);
+            foreach (var child in node.Children)
+            {
+                node.TotalPrimitiveCount += child.TotalPrimitiveCount;
+            }
         }
 
         public void CapInstanceLists()
         {
+            // splits
             var max = Configuration.OptimizationConfiguration.MaxInstances;
-            var root = _buffers.Root;
             var toSplit = _buffers.Nodes
-                .Where(node => node.IsInstanceList && node.Children.Skip(max).Any())
+                .Where(node => node.IsInstanceList && node.NumChildren > max)
                 .ToList();
 
             if (toSplit.Any() && Configuration.OptimizationConfiguration.UseSingleLevelInstancing)
-                throw new Exception("Capping instance lists is not possible with single level" +
-                                    ", as it requires traversal");
+                Console.WriteLine("WARNING! Capping instance lists requires traversal,\n " +
+                                  "therefore this scene is no longer single level");
 
             while (toSplit.Any())
             {
                 var left = toSplit[^1];
                 toSplit.RemoveAt(toSplit.Count - 1);
+
+                Console.WriteLine("Splitting " + left.Name + " count:"+ left.NumChildren);
+
+                if (left == _buffers.Root)
+                {
+                    var newRoot = new SceneNode
+                    {
+                        Name = "Split ROOT"
+                    };
+                    _buffers.Add(newRoot);
+                    _buffers.Root = newRoot;
+                    newRoot.AddChild(left);
+                    left.AddParent(newRoot);
+                }
+
                 left.ComputeAABBs(_buffers);
                 var (leftChildren, rightChildren) = SplitNodes(left);
 
@@ -566,6 +604,7 @@ namespace SceneCompiler.Scene
 
         public void ToSingleLevel()
         {
+            Console.WriteLine("Reducing to single level");
             var root = _buffers.Root;
             var newRoot = new SceneNode
             {
@@ -574,7 +613,7 @@ namespace SceneCompiler.Scene
                 ForceEven = true
             };
             var children = new List<SceneNode>();
-            Recursion(root, Matrix4x4.Identity, children);
+            SingleRecursion(root, Matrix4x4.Identity, children);
             _buffers.Add(newRoot);
             newRoot.Children = children;
             _buffers.Root = newRoot;
@@ -588,7 +627,7 @@ namespace SceneCompiler.Scene
             }
         }
 
-        private void Recursion(SceneNode node, Matrix4x4 parentTransform, List<SceneNode> nodes)
+        private void SingleRecursion(SceneNode node, Matrix4x4 parentTransform, List<SceneNode> nodes)
         {
             var transform = Matrix4x4.Multiply(node.ObjectToWorld, parentTransform);
             if (node.NumTriangles > 0)
@@ -609,7 +648,72 @@ namespace SceneCompiler.Scene
                 }
                 if (child.NumChildren > 0)
                 {
-                    Recursion(child, transform, nodes);
+                    SingleRecursion(child, transform, nodes);
+                }
+            }
+        }
+
+
+        public void ReduceHeight()
+        {
+            Console.WriteLine("Reducing height");
+            var root = _buffers.Root;
+            var newRoot = new SceneNode
+            {
+                IsInstanceList = true,
+                Name = "ROOT-Reduced height",
+                ForceEven = true
+            };
+            var children = new List<SceneNode>();
+            ReduceRecursion(root, Matrix4x4.Identity, children, Configuration.OptimizationConfiguration.ReduceInstanceListCount);
+            _buffers.Add(newRoot);
+            newRoot.Children = children;
+            _buffers.Root = newRoot;
+        }
+
+        private void ReduceRecursion(SceneNode node, Matrix4x4 parentTransform, List<SceneNode> nodes, int count)
+        {
+            var transform = Matrix4x4.Multiply(node.ObjectToWorld, parentTransform);
+
+            foreach (var child in node.Children)
+            {
+                if (child.IsInstanceList)
+                {
+                    if (count == 0)
+                    {
+                        var add = new SceneNode
+                        {
+                            Name = "Inst-Single",
+                            ObjectToWorld = child.ObjectToWorld * transform,
+                            ForceEven = true
+                        };
+                        nodes.Add(add);
+                        _buffers.Add(add);
+                        add.AddChild(child);
+                    }
+                    else
+                    {
+                        ReduceRecursion(child, transform, nodes, count - 1);
+                    }
+                }
+                else
+                {
+                    if (child.NumTriangles > 0)
+                    {
+                        var add = new SceneNode
+                        {
+                            Name = "Inst-Reduces",
+                            ObjectToWorld = child.ObjectToWorld * transform,
+                            ForceEven = true
+                        };
+                        nodes.Add(add);
+                        _buffers.Add(add);
+                        add.AddChild(child);
+                    }
+                    if (child.NumChildren > 0)
+                    {
+                        ReduceRecursion(child, transform, nodes, count);
+                    }
                 }
             }
         }

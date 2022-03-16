@@ -16,7 +16,6 @@ void getHitPayload(int triangle, vec3 tuv, out vec3 N, out Material material) {
 	Vertex v0 = vertices[indices[triangle * 3]];
 	Vertex v1 = vertices[indices[triangle * 3 + 1]];
 	Vertex v2 = vertices[indices[triangle * 3 + 2]];
-
 	float w = 1 - tuv.y - tuv.z;
 	float u = tuv.y;
 	float v = tuv.z;
@@ -77,9 +76,9 @@ struct TraversalPayload {
 #ifdef RAY_QUERIES
 // use a stack because:
 // keep the list as short as possible, I.E. use a depth first search
-const int BUFFER_SIZE = 15;
+const int TRAVERSAL_STACK_SIZE = 30;
 int stackSize = 0;
-TraversalPayload traversalBuffer[BUFFER_SIZE];
+TraversalPayload traversalStack[TRAVERSAL_STACK_SIZE];
 
 int traversalDepth = 0;
 uint numTraversals = 0;
@@ -87,9 +86,8 @@ uint queryCount = 0;
 
 int usedLod = -1;
 bool keepLod = false;
-void instanceHitCompute(SceneNode tlas, int index, vec3 rayOrigin, vec3 rayDirection){	
-	TraversalPayload nextLoad = traversalBuffer[index];
-	SceneNode directChild = nodes[nextLoad.nIdx]; // use the custom index to take a shortcut
+void instanceShader(SceneNode tlas, int index, vec3 rayOrigin, vec3 rayDirection){	
+	TraversalPayload nextLoad = traversalStack[index];
 	mat4x3 world_to_object;
 
 	// compute the blas
@@ -99,8 +97,8 @@ void instanceHitCompute(SceneNode tlas, int index, vec3 rayOrigin, vec3 rayDirec
 		blas = nodes[nextLoad.sIdx];
 		world_to_object = mat4x3(mat4(inv(transforms[blas.TransformIndex])) * mat4(inv(transforms[instance.TransformIndex])));
 	} else {
-		world_to_object = inv(transforms[directChild.TransformIndex]);
 		blas = nodes[nextLoad.nIdx];
+		world_to_object = inv(transforms[blas.TransformIndex]);
 	}
 
 	// compute the next node
@@ -139,11 +137,11 @@ void instanceHitCompute(SceneNode tlas, int index, vec3 rayOrigin, vec3 rayDirec
 			int N = dummy.NumChildren;
 			mat3 tr = mat3(world_to_object * mat4(nextLoad.world_to_object));
 
-			float eigMax = determinant(tr);
+			float scale = sqrt(determinant(tr));
 			// computes the biggest eigenvalue of the object_to_world transform
 
 			float rObject = length(next.AABB_max-next.AABB_min)/2;
-			float rWorld = eigMax * rObject;
+			float rWorld = scale * rObject;
 			
 			float rMax = 3000;
 			float t = max(0,tNear);
@@ -165,7 +163,7 @@ void instanceHitCompute(SceneNode tlas, int index, vec3 rayOrigin, vec3 rayDirec
 	nextLoad.nIdx = next.Index;
 	nextLoad.world_to_object = mat4x3(mat4(world_to_object) * mat4(nextLoad.world_to_object));
 	nextLoad.t = tNear;
-	traversalBuffer[index] = nextLoad;
+	traversalStack[index] = nextLoad;
 	
 	if (debug && displayAABBs) {
 		debugAABB(origin, direction, next);
@@ -178,7 +176,7 @@ void triangleHit(rayQueryEXT ray_query, SceneNode node, float minAlpha) {
 	vec2 uv = rayQueryGetIntersectionBarycentricsEXT(ray_query, false);
 	uint cIdx = rayQueryGetIntersectionInstanceCustomIndexEXT(ray_query, false);
 	SceneNode blasChild = nodes[cIdx];
-	int triangle = blasChild.IndexBuferIndex / 3 + rayQueryGetIntersectionPrimitiveIndexEXT(ray_query, false);
+	int triangle = blasChild.IndexBufferIndex / 3 + rayQueryGetIntersectionPrimitiveIndexEXT(ray_query, false);
 	Vertex v0 = vertices[indices[triangle * 3]];
 	Vertex v1 = vertices[indices[triangle * 3 + 1]];
 	Vertex v2 = vertices[indices[triangle * 3 + 2]];
@@ -213,7 +211,7 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, f
 		debugAABB(rayOrigin, rayDirection, root);
 	}
 
-	traversalBuffer[0] = start;
+	traversalStack[0] = start;
 
 	triangle_index = -1;
 	stackSize = 1;
@@ -221,7 +219,7 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, f
 	uint triangleTLAS = -1;
 	while (stackSize > 0) {
 		stackSize--; // remove last element
-		TraversalPayload load = traversalBuffer[stackSize];
+		TraversalPayload load = traversalStack[stackSize];
 		if (load.t >= best_t) continue;// there was already a closer hit, we can skip this one
 
 		int start = stackSize;
@@ -252,6 +250,7 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, f
 		rayQueryInitializeEXT(ray_query, tlas[tlasNumber], 0, 0xFF,
 			query_origin, min_t,
 			query_direction, best_t);
+
 		queryCount++;
 		numTraversals++;
 		uint triangleIntersections = 0;
@@ -260,6 +259,8 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, f
 			uint type = rayQueryGetIntersectionTypeEXT(ray_query, false);
 			switch (type) {
 			case gl_RayQueryCandidateIntersectionTriangleEXT:
+				rayQueryConfirmIntersectionEXT(ray_query);
+				break;
 				// might want to check for opaque
 				triangleHit(ray_query, node, minAlpha);
 				//rayQueryConfirmIntersectionEXT(ray_query);
@@ -273,13 +274,13 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, f
 				// that replaces the node that executed the query, however we still want to do a DFS. Solution for this is:
 				// We reverse the list. Then the closest hit is at the end of the stack, and all added levels are still 
 				// right of this node
-				if(stackSize>=BUFFER_SIZE)
+				if(stackSize>=TRAVERSAL_STACK_SIZE)
 					break;
 
-				traversalBuffer[stackSize] = load;
-				traversalBuffer[stackSize].nIdx = rayQueryGetIntersectionInstanceCustomIndexEXT(ray_query, false);
-				traversalBuffer[stackSize].pIdx = rayQueryGetIntersectionPrimitiveIndexEXT(ray_query, false);
-				traversalBuffer[stackSize].sIdx = rayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetEXT(ray_query, false);
+				traversalStack[stackSize] = load;
+				traversalStack[stackSize].nIdx = rayQueryGetIntersectionInstanceCustomIndexEXT(ray_query, false);
+				traversalStack[stackSize].pIdx = rayQueryGetIntersectionPrimitiveIndexEXT(ray_query, false);
+				traversalStack[stackSize].sIdx = rayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetEXT(ray_query, false);
 				stackSize++;
 				instanceIntersections++;
 				break;
@@ -290,17 +291,17 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, f
 		int added = end - start;
 		
 		for(int i = start;i < end;i++) {
-			instanceHitCompute(node, i, rayOrigin, rayDirection);
-			//recordQuery(traversalBuffer[i].nIdx, node.Level, traversalBuffer[i].t, vec3(1,0,0), vec3(2,0,0), i-start ,added);
+			instanceShader(node, i, rayOrigin, rayDirection);
+			//recordQuery(traversalStack[i].nIdx, node.Level, traversalStack[i].t, vec3(1,0,0), vec3(2,0,0), i-start ,added);
 		}
 
 		for (int i = 0; i < added / 2; i++) {
 			int i1 = start + i;
 			int i2 = end - 1 - i;
-			TraversalPayload tmp1 = traversalBuffer[i1];
-			TraversalPayload tmp2 = traversalBuffer[i2];
-			traversalBuffer[i1] = tmp2;
-			traversalBuffer[i2] = tmp1;
+			TraversalPayload tmp1 = traversalStack[i1];
+			TraversalPayload tmp2 = traversalStack[i2];
+			traversalStack[i1] = tmp2;
+			traversalStack[i2] = tmp1;
 		}
 
 		uint commitedType = rayQueryGetIntersectionTypeEXT(ray_query, true);
@@ -325,7 +326,7 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, f
 				else {
 					blasChild = nodes[rayQueryGetIntersectionInstanceCustomIndexEXT(ray_query, true)];
 				}
-				triangle_index = blasChild.IndexBuferIndex / 3 + rayQueryGetIntersectionPrimitiveIndexEXT(ray_query, true);
+				triangle_index = blasChild.IndexBufferIndex / 3 + rayQueryGetIntersectionPrimitiveIndexEXT(ray_query, true);
 
 				tuv.x = t;
 				vec2 uv = rayQueryGetIntersectionBarycentricsEXT(ray_query, true);
@@ -342,10 +343,7 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, f
 		recordQuery(node.Index, node.Level, load.t, rayOrigin, rayOrigin + best_t * rayDirection, triangleIntersections ,instanceIntersections);
 	}
 	SetDebugHsv(displayTLASNumber, triangleTLAS, colorSensitivity, true);
-	if (triangle_index >= 0) {
-		return true;
-	}
-	return false;
+	return triangle_index >= 0;
 }
 #endif
 
@@ -398,9 +396,6 @@ const float MAX_T = 100000;
 
 vec4 shadeFragment(vec3 P, vec3 V, vec3 N, Material material, int triangle) {
 	// calculate lighting for each light source
-
-	//recordQuery(999, 0, 0, P, P + N, 0 ,0);
-
 	vec3 sum = vec3(0);
 	for (int i = 0; i < numLights; i++) {
 		Light light = lights[i];
@@ -430,26 +425,23 @@ vec4 shadeFragment(vec3 P, vec3 V, vec3 N, Material material, int triangle) {
 					continue;
 				}
 				specular = material.k_s * pow(max(0, dot(R, LN)), material.n);
+				// https://developer.valvesoftware.com/wiki/Constant-Linear-Quadratic_Falloff
+				float d = l_dst;
+				float l_mult = light.quadratic.x + light.quadratic.y / d + light.quadratic.z / (d * d);
+				if (!renderDiffuse) diffuse = 0;
+				if (!renderSpecular) specular = 0;
+				sum += (specular + diffuse) * l_mult * light.intensity * material.color.xyz;
 			}
 			else if ((light.type & LIGHT_TYPE_SUN) != 0) { // directional light, check if it is visible 
 				vec3 LN = normalize(light.direction);
 				if (ray_trace_loop(POff, -LN, MAX_T, rootSceneNode,0.9f, tuvShadow, index, load)) { // shoot shadow ray into the light source
 					continue;
 				}
-				specular = material.k_s * pow(max(0, dot(R, -light.direction)), material.n);
+				specular = material.k_s * pow(max(0, dot(R, -LN)), material.n);
+				if (!renderDiffuse) diffuse = 0;
+				if (!renderSpecular) specular = 0;
+				sum += (specular + diffuse) * light.intensity * material.color.xyz;
 			}
-		}
-
-		// https://developer.valvesoftware.com/wiki/Constant-Linear-Quadratic_Falloff
-
-		float d = l_dst - light.radius;
-		if (!renderDiffuse) diffuse = 0;
-		if (!renderSpecular) specular = 0;
-		if (d < 0)
-			sum += vec3(1);
-		else {
-			float l_mult = light.quadratic.x + light.quadratic.y / d + light.quadratic.z / (d * d);
-			sum += (specular + diffuse) * l_mult * light.intensity * material.color.xyz;
 		}
 	}
 	if (!renderAmbient) material.k_a = 0;
@@ -490,7 +482,7 @@ vec4 rayTrace(vec3 rayOrigin, vec3 rayDirection, out float t) {
 		count++;
 		num--;
 
-		vec3 P = Origin[num];s
+		vec3 P = Origin[num];
 		vec3 V = Direction[num];
 		float frac = Contribution[num];
 		bool hit = ray_trace_loop(P, V, MAX_T, rootSceneNode,0, tuv, triangle, load);
@@ -518,37 +510,28 @@ vec4 rayTrace(vec3 rayOrigin, vec3 rayDirection, out float t) {
 			float tr = material.k_t + (1-fracColor[3]);
 			float rf = material.k_r;
 
-			if(count>10){
+			if(count>rayMaxDepth){
 				tr = 0;
 				rf = 0;
 			}
 
-			if(rf>0 && tr > 0 && num<=4) {
+			if(tr > 0 && renderTransmission && num<6){
 				Contribution[num] = tr * frac;
-				Origin[num] = P;
+				Origin[num] = P + V * 0.001f;
 				Direction[num] = V;
-				Contribution[num+1] = rf * frac;
-				Origin[num+1] = P;
-				Direction[num+1] = reflect(V,N_world);
-				num+=2;
-			}
-
-			if(rf>0 && tr <= 0 && num<=5) {
-				Contribution[num] = rf * frac;
-				Origin[num] = P;
-				Direction[num] = reflect(V,N_world);
 				num++;
 			}
 
-			if(tr>0 && rf <= 0 && num<=5) {
-				Contribution[num] = tr * frac;
-				Origin[num] = P;
-				Direction[num] = V;
+			if(rf > 0 && renderReflection && num<6){
+				Contribution[num] = rf * frac;
+				vec3 dirRef = reflect(V,N_world);
+				Origin[num] = P + dirRef * 0.001f;
+				Direction[num] = dirRef;
 				num++;
 			}
 		} else {
 			if(count==1) {
-				SetDebugCol(true, vec4(0,0,0,0));
+				//SetDebugCol(true, vec4(0,0,0,0));
 				t = MAX_T;
 			}
 			// maybe environment map

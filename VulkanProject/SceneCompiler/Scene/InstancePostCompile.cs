@@ -49,8 +49,6 @@ namespace SceneCompiler.Scene
             {
                 varianceX = extentX;
                 varianceZ = extentZ;
-                extentX *= 0.4f;
-                extentZ += 0.4f;
             }
 
             // construct a new instanceList, we also use this as the root
@@ -62,6 +60,9 @@ namespace SceneCompiler.Scene
             _buffers.Add(newRoot);
             _buffers.Root = newRoot;
             var added = new List<SceneNode>(numX*numZ);
+
+            var factor = CompilerConfiguration.Configuration.InstanceConfiguration.SpacingFactor;
+
             for(var x = 0; x < numX; x++)
             {
                 for(var z = 0; z < numZ; z++)
@@ -78,8 +79,8 @@ namespace SceneCompiler.Scene
                         var rot = Matrix4x4.CreateRotationY((float) (Rand * 2 * Math.PI));
 
 
-                        var xTranslation = offsetX + (x - numX / 2) * extentX;
-                        var zTranslation = offsetZ + (z - numZ / 2) * extentZ;
+                        var xTranslation = offsetX + (x - numX / 2) * extentX * factor;
+                        var zTranslation = offsetZ + (z - numZ / 2) * extentZ * factor;
                         xTranslation += varianceX * (Rand - 0.5f);
                         zTranslation += varianceZ * (Rand - 0.5f);
                         
@@ -91,8 +92,8 @@ namespace SceneCompiler.Scene
                     }
                     else
                     {
-                        var xTranslation = offsetX + (x - numX / 2) * extentX;
-                        var zTranslation = offsetZ + (z - numZ / 2) * extentZ;
+                        var xTranslation = offsetX + (x - numX / 2) * extentX * factor;
+                        var zTranslation = offsetZ + (z - numZ / 2) * extentZ * factor;
                         add.ObjectToWorld = Matrix4x4.CreateTranslation(xTranslation, 0, zTranslation);
                     }
 

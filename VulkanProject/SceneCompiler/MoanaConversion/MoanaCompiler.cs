@@ -87,13 +87,16 @@ namespace SceneCompiler.MoanaConversion
                     if (geometry == null)
                         throw new Exception("Unresolved mapping for:" + instance.ObjectName);
 
-                    Parallel.ForEach(instance.Children, child =>
+                    if (instance.Children != null)
                     {
-                        var map = section.InstancedGeometries
-                            .SelectMany(x => x.InstanceLists).SingleOrDefault(x => x.Name == child);
-                        if (map == null)
-                            throw new Exception("Unresolved mapping for:" + child);
-                    });
+                        Parallel.ForEach(instance.Children, child =>
+                        {
+                            var map = section.InstancedGeometries
+                                .SelectMany(x => x.InstanceLists).SingleOrDefault(x => x.Name == child);
+                            if (map == null)
+                                throw new Exception("Unresolved mapping for:" + child);
+                        });
+                    }
                 });
 
                 Parallel.ForEach(section.InstancedGeometry.Geometries.SelectMany(x => x.Meshes), mesh =>

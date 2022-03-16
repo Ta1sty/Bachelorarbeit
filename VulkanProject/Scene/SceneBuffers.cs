@@ -315,7 +315,7 @@ namespace Scene
 
             int start = indexOffset;
 
-            if (node.IsInstanceList)
+            if (node.IsInstanceList)    
             {
                 if (node.Children.First().NewIndex < 0)
                 {

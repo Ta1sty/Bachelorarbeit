@@ -7,9 +7,8 @@ bool intersectAABB(vec3 rayOrigin, vec3 rayDir, vec3 boxMin, vec3 boxMax, out fl
 	vec3 t2 = max(tMin, tMax);
 	tNear = max(max(t1.x, t1.y), t1.z);
 	tFar = min(min(t2.x, t2.y), t2.z);
-	if (tNear > tFar)
-		return false;
-	return true;
+	return tNear <= tFar;
+
 }
 
 bool rayTriangleIntersect(vec3 rayOrigin, vec3 rayDirection, out vec3 tuv, vec3 v0, vec3 v1, vec3 v2) {

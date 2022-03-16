@@ -975,9 +975,9 @@ void compile_query_trace(VkInfo* info, Scene* scene)
 			int a = 0;
 			printf("Level:%d\n", t.nodeLevel);
 		}
+		printf("L:%d -> T:%f, I:%d/%d\n", t.nodeLevel, t.t, t.triangleIntersections, t.instanceIntersections);
 		if (t.isValid == 0)
 			break;
-		printf("L:%d -> T:%f, I:%d/%d\n", t.nodeLevel, t.t, t.triangleIntersections, t.instanceIntersections);
 	}
 	vkUnmapMemory(info->device, info->ray_descriptor.traceMemory);
 	scene->camera.settings.recordQueryTrace = 0;

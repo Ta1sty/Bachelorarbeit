@@ -60,7 +60,7 @@ namespace SceneCompiler.MoanaConversion
 
             foreach (var material in Materials)
             {
-                material.ToSceneMaterial(buffers, Moana.Textures);
+                material.ToSceneMaterial(buffers);
             }
 
             Node.Children = InstancedGeometry.InstanceLists
@@ -367,7 +367,7 @@ namespace SceneCompiler.MoanaConversion
         public List<uint> Indices { get; set; } = new();
     }
 
-    public class Material
+    public class  Material
     {
         public string Name { get; set; }
         public string Type { get; set; }
@@ -387,20 +387,56 @@ namespace SceneCompiler.MoanaConversion
         public float Flatness { get; set; }
         public float[] Scatterdistance { get; set; }
         public SceneMaterial SceneMaterial { get; set; }
-        public int BufferIndex { get; set; }
+        public int BufferIndex { get; set; } = -1;
 
-        public void ToSceneMaterial(SceneBuffers buffers, List<Texture> textures)
+        public void ToSceneMaterial(SceneBuffers buffers)
         {
-            SceneMaterial = new SceneMaterial
+            if (BufferIndex != -1)
+                return;
+
+            var color = Color ?? new[] { 1f, 1f, 1f };
+            var alpha = 1;
+            if (Color == null)
+                alpha = 0;
+
+
+            if (Name.Contains("water"))
             {
-                Name = Name,
-                DefaultColor = new Vector4(Color[0],Color[1],Color[2],1),
-                Diffuse = Roughness,
-                Specular = Spectrans,
-                PhongExponent = Eta
-            };
+                SceneMaterial = new SceneMaterial
+                {
+                    Ambient = 0.0f,
+                    Diffuse = 0.2f,
+                    Specular = 0.2f,
+                    PhongExponent = 50,
+                    Transmission = 0.3f,
+                    Reflection = 0.3f,
+                };
+            }
+            else
+            {
+                SceneMaterial = new SceneMaterial
+                {
+                    Name = Name,
+                    DefaultColor = new Vector4(color[0], color[1], color[2], alpha),
+                    Diffuse = Roughness,
+                    Specular = Spectrans,
+                    PhongExponent = Math.Max(1,Metallic * 50),
+                };
+                var sum = SceneMaterial.Ambient + SceneMaterial.Diffuse + SceneMaterial.Specular;
+                SceneMaterial.Ambient /= sum;
+                SceneMaterial.Diffuse /= sum;
+                SceneMaterial.Specular /= sum;
+            }
+
             BufferIndex = buffers.MaterialBuffer.Count;
             buffers.MaterialBuffer.Add(SceneMaterial);
+        }
+
+        public int GetBufferIndex(SceneBuffers buffers)
+        {
+            if(BufferIndex == -1)
+                ToSceneMaterial(buffers);
+            return BufferIndex;
         }
     }
 

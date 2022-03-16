@@ -200,16 +200,38 @@ void draw_imgui_frame(VkInfo* info, Scene* scene, SceneSelection* scene_selectio
 	ImGui::Begin("Settings");
 
 	bool enable = true;
-	//ImGui::ShowDemoWindow(&enable);
-	ImGui::Combo("combo", &scene_selection->nextScene, scene_selection->availableScenes, scene_selection->numScenes);
-	ImGui::Text("Framerate: %f", info->frameRate);
+
+
+	static float values[90] = {};
+	static int values_offset = 0;
+	static double refresh_time = 0.0;
+	while (refresh_time < ImGui::GetTime()) // Create data at fixed 60 Hz rate for the demo
+	{
+		values[values_offset] = info->frameRate;
+		values_offset = (values_offset + 1) % IM_ARRAYSIZE(values);
+		refresh_time += 1.0 / 60.0;
+	}
+
+	{
+		float average = 0.0f;
+		for (int n = 0; n < IM_ARRAYSIZE(values); n++)
+			average += values[n];
+		average /= (float)IM_ARRAYSIZE(values);
+		char overlay[32];
+		sprintf_s(overlay, "Framerate %f", average);
+		ImGui::PlotLines("", values, IM_ARRAYSIZE(values), values_offset, overlay, 0, 200, ImVec2(0, 80));
+	}
+	ImGui::Text("Scene selection");
+	ImGui::Combo("", &scene_selection->nextScene, scene_selection->availableScenes, scene_selection->numScenes);
 	ImGui::SliderFloat("FOV", &scene->camera.settings.fov, 1, 89);
 	ImGui::Checkbox("Textures", (bool*)&scene->camera.settings.textures);
 	ImGui::Checkbox("Ambient", (bool*)&scene->camera.settings.ambient);
 	ImGui::Checkbox("Diffuse", (bool*)&scene->camera.settings.diffuse);
 	ImGui::Checkbox("Specular", (bool*)&scene->camera.settings.specular);
 	ImGui::Checkbox("Shadows", (bool*)&scene->camera.settings.shadows);
-	ImGui::SliderInt("MaxDepth", (int*) &scene->camera.settings.maxDepth, 1, 10);
+	ImGui::Checkbox("Reflections", (bool*)&scene->camera.settings.reflection);
+	ImGui::Checkbox("Transmission", (bool*)&scene->camera.settings.transmission);
+	ImGui::SliderInt("MaxDepth", (int*) &scene->camera.settings.maxDepth, 0, 10);
 
 	ImGui::Text("Rendersettings");
 	ImGui::Checkbox("Vsync", (bool*)&info->vsync);
