@@ -1,0 +1,73 @@
+{
+  "GltfConfiguration": {
+    "ConvertGltf": false,
+    "RemoveDuplicates": false,
+    "RemovePresumedInstances": false
+  },
+  "MoanaConfiguration": {
+    "ConvertMoana": true,
+    "UseCompilerVersion2": true,
+    "MoanaRootPath": null,
+    "Cleanup": true,
+    "MergeMeshes": true,
+    "UseFirstSectionObject": false,
+    "UseObjectIncludes": false,
+    "Includes": [
+      "isBeach",
+      "isCoastline",
+      "isDunesA",
+      "isDunesB",
+      "isGardeniaA",
+      "isHibiscus",
+      "isHibiscusYoung",
+      "isLavaRocks",
+      "isMountainA",
+      "isMountainB",
+      "isNaupakaA",
+      "osOcean"
+    ],
+    "ValidateMaterials": true,
+    "ValidateMoana": true
+  },
+  "InstanceConfiguration": {
+    "UseInstancing": false,
+    "InstanceX": 3,
+    "InstanceZ": 4,
+    "InstanceCount": 3,
+    "SpacingFactor": 1,
+    "Randomize": false
+  },
+  "OptimizationConfiguration": {
+    "UseSingleLevelInstancing": false,
+    "ReduceInstanceListCount": 2,
+    "ForceInstanceListEven": true,
+    "MergeInstanceLists": true,
+    "CapInstanceLists": false,
+    "MaxInstances": 16000000,
+    "RootBufferRebuild": true
+  },
+  "LodConfiguration": {
+    "UseLod": true,
+    "UseTriangleLod": false,
+    "LodTriangleThreshold": 15000,
+    "UseInstanceLod": true,
+    "CutExcess": true,
+    "LodInstanceThreshold": 1000000,
+    "ReductionFactor": 4,
+    "NumLod": 1,
+    "TriDecimatorArguments": [
+      "-Sn",
+      "-C"
+    ]
+  },
+  "DebugConfiguration": {
+    "PrintScene": true,
+    "PrintFullScene": false,
+    "PrintFullThreshold": 1000,
+    "PrintMaterials": true,
+    "ValidateSceneGraph": true,
+    "ValidateParentsAndChildren": false,
+    "InsertGround": false
+  },
+  "StorePath": null
+}
