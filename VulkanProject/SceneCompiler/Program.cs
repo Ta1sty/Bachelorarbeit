@@ -32,20 +32,21 @@ namespace SceneCompiler
             var path = "";
             ASceneCompiler compiler = null;
 
-            var location = Assembly.GetExecutingAssembly().Location;
             var buffers = new SceneBuffers();
 
             var config = CompilerConfiguration.Configuration;
+
             if (config.MoanaConfiguration.ConvertMoana && config.GltfConfiguration.ConvertGltf)
                 throw new Exception("can not convert gltf and moana, only one can be true");
+
+            if (config.StorePath == null)
+                throw new Exception("store path is null");
+
             if (config.MoanaConfiguration.ConvertMoana)
             {
-                if(config.MoanaConfiguration.MoanaRootPath == null)
-                    path = regex.Replace(location,
-                    @"island\pbrt");
-                else
-                    path = config.MoanaConfiguration.MoanaRootPath;
-                compiler = ConvertMoana(path, buffers);
+                if (config.MoanaConfiguration.MoanaRootPath == null)
+                    throw new Exception("moana store path is null");
+                compiler = ConvertMoana(config.MoanaConfiguration.MoanaRootPath, buffers);
             }
             else if (config.GltfConfiguration.ConvertGltf)
             {
@@ -57,18 +58,8 @@ namespace SceneCompiler
                 throw new Exception("at least one convert type must be true");
             }
 
-            var dst = "";
-            if (config.CustomStorePath == null)
-            {
-                dst = regex.Replace(location,
-                    @"VulkanProject\Scenes\"
-                    + compiler.SceneName + ".vksc");
-            }
-            else
-            {
-                dst = Path.Combine(config.CustomStorePath, compiler.SceneName + ".vksc");
-            }
 
+            var dst = Path.Combine(config.StorePath, compiler.SceneName + ".vksc");
 
             if (config.LodConfiguration.UseLod)
             {
@@ -81,7 +72,7 @@ namespace SceneCompiler
                     {
                         node.ForceOdd = false;
                         node.ForceEven = true;
-                        creator.CreateTriangleLod(node, config.LodConfiguration.NumMaxLod, config.LodConfiguration.ReductionFactor);
+                        creator.CreateTriangleLod(node, config.LodConfiguration.NumLod, config.LodConfiguration.ReductionFactor);
                     }
                 }
 
@@ -92,7 +83,7 @@ namespace SceneCompiler
                         .ToList();
                     foreach (var node in lodNodes)
                     {
-                        creator.CreateInstanceLod(node, config.LodConfiguration.NumMaxLod, config.LodConfiguration.ReductionFactor);
+                        creator.CreateInstanceLod(node, config.LodConfiguration.NumLod, config.LodConfiguration.ReductionFactor);
                     }
                 }
             }

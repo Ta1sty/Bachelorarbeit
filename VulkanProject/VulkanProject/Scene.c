@@ -86,7 +86,7 @@ void load_scene(Scene* scene, char* path)
 		.intensity = {1,1,0.7f},
 		.maxDst = 30,
 		.quadratic = {2,0,0},
-		.direction = {1,-2,1},
+		.direction = {-1,-0.5f,-1},
 	};
 	//scene->lights[0] = light1;
 	scene->lights[0] = light1;

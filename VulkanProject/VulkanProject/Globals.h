@@ -16,6 +16,7 @@ typedef struct textureContainer
 	VkDescriptorSet descriptor_set;
 	uint32_t sampler_binding;
 	uint32_t texture_binding;
+	uint32_t skybox_binding;
 } TextureContainer;
 
 typedef struct buffer
@@ -130,6 +131,11 @@ typedef struct vkInfo {
 	TextureContainer texture_container; // set 1
 	DescriptorSetContainer per_frame_buffers; // set 2
 	RayTracingDescriptor ray_descriptor; // set 3
+
+	VkSampler skyboxSampler;
+	VkImage skyboxImage;
+	VkDeviceMemory skyboxMemory;
+	VkImageView skyboxView;
 
 	VkBuffer vertexBuffer;
 	VkDeviceMemory vertexBufferMemory;

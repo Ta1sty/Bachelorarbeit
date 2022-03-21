@@ -71,7 +71,7 @@ void main() {
 		if(closestLight>=0){
 			Light light = lights[closestLight];
 			if((light.type & LIGHT_ON) != 0){
-				debugColor = vec4(1,1,1,1);
+				debugColor = vec4(0,1,0,1);
 			} else {
 				debugColor = vec4(0,0,0,1);
 			}

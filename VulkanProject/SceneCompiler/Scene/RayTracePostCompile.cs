@@ -469,11 +469,18 @@ namespace SceneCompiler.Scene
                 }
             }
 
-            node.TotalPrimitiveCount = node.NumTriangles;
-
-            foreach (var child in node.Children)
+            if (node.IsLodSelector)
             {
-                node.TotalPrimitiveCount += child.TotalPrimitiveCount;
+                node.TotalPrimitiveCount = node.Children.Max(x => x.TotalPrimitiveCount);
+            }
+            else
+            {
+                node.TotalPrimitiveCount = node.NumTriangles;
+
+                foreach (var child in node.Children)
+                {
+                    node.TotalPrimitiveCount += child.TotalPrimitiveCount;
+                }
             }
         }
 
@@ -698,7 +705,7 @@ namespace SceneCompiler.Scene
                 }
                 else
                 {
-                    if (child.NumTriangles > 0)
+                    if (child.IsLodSelector) // keep LOD selectors and dont reduce them
                     {
                         var add = new SceneNode
                         {
@@ -710,9 +717,24 @@ namespace SceneCompiler.Scene
                         _buffers.Add(add);
                         add.AddChild(child);
                     }
-                    if (child.NumChildren > 0)
+                    else
                     {
-                        ReduceRecursion(child, transform, nodes, count);
+                        if (child.NumTriangles > 0)
+                        {
+                            var add = new SceneNode
+                            {
+                                Name = "Inst-Reduces",
+                                ObjectToWorld = child.ObjectToWorld * transform,
+                                ForceEven = true
+                            };
+                            nodes.Add(add);
+                            _buffers.Add(add);
+                            add.AddChild(child);
+                        }
+                        if (child.NumChildren > 0)
+                        {
+                            ReduceRecursion(child, transform, nodes, count);
+                        }
                     }
                 }
             }

@@ -199,9 +199,6 @@ void draw_imgui_frame(VkInfo* info, Scene* scene, SceneSelection* scene_selectio
 	ImGui::NewFrame();
 	ImGui::Begin("Settings");
 
-	bool enable = true;
-
-
 	static float values[90] = {};
 	static int values_offset = 0;
 	static double refresh_time = 0.0;
@@ -218,9 +215,11 @@ void draw_imgui_frame(VkInfo* info, Scene* scene, SceneSelection* scene_selectio
 			average += values[n];
 		average /= (float)IM_ARRAYSIZE(values);
 		char overlay[32];
-		sprintf_s(overlay, "Framerate %f", average);
+		sprintf_s(overlay, "Framerate %.0f", average);
 		ImGui::PlotLines("", values, IM_ARRAYSIZE(values), values_offset, overlay, 0, 200, ImVec2(0, 80));
 	}
+	ImGui::Text("POS:%.2f:%.2f:%.2f", scene->camera.pos[0], scene->camera.pos[1], scene->camera.pos[2]);
+	ImGui::Text("ROT:%.2f:%.2f", scene->camera.rotation_x, scene->camera.rotation_y);
 	ImGui::Text("Scene selection");
 	ImGui::Combo("", &scene_selection->nextScene, scene_selection->availableScenes, scene_selection->numScenes);
 	ImGui::SliderFloat("FOV", &scene->camera.settings.fov, 1, 89);
@@ -274,6 +273,11 @@ void draw_imgui_frame(VkInfo* info, Scene* scene, SceneSelection* scene_selectio
 		ImGui::Unindent(10);
 		ImGui::EndDisabled();
 		ImGui::EndDisabled();
+	}
+
+	if (ImGui::CollapsingHeader("VIEWPOS")) {
+		ImGui::InputFloat3("POS", scene->camera.pos);
+		ImGui::InputFloat2("ROT", &scene->camera.rotation_x);
 	}
 
 	ImGui::End();

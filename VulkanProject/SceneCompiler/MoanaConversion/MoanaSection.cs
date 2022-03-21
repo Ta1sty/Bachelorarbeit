@@ -404,6 +404,7 @@ namespace SceneCompiler.MoanaConversion
             {
                 SceneMaterial = new SceneMaterial
                 {
+                    Name = Name,
                     Ambient = 0.0f,
                     Diffuse = 0.2f,
                     Specular = 0.2f,

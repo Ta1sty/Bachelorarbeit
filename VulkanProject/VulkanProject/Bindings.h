@@ -12,9 +12,10 @@
 #define NODE_CHILDREN_BINDING 7
 #define SAMPLER_BINDING 8
 #define TEXTURE_BINDING 9
-#define FRAME_DATA_BINDING 10
-#define TLAS_BINDING 11
-#define TRACE_BINDING 12
+#define SKYBOX_BINDING 10
+#define FRAME_DATA_BINDING 11
+#define TLAS_BINDING 12
+#define TRACE_BINDING 13
 
 #define GET_SCENE_DATA_BUFFER(VK_INFO) (##VK_INFO->global_buffers.buffer_containers[0].buffers[0])
 #define GET_VERTEX_BUFFER(VK_INFO) (##VK_INFO->global_buffers.buffer_containers[0].buffers[1])

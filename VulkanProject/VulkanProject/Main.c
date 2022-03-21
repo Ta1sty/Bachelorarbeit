@@ -126,6 +126,14 @@ void updatePosition(GLFWwindow* window, Camera* camera)
 
     camera->pos[0] += cos_y * sideways;
     camera->pos[2] += sin_y * sideways;
+
+    if (camera->rotation_y > 180)
+        camera->rotation_y -= 360;
+    if (camera->rotation_y < -180)
+        camera->rotation_y += 360;
+
+    camera->rotation_x = min(camera->rotation_x, 90);
+    camera->rotation_x = max(camera->rotation_x, -90);
 }
 void changeScene(App* app)
 {
@@ -148,7 +156,6 @@ void changeScene(App* app)
     printSceneSizes(&app->scene);
     app->scene.camera = oldCam;
     app->sceneSelection.currentScene = app->sceneSelection.nextScene;
-
 }
 
 int main()

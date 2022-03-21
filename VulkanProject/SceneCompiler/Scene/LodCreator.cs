@@ -73,8 +73,13 @@ namespace SceneCompiler.Scene
 
                 lods[i] = lod;
 
-                if (lod.NumTriangles < Configuration.LodTriangleThreshold)
+                if (lod.NumTriangles < Configuration.LodTriangleStopCount)
                     break;
+            }
+
+            foreach (var file in Directory.GetFiles(".").Where(x=>x.EndsWith(".ply")))
+            {
+                File.Delete(file);
             }
         }
 
@@ -171,8 +176,9 @@ namespace SceneCompiler.Scene
 
                 lods[i] = lod;
 
-                if (lod.NumChildren < Configuration.LodInstanceThreshold)
+                if (lod.NumChildren < Configuration.LodInstanceStopCount)
                     break;
+
                 if(Configuration.CutExcess)
                     break;
             }

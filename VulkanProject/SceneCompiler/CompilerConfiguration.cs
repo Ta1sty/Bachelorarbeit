@@ -43,11 +43,11 @@ namespace SceneCompiler
         public GltfConfiguration GltfConfiguration { get; set; } = new();
         public MoanaConfiguration MoanaConfiguration { get; set; } = new();
         public InstanceConfiguration InstanceConfiguration { get; set; } = new();
-        public OptimizationConfiguration OptimizationConfiguration { get; set; } = new();
         public LodConfiguration LodConfiguration { get; set; } = new();
+        public OptimizationConfiguration OptimizationConfiguration { get; set; } = new();
         public DebugConfiguration DebugConfiguration { get; set; } = new();
         /// <summary>if this is not null, the .vksc file will be saved in that folder</summary>
-        public string CustomStorePath { get; set; } = null;
+        public string StorePath { get; set; }
     }
 
     public class GltfConfiguration
@@ -129,16 +129,20 @@ namespace SceneCompiler
         public bool UseTriangleLod { get; set; } = true;
         /// <summary>The amount of triangles needed for lod to be used</summary>
         public int LodTriangleThreshold { get; set; } = 100000;
+        /// <summary>stops creating LOD once the triangle count is below this value</summary>
+        public int LodTriangleStopCount { get; set; } = 100000;
         /// <summary>Creates Levels of detail for large Instance lists</summary>
         public bool UseInstanceLod { get; set; } = false;
         /// <summary>Removes the excess instead of splitting it</summary>
         public bool CutExcess { get; set; } = false;
         /// <summary>The amount of instances need for a the creation of an instance list LOD</summary>
         public int LodInstanceThreshold { get; set; } = 500;
+        /// <summary>stops creating LOD once the instance count is below this value</summary>
+        public int LodInstanceStopCount { get; set; } = 500;
         /// <summary>The reduction factor per level of lod. Means factor 4 is ~25% of triangles</summary>
         public int ReductionFactor { get; set; } = 4;
         /// <summary>The number of Lods to build</summary>
-        public int NumMaxLod { get; set; } = 6;
+        public int NumLod { get; set; } = 6;
         /// <summary>The additional Arguments passed to the TriDecimator</summary>
         public List<string> TriDecimatorArguments { get; set; } = new List<string>() { "-Ty", "-C" };
     }

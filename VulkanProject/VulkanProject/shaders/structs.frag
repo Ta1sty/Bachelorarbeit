@@ -58,9 +58,10 @@ struct Light {
 #define NODE_CHILDREN_BINDING 7
 #define SAMPLER_BINDING 8
 #define TEXTURE_BINDING 9
-#define FRAME_DATA_BINDING 10
-#define TLAS_BINDING 11
-#define TRACE_BINDING 12
+#define SKYBOX_BINDING 10
+#define FRAME_DATA_BINDING 11
+#define TLAS_BINDING 12
+#define TRACE_BINDING 13
 
 layout(binding = SCENE_DATA_BINDING, set = 0) uniform SceneData{
 	uint numVertices;
@@ -82,6 +83,7 @@ layout(binding = NODE_CHILDREN_BINDING, set = 0) buffer ChildBuffer { uint[] chi
 
 layout(binding = SAMPLER_BINDING, set = 1) uniform sampler samp;
 layout(binding = TEXTURE_BINDING, set = 1) uniform texture2D textures[];
+layout(binding = SKYBOX_BINDING, set = 1) uniform samplerCube skybox;
 
 layout(binding = FRAME_DATA_BINDING, set = 2) uniform FrameData{
 	mat4 view_to_world;

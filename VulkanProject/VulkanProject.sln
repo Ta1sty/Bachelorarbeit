@@ -13,6 +13,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Scene", "Scene\Scene.csproj
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VulkanTutorial", "VulkanTutorial\VulkanTutorial.vcxproj", "{390E782F-ADED-4996-916F-7C4EB8B7D73E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CreateSkybox", "CreateSkybox\CreateSkybox.csproj", "{BDEF71BF-E036-4FF2-AEFC-44A98F484986}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -81,6 +83,18 @@ Global
 		{390E782F-ADED-4996-916F-7C4EB8B7D73E}.Release|x64.Build.0 = Release|x64
 		{390E782F-ADED-4996-916F-7C4EB8B7D73E}.Release|x86.ActiveCfg = Release|Win32
 		{390E782F-ADED-4996-916F-7C4EB8B7D73E}.Release|x86.Build.0 = Release|Win32
+		{BDEF71BF-E036-4FF2-AEFC-44A98F484986}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BDEF71BF-E036-4FF2-AEFC-44A98F484986}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BDEF71BF-E036-4FF2-AEFC-44A98F484986}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{BDEF71BF-E036-4FF2-AEFC-44A98F484986}.Debug|x64.Build.0 = Debug|Any CPU
+		{BDEF71BF-E036-4FF2-AEFC-44A98F484986}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{BDEF71BF-E036-4FF2-AEFC-44A98F484986}.Debug|x86.Build.0 = Debug|Any CPU
+		{BDEF71BF-E036-4FF2-AEFC-44A98F484986}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BDEF71BF-E036-4FF2-AEFC-44A98F484986}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BDEF71BF-E036-4FF2-AEFC-44A98F484986}.Release|x64.ActiveCfg = Release|Any CPU
+		{BDEF71BF-E036-4FF2-AEFC-44A98F484986}.Release|x64.Build.0 = Release|Any CPU
+		{BDEF71BF-E036-4FF2-AEFC-44A98F484986}.Release|x86.ActiveCfg = Release|Any CPU
+		{BDEF71BF-E036-4FF2-AEFC-44A98F484986}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

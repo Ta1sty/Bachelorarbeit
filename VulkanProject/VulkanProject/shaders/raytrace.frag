@@ -62,42 +62,56 @@ void getHitPayload(int triangle, vec3 tuv, out vec3 N, out Material material) {
 	else
 		SetDebugCol(displayTextureIdx, vec4(0.2, 0.4, 0.8, 1));
 }
+SceneNode selectLOD(SceneNode selector, float tNear, mat3 tr, int parentLOD, out int lod){
+	SceneNode dummy = nodes[childIndices[selector.ChildrenIndex]];
+	int N = dummy.NumChildren;
+	if(parentLOD >= 0) {
+		lod = parentLOD;
+	} else {
+		float rObject = length(selector.AABB_max-selector.AABB_min)/2;
+
+		float rMax = 5000;
+		float t = max(0,tNear);
+		float rPixel = rObject * height / (tan(PI / 180 * fov) * 2 * t);
+		lod = -int(log2(pow(2,N-1) * rPixel/rMax));
+		lod = max(lod, 0);
+	}
+	lod = min(lod, N-1);
+	return nodes[childIndices[dummy.ChildrenIndex + lod]];
+}
 
 
 // ONLY modify these when in the instanceShader or the rayTrace Loop
 struct TraversalPayload {
 	mat4x3 world_to_object;
-	float t; // the t for which this aabb was intersected
-	uint nIdx; // node index, or custom index(aka, direct child) before compute
-	uint pIdx;
-	uint sIdx; // shader offset (dont use it), we use it instead to get the grandchild when using instance Lists
+	float tNear; // the t for which this aabb was intersected
+	int cIdx_nIdx; // after compute: node index; before compute: custom index
+	int pIdx_lod; // after compute: LOD       ; before compute: primitve index
+	int sIdx_un; // after compute: unsused   ; bebore compute: shaderOffset (grandchild)
 };
 
 #ifdef RAY_QUERIES
 // use a stack because:
 // keep the list as short as possible, I.E. use a depth first search
 const int TRAVERSAL_STACK_SIZE = 30;
-int stackSize = 0;
+int stackSize = 0;	
 TraversalPayload traversalStack[TRAVERSAL_STACK_SIZE];
 
 int traversalDepth = 0;
 uint numTraversals = 0;
 uint queryCount = 0;
-
-int usedLod = -1;
-bool keepLod = false;
-void instanceShader(SceneNode tlas, int index, vec3 rayOrigin, vec3 rayDirection){	
+void instanceShader(SceneNode tlas, int index, vec3 rayOrigin, vec3 rayDirection, int parentLOD){	
 	TraversalPayload nextLoad = traversalStack[index];
 	mat4x3 world_to_object;
 
 	// compute the blas
 	SceneNode blas;
 	if(tlas.IsInstanceList)	{
-		SceneNode instance = nodes[nextLoad.nIdx];
-		blas = nodes[nextLoad.sIdx];
+		SceneNode instance = nodes[nextLoad.cIdx_nIdx];
+		blas = nodes[nextLoad.sIdx_un];
 		world_to_object = mat4x3(mat4(inv(transforms[blas.TransformIndex])) * mat4(inv(transforms[instance.TransformIndex])));
 	} else {
-		blas = nodes[nextLoad.nIdx];
+		blas = nodes[nextLoad.cIdx_nIdx];
 		world_to_object = inv(transforms[blas.TransformIndex]);
 	}
 
@@ -105,11 +119,11 @@ void instanceShader(SceneNode tlas, int index, vec3 rayOrigin, vec3 rayDirection
 	SceneNode next;
 	if(blas.IsInstanceList){
 		SceneNode dummy = nodes[childIndices[blas.ChildrenIndex]];
-		SceneNode instance = nodes[childIndices[dummy.ChildrenIndex+nextLoad.pIdx]];
+		SceneNode instance = nodes[childIndices[dummy.ChildrenIndex+nextLoad.pIdx_lod]];
 		next = nodes[childIndices[instance.ChildrenIndex]];
 		world_to_object = mat4x3(mat4(inv(transforms[instance.TransformIndex])) * mat4(world_to_object));
 	} else {
-		next = nodes[childIndices[blas.ChildrenIndex + nextLoad.pIdx]];
+		next = nodes[childIndices[blas.ChildrenIndex + nextLoad.pIdx_lod]];
 	}
 
 	// discard is not possible without either reodering the buffer or some other operation
@@ -127,42 +141,19 @@ void instanceShader(SceneNode tlas, int index, vec3 rayOrigin, vec3 rayDirection
 	// need to compute tNear to sort out instanceHits of AABBs that are behind a previous triangle hit
 	float tNear, tFar;
 	intersectAABB(origin, direction, next.AABB_min, next.AABB_max, tNear, tFar);
-
+	int lod = parentLOD;
 	if(next.IsLodSelector) {
-		SceneNode dummy = nodes[childIndices[next.ChildrenIndex]];
-		int lod;
-		if(usedLod >= 0) {
-			lod = usedLod;
-		} else {
-			int N = dummy.NumChildren;
-			mat3 tr = mat3(world_to_object * mat4(nextLoad.world_to_object));
-
-			float scale = sqrt(determinant(tr));
-			// computes the biggest eigenvalue of the object_to_world transform
-
-			float rObject = length(next.AABB_max-next.AABB_min)/2;
-			float rWorld = scale * rObject;
-			
-			float rMax = 3000;
-			float t = max(0,tNear);
-			float rPixel = rWorld * height / (tan(PI / 180 * fov) * 2 * t);
-			lod = -int(log2(pow(2,N-1) * rPixel/rMax));
-
-			lod = max(lod, 0);
-			lod = min(lod, N-1);
-			usedLod = lod;
-		}
-
-		//recordLODSelect(next.Index, mat4(tr), tNear, rObject, rWorld, rPixel, eigMax, lod);
-		next = nodes[childIndices[dummy.ChildrenIndex + lod]];
+		mat3 tr = mat3(world_to_object * mat4(nextLoad.world_to_object));
+		next = selectLOD(next,tNear, tr, parentLOD, lod);
 	}
 
 	world_to_object = mat4x3(mat4(inv(transforms[next.TransformIndex])) * mat4(world_to_object));
 	
 	// here the shader adds the next payloads
-	nextLoad.nIdx = next.Index;
+	nextLoad.cIdx_nIdx = next.Index;
 	nextLoad.world_to_object = mat4x3(mat4(world_to_object) * mat4(nextLoad.world_to_object));
-	nextLoad.t = tNear;
+	nextLoad.tNear = tNear;
+	nextLoad.pIdx_lod = lod;
 	traversalStack[index] = nextLoad;
 	
 	if (debug && displayAABBs) {
@@ -193,7 +184,7 @@ void triangleHit(rayQueryEXT ray_query, SceneNode node, float minAlpha) {
 		rayQueryConfirmIntersectionEXT(ray_query);
 }
 
-bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, float minAlpha,out vec3 tuv, out int triangle_index, out TraversalPayload resultPayload) {
+bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, float minAlpha, int lod,out vec3 tuv, out int triangle_index, out TraversalPayload resultPayload) {
 	numTraversals = 0;
 
 	tuv = vec3(0);
@@ -203,8 +194,9 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, f
 
 	TraversalPayload start; // start at root node
 	start.world_to_object = mat4x3(1);
-	start.nIdx = root;
-	start.t = 0;
+	start.cIdx_nIdx = int(root);
+	start.pIdx_lod = lod;
+	start.tNear = 0;
 
 	if (debug && displayAABBs) {
 		SceneNode root = nodes[root];
@@ -220,10 +212,10 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, f
 	while (stackSize > 0) {
 		stackSize--; // remove last element
 		TraversalPayload load = traversalStack[stackSize];
-		if (load.t >= best_t) continue;// there was already a closer hit, we can skip this one
+		if (load.tNear >= best_t) continue;// there was already a closer hit, we can skip this one
 
 		int start = stackSize;
-		SceneNode node = nodes[load.nIdx]; // retrieve scene Node
+		SceneNode node = nodes[load.cIdx_nIdx]; // retrieve scene Node
 		traversalDepth = max(node.Level, traversalDepth); // not 100% correct but it gives a vague idea
 
 		uint tlasNumber = node.TlasNumber;
@@ -278,9 +270,9 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, f
 					break;
 
 				traversalStack[stackSize] = load;
-				traversalStack[stackSize].nIdx = rayQueryGetIntersectionInstanceCustomIndexEXT(ray_query, false);
-				traversalStack[stackSize].pIdx = rayQueryGetIntersectionPrimitiveIndexEXT(ray_query, false);
-				traversalStack[stackSize].sIdx = rayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetEXT(ray_query, false);
+				traversalStack[stackSize].cIdx_nIdx = rayQueryGetIntersectionInstanceCustomIndexEXT(ray_query, false);
+				traversalStack[stackSize].pIdx_lod = rayQueryGetIntersectionPrimitiveIndexEXT(ray_query, false);
+				traversalStack[stackSize].sIdx_un = int(rayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetEXT(ray_query, false));
 				stackSize++;
 				instanceIntersections++;
 				break;
@@ -291,7 +283,7 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, f
 		int added = end - start;
 		
 		for(int i = start;i < end;i++) {
-			instanceShader(node, i, rayOrigin, rayDirection);
+			instanceShader(node, i, rayOrigin, rayDirection, load.pIdx_lod);
 			//recordQuery(traversalStack[i].nIdx, node.Level, traversalStack[i].t, vec3(1,0,0), vec3(2,0,0), i-start ,added);
 		}
 
@@ -334,13 +326,14 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, f
 				tuv.z = uv.x;
 
 				mat4 world_to_object = mat4(rayQueryGetIntersectionWorldToObjectEXT(ray_query, true));
-				resultPayload.nIdx = blasChild.Index;
+				resultPayload.cIdx_nIdx = blasChild.Index;
 				resultPayload.world_to_object = mat4x3(world_to_object * mat4(load.world_to_object));
-				resultPayload.t = best_t;
+				resultPayload.tNear = best_t;
+				resultPayload.pIdx_lod = load.pIdx_lod;
 				triangleTLAS = tlasNumber;
 			}
 		}
-		recordQuery(node.Index, node.Level, load.t, rayOrigin, rayOrigin + best_t * rayDirection, triangleIntersections ,instanceIntersections);
+		recordQuery(node.Index, node.Level, load.tNear, rayOrigin, rayOrigin + best_t * rayDirection, triangleIntersections ,instanceIntersections);
 	}
 	SetDebugHsv(displayTLASNumber, triangleTLAS, colorSensitivity, true);
 	return triangle_index >= 0;
@@ -394,7 +387,7 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, o
 
 const float MAX_T = 100000;
 
-vec4 shadeFragment(vec3 P, vec3 V, vec3 N, Material material, int triangle) {
+vec4 shadeFragment(vec3 P, vec3 V, vec3 N, Material material, int triangle, int lod) {
 	// calculate lighting for each light source
 	vec3 sum = vec3(0);
 	for (int i = 0; i < numLights; i++) {
@@ -421,7 +414,7 @@ vec4 shadeFragment(vec3 P, vec3 V, vec3 N, Material material, int triangle) {
 				}
 
 				vec3 LN = normalize(L);
-				if (ray_trace_loop(POff, LN, l_dst, rootSceneNode,0.9f, tuvShadow, index, load)) { // is light source visible? shoot ray to lPos
+				if (ray_trace_loop(POff, LN, l_dst, rootSceneNode,0.9f,lod , tuvShadow, index, load)) { // is light source visible? shoot ray to lPos
 					continue;
 				}
 				specular = material.k_s * pow(max(0, dot(R, LN)), material.n);
@@ -434,7 +427,7 @@ vec4 shadeFragment(vec3 P, vec3 V, vec3 N, Material material, int triangle) {
 			}
 			else if ((light.type & LIGHT_TYPE_SUN) != 0) { // directional light, check if it is visible 
 				vec3 LN = normalize(light.direction);
-				if (ray_trace_loop(POff, -LN, MAX_T, rootSceneNode,0.9f, tuvShadow, index, load)) { // shoot shadow ray into the light source
+				if (ray_trace_loop(POff, -LN, MAX_T, rootSceneNode,0.9f,lod , tuvShadow, index, load)) { // shoot shadow ray into the light source
 					continue;
 				}
 				specular = material.k_s * pow(max(0, dot(R, -LN)), material.n);
@@ -462,7 +455,7 @@ vec4 rayTrace(vec3 rayOrigin, vec3 rayDirection, out float t) {
 		int triangle = -1;
 		TraversalPayload load;
 		vec3 tuv;
-		if (ray_trace_loop(rayOrigin, rayDirection, MAX_T, rootSceneNode,0, tuv, triangle, load))
+		if (ray_trace_loop(rayOrigin, rayDirection, MAX_T, rootSceneNode,0,-1, tuv, triangle, load))
 			return vec4(1, 1, 1, 1);
 		else
 			return vec4(0, 0, 0, 1);
@@ -477,7 +470,6 @@ vec4 rayTrace(vec3 rayOrigin, vec3 rayDirection, out float t) {
 	Contribution[0] = 1;
 	Origin[0] = rayOrigin;
 	Direction[0] = rayDirection;
-
 	while (num>0) {
 		count++;
 		num--;
@@ -485,11 +477,11 @@ vec4 rayTrace(vec3 rayOrigin, vec3 rayDirection, out float t) {
 		vec3 P = Origin[num];
 		vec3 V = Direction[num];
 		float frac = Contribution[num];
-		bool hit = ray_trace_loop(P, V, MAX_T, rootSceneNode,0, tuv, triangle, load);
-
-		SetDebugHsv(displayLOD, usedLod, 7, true);
+		bool hit = ray_trace_loop(P, V, MAX_T, rootSceneNode,0, -1, tuv, triangle, load);
 
 		if(hit) {
+			SetDebugHsv(displayLOD, load.pIdx_lod, 7, true);
+
 			vec3 P = P + tuv.x * V;
 			vec3 N_obj;
 			getHitPayload(triangle, tuv, N_obj, material);
@@ -499,11 +491,13 @@ vec4 rayTrace(vec3 rayOrigin, vec3 rayDirection, out float t) {
 			if (count == 1)
 				t = tuv.x;
 
-			vec4 fracColor = shadeFragment(P, V, N_world, material, triangle);
+			vec4 fracColor = shadeFragment(P, V, N_world, material, triangle, load.pIdx_lod);
+
 			if(debug && displayLOD){
-				fracColor = 0.8f * fracColor + 0.2f * debugColor;
+				fracColor = 0.7f * fracColor + 0.3f * debugColor;
 				debugColor = vec4(0,0,0,0);
 			}
+
 			DebugOffIfSet();
 			color += frac * fracColor[3] * fracColor;
 
@@ -514,10 +508,9 @@ vec4 rayTrace(vec3 rayOrigin, vec3 rayDirection, out float t) {
 				tr = 0;
 				rf = 0;
 			}
-
 			if(tr > 0 && renderTransmission && num<6){
 				Contribution[num] = tr * frac;
-				Origin[num] = P + V * 0.001f;
+				Origin[num] = P + V * 0.01f;
 				Direction[num] = V;
 				num++;
 			}
@@ -525,7 +518,7 @@ vec4 rayTrace(vec3 rayOrigin, vec3 rayDirection, out float t) {
 			if(rf > 0 && renderReflection && num<6){
 				Contribution[num] = rf * frac;
 				vec3 dirRef = reflect(V,N_world);
-				Origin[num] = P + dirRef * 0.001f;
+				Origin[num] = P + dirRef * 0.01f;
 				Direction[num] = dirRef;
 				num++;
 			}
@@ -535,7 +528,16 @@ vec4 rayTrace(vec3 rayOrigin, vec3 rayDirection, out float t) {
 				t = MAX_T;
 			}
 			// maybe environment map
-			color += frac * vec4(3, 215, 252, 255) / 255;
+			for (int i = 0; i < numLights; i++) {
+				Light light = lights[i];
+				if ((light.type & LIGHT_TYPE_SUN) != 0) {
+					vec3 LD = normalize(light.direction);
+					vec3 VN = normalize(V);
+					float fac = pow(max(0,dot(LD,-VN)),500) * 3;
+					color += frac * fac * vec4(light.intensity,1);
+				}
+			}
+			color += frac * texture(skybox,V);
 		}
 	}
 	return color;
