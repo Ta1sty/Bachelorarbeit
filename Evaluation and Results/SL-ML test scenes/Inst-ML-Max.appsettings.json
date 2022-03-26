@@ -1,0 +1,64 @@
+{
+  "GltfConfiguration": {
+    "ConvertGltf": false,
+    "RemoveDuplicates": false,
+    "RemovePresumedInstances": false
+  },
+  "MoanaConfiguration": {
+    "ConvertMoana": true,
+    "UseCompilerVersion2": false,
+    "MoanaRootPath": null,
+    "Cleanup": true,
+    "MergeMeshes": true,
+    "UseFirstSectionObject": true,
+    "UseObjectIncludes": true,
+    "Includes": [
+      "isBayCedarA1"
+    ],
+    "ValidateMaterials": true,
+    "ValidateMoana": true
+  },
+  "InstanceConfiguration": {
+    "UseInstancing": true,
+    "InstanceX": 32,
+    "InstanceZ": 32,
+    "InstanceCount": 4,
+    "SpacingFactor": 1,
+    "Randomize": false
+  },
+  "LodConfiguration": {
+    "UseLod": false,
+    "UseTriangleLod": true,
+    "LodTriangleThreshold": 150000,
+    "LodTriangleStopCount": 0,
+    "UseInstanceLod": false,
+    "CutExcess": true,
+    "LodInstanceThreshold": 10000000,
+    "LodInstanceStopCount": 10000000,
+    "ReductionFactor": 4,
+    "NumLod": 1,
+    "TriDecimatorArguments": [
+      "-Sy",
+      "-C"
+    ]
+  },
+  "OptimizationConfiguration": {
+    "UseSingleLevelInstancing": false,
+    "ReduceInstanceListCount": 0,
+    "ForceInstanceListEven": true,
+    "MergeInstanceLists": true,
+    "CapInstanceLists": false,
+    "MaxInstances": 16000000,
+    "RootBufferRebuild": true
+  },
+  "DebugConfiguration": {
+    "PrintScene": true,
+    "PrintFullScene": false,
+    "PrintFullThreshold": 1000,
+    "PrintMaterials": true,
+    "ValidateSceneGraph": true,
+    "ValidateParentsAndChildren": false,
+    "InsertGround": true
+  },
+  "StorePath": null
+}
