@@ -26,6 +26,7 @@ namespace SceneCompiler
                 Console.WriteLine(arg);
             }
 
+
             var regex = new Regex(@"VulkanProject\\.*");
 
 
@@ -39,13 +40,12 @@ namespace SceneCompiler
             if (config.MoanaConfiguration.ConvertMoana && config.GltfConfiguration.ConvertGltf)
                 throw new Exception("can not convert gltf and moana, only one can be true");
 
-            if (config.StorePath == null)
-                throw new Exception("store path is null");
+            config.StorePath ??= ChooseDirectory("Choose Store directory for the scenes.");
 
             if (config.MoanaConfiguration.ConvertMoana)
             {
-                if (config.MoanaConfiguration.MoanaRootPath == null)
-                    throw new Exception("moana store path is null");
+                config.MoanaConfiguration.MoanaRootPath ??= 
+                    ChooseDirectory("Choose moana root path. Needs to end with island/pbrt");
                 compiler = ConvertMoana(config.MoanaConfiguration.MoanaRootPath, buffers);
             }
             else if (config.GltfConfiguration.ConvertGltf)
@@ -57,7 +57,6 @@ namespace SceneCompiler
             {
                 throw new Exception("at least one convert type must be true");
             }
-
 
             var dst = Path.Combine(config.StorePath, compiler.SceneName + ".vksc");
 
@@ -157,11 +156,45 @@ namespace SceneCompiler
                 var res = fileDialog.ShowDialog();
                 if (res != DialogResult.OK || string.IsNullOrWhiteSpace(fileDialog.FileName))
                 {
-                    path = "";
+                    Console.WriteLine("File choose was aborted or is invalid");
+                    Console.WriteLine("Press ENTER to exit");
+                    Console.ReadLine();
+                    Environment.Exit(-1);
                 }
                 else
                 {
                     path = fileDialog.FileName;
+                }
+            });
+            t.SetApartmentState(ApartmentState.STA);
+            t.Start();
+            t.Join();
+            return path;
+        }
+
+        private static string ChooseDirectory(string text)
+        {
+            var path = "";
+            var t = new Thread(() =>
+            {
+                using var dirDialog = new FolderBrowserDialog();
+                dirDialog.Description = text;
+                dirDialog.UseDescriptionForTitle = true;
+                Regex reg = new Regex(@"\\SceneCompiler.*");
+                var bPath = reg.Replace(Assembly.GetExecutingAssembly().Location, "");
+                dirDialog.SelectedPath = Directory.GetParent(bPath).FullName;
+
+                var res = dirDialog.ShowDialog();
+                if (res != DialogResult.OK || string.IsNullOrWhiteSpace(dirDialog.SelectedPath))
+                {
+                    Console.WriteLine("Directory choose was aborted or is invalid");
+                    Console.WriteLine("Press ENTER to exit");
+                    Console.ReadLine();
+                    Environment.Exit(-1);
+                }
+                else
+                {
+                    path = dirDialog.SelectedPath;
                 }
             });
             t.SetApartmentState(ApartmentState.STA);

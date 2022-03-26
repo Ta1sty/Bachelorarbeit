@@ -1,9 +1,0 @@
-change to world to object -didnt work, no usage in shader, but used in instance construction and aabb compute
-Normal offset Intersection P
-InstanceList Merge (split spacially)
-
-LOD ??
-
-Multilevel instancing, with size
-
-vksc merge

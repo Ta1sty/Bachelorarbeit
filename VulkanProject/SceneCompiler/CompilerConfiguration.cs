@@ -1,7 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Text.Json;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Windows.Forms;
 using Accessibility;
 
 namespace SceneCompiler
@@ -9,6 +13,15 @@ namespace SceneCompiler
     public class CompilerConfiguration
     {
         public static readonly CompilerConfiguration Configuration = LoadCompilerConfiguration();
+
+        public GltfConfiguration GltfConfiguration { get; set; } = new();
+        public MoanaConfiguration MoanaConfiguration { get; set; } = new();
+        public InstanceConfiguration InstanceConfiguration { get; set; } = new();
+        public LodConfiguration LodConfiguration { get; set; } = new();
+        public OptimizationConfiguration OptimizationConfiguration { get; set; } = new();
+        public DebugConfiguration DebugConfiguration { get; set; } = new();
+        /// <summary>if this is not null, the .vksc file will be saved in that folder</summary>
+        public string StorePath { get; set; }
 
         private static CompilerConfiguration LoadCompilerConfiguration()
         {
@@ -19,12 +32,20 @@ namespace SceneCompiler
                 IgnoreNullValues = false,
             };
             CompilerConfiguration config;
-            using(var str = new StreamReader("appsettings.json"))
+            var path = "appsettings.json";
+
+            var overridden = OverrideAppsettings(out var overridePath);
+            if (overridden)
+                path = overridePath;
+            using (var str = new StreamReader(path))
             {
                 var res = str.ReadToEnd();
                 config = JsonSerializer.Deserialize<CompilerConfiguration>(res, opt);
             }
-            // write back so that newly added default values are added to the json file
+
+            if (overridden)
+                return config;
+                // write back so that newly added default values are added to the json file
             using (var str = new StreamWriter("appsettings.json"))
             {
                 var text = JsonSerializer.Serialize(config, opt);
@@ -39,15 +60,42 @@ namespace SceneCompiler
 #endif
             return config;
         }
+        private static bool OverrideAppsettings(out string retPath)
+        {
+            var path = "";
+            var result = false;
+            var t = new Thread(() =>
+            {
+                var confResult = MessageBox.Show("Override appsettings with file?", "Appsettings", MessageBoxButtons.YesNo);
+                if (confResult == DialogResult.No)
+                    return;
+                using var fileDialog = new OpenFileDialog();
+                fileDialog.Filter = "JSON-File (.json) | *.json";
+                fileDialog.Title = "Select the overriding appsettings file";
+                Regex reg = new Regex(@"\\SceneCompiler.*");
+                var bPath = reg.Replace(Assembly.GetExecutingAssembly().Location, "");
+                fileDialog.InitialDirectory = Directory.GetParent(bPath).FullName;
 
-        public GltfConfiguration GltfConfiguration { get; set; } = new();
-        public MoanaConfiguration MoanaConfiguration { get; set; } = new();
-        public InstanceConfiguration InstanceConfiguration { get; set; } = new();
-        public LodConfiguration LodConfiguration { get; set; } = new();
-        public OptimizationConfiguration OptimizationConfiguration { get; set; } = new();
-        public DebugConfiguration DebugConfiguration { get; set; } = new();
-        /// <summary>if this is not null, the .vksc file will be saved in that folder</summary>
-        public string StorePath { get; set; }
+                var res = fileDialog.ShowDialog();
+                if (res != DialogResult.OK || string.IsNullOrWhiteSpace(fileDialog.FileName))
+                {
+                    Console.WriteLine("File choose was aborted or is invalid");
+                    Console.WriteLine("Press ENTER to exit");
+                    Console.ReadLine();
+                    Environment.Exit(-1);
+                }
+                else
+                {
+                    path = fileDialog.FileName;
+                }
+                result = true;
+            });
+            t.SetApartmentState(ApartmentState.STA);
+            t.Start();
+            t.Join();
+            retPath = path;
+            return result;
+        }
     }
 
     public class GltfConfiguration
