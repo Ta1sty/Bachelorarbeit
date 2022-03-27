@@ -364,9 +364,7 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /vulkan_renderer
-/island
 /VulkanProject/Scenes
-/island
 /TriDecimator
 /Models/Gallic_warrior_1_OBJ
 /Test/LOD test scenes
