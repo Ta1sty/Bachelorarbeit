@@ -149,9 +149,7 @@ namespace SceneCompiler
                 using var fileDialog = new OpenFileDialog();
                 fileDialog.Filter = "GLTF (.gltf) | *.gltf";
                 fileDialog.Title = "Select the file to open";
-                Regex reg = new Regex(@"\\SceneCompiler.*");
-                var bPath = reg.Replace(Assembly.GetExecutingAssembly().Location, "");
-                fileDialog.InitialDirectory = Directory.GetParent(bPath).FullName;
+                fileDialog.InitialDirectory = Directory.GetParent(Environment.CurrentDirectory).FullName;
 
                 var res = fileDialog.ShowDialog();
                 if (res != DialogResult.OK || string.IsNullOrWhiteSpace(fileDialog.FileName))
@@ -180,9 +178,7 @@ namespace SceneCompiler
                 using var dirDialog = new FolderBrowserDialog();
                 dirDialog.Description = text;
                 dirDialog.UseDescriptionForTitle = true;
-                Regex reg = new Regex(@"\\SceneCompiler.*");
-                var bPath = reg.Replace(Assembly.GetExecutingAssembly().Location, "");
-                dirDialog.SelectedPath = Directory.GetParent(bPath).FullName;
+                dirDialog.SelectedPath = Directory.GetParent(Environment.CurrentDirectory).FullName;
 
                 var res = dirDialog.ShowDialog();
                 if (res != DialogResult.OK || string.IsNullOrWhiteSpace(dirDialog.SelectedPath))

@@ -582,7 +582,7 @@ namespace SceneCompiler.MoanaConversion
                                 Console.WriteLine("duplicate mesh in pbrt file, skipping:" + mesh.Name);
                                 continue;
                             }
-                            throw new Exception("unspecified material");
+                            Console.WriteLine("unspecified material");
                         }
 
                         if (mesh.MaterialName != null)
@@ -596,7 +596,7 @@ namespace SceneCompiler.MoanaConversion
                             else if (compiler.Materials.TryGetValue(subSection2 + "_" + mesh.MaterialName, out material)) ;
                             else if (compiler.Materials.TryGetValue(subSection2 + "1_" + mesh.MaterialName, out material)) ;
                             else if (compiler.Materials.TryGetValue(mesh.MaterialName, out material)) ;
-                            else throw new Exception("unsresolved material");
+                            else Console.WriteLine("unresolved material " + mesh.MaterialName);
                             materialIndex = material.GetBufferIndex(buffers);
                         }
 
