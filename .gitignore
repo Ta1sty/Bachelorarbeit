@@ -370,3 +370,5 @@ FodyWeavers.xsd
 /Test/LOD test scenes
 /Test/SL-ML test scenes
 *.ngfx-gputrace
+/island
+/island_old
