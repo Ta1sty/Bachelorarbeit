@@ -69,7 +69,8 @@ namespace SceneCompiler
                 str.Write(text);
             }
 #if DEBUG
-            using (var str = new StreamWriter("../../../appsettings.json"))
+            var writeBack = Path.GetFileName(path);
+            using (var str = new StreamWriter("../../../" + writeBack))
             {
                 var text = JsonSerializer.Serialize(config, opt);
                 str.Write(text);
