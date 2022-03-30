@@ -1,0 +1,949 @@
+Parsed F:\BA\island\pbrt\isBayCedarA1\objects.pbrt
+Parsed F:\BA\island\pbrt\isBayCedarA1\materials.pbrt
+Parsed F:\BA\island\pbrt\isBeach\objects.pbrt
+Parsed F:\BA\island\pbrt\isBeach\materials.pbrt
+Parsed F:\BA\island\pbrt\isCoastline\objects.pbrt
+Parsed F:\BA\island\pbrt\isCoastline\materials.pbrt
+Parsed F:\BA\island\pbrt\isCoral\objects.pbrt
+Parsed F:\BA\island\pbrt\isCoral\materials.pbrt
+Parsed F:\BA\island\pbrt\isDunesA\objects.pbrt
+Parsed F:\BA\island\pbrt\isDunesA\materials.pbrt
+Parsed F:\BA\island\pbrt\isDunesB\objects.pbrt
+Parsed F:\BA\island\pbrt\isDunesB\materials.pbrt
+Parsed F:\BA\island\pbrt\isGardeniaA\objects.pbrt
+Parsed F:\BA\island\pbrt\isGardeniaA\materials.pbrt
+Parsed F:\BA\island\pbrt\isHibiscus\objects.pbrt
+Parsed F:\BA\island\pbrt\isHibiscus\materials.pbrt
+Parsed F:\BA\island\pbrt\isHibiscusYoung\objects.pbrt
+Parsed F:\BA\island\pbrt\isHibiscusYoung\materials.pbrt
+Parsed F:\BA\island\pbrt\isIronwoodA1\objects.pbrt
+Parsed F:\BA\island\pbrt\isIronwoodA1\materials.pbrt
+Parsed F:\BA\island\pbrt\isIronwoodB\objects.pbrt
+Parsed F:\BA\island\pbrt\isIronwoodB\materials.pbrt
+Parsed F:\BA\island\pbrt\isKava\objects.pbrt
+Parsed F:\BA\island\pbrt\isKava\materials.pbrt
+Parsed F:\BA\island\pbrt\isLavaRocks\objects.pbrt
+Parsed F:\BA\island\pbrt\isLavaRocks\materials.pbrt
+Parsed F:\BA\island\pbrt\isMountainA\objects.pbrt
+Parsed F:\BA\island\pbrt\isMountainA\materials.pbrt
+Parsed F:\BA\island\pbrt\isMountainB\objects.pbrt
+Parsed F:\BA\island\pbrt\isMountainB\materials.pbrt
+Parsed F:\BA\island\pbrt\isNaupakaA\objects.pbrt
+Parsed F:\BA\island\pbrt\isNaupakaA\materials.pbrt
+Parsed F:\BA\island\pbrt\isPalmDead\objects.pbrt
+Parsed F:\BA\island\pbrt\isPalmDead\materials.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig\objects.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig\materials.pbrt
+Parsed F:\BA\island\pbrt\isPandanusA\objects.pbrt
+Parsed F:\BA\island\pbrt\isPandanusA\materials.pbrt
+Parsed F:\BA\island\pbrt\osOcean\materials.pbrt
+Parsed F:\BA\island\pbrt\isMountainA/isMountainA.pbrt
+Parsed F:\BA\island\pbrt\isMountainA/isMountainA_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainA/xgFoliageC/isMountainA_xgFoliageC.pbrt
+Parsed F:\BA\island\pbrt\isMountainA/xgFoliageC/xgFoliageC_treeMadronaBaked_canopyOnly_lo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainA/xgCocoPalms/isMountainA_xgCocoPalms.pbrt
+Parsed F:\BA\island\pbrt\isMountainA/xgCocoPalms/xgCocoPalms_isPalmRig5_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainA/xgCocoPalms/xgCocoPalms_isPalmRig6_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainA/xgCocoPalms/xgCocoPalms_isPalmRig13_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainA/xgCocoPalms/xgCocoPalms_isPalmRig14_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainA/xgCocoPalms/xgCocoPalms_isPalmRig3_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainA/xgCocoPalms/xgCocoPalms_isPalmRig1_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainA/xgCocoPalms/xgCocoPalms_isPalmRig16_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainA/xgCocoPalms/xgCocoPalms_isPalmRig15_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainA/xgCocoPalms/xgCocoPalms_isPalmRig4_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainA/xgCocoPalms/xgCocoPalms_isPalmRig_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainA/xgCocoPalms/xgCocoPalms_isPalmRig12_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainA/xgCocoPalms/xgCocoPalms_isPalmRig8_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainA/xgCocoPalms/xgCocoPalms_isPalmRig2_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainA/xgCocoPalms/xgCocoPalms_isPalmRig7_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainA/xgCocoPalms/xgCocoPalms_isPalmRig17_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainA/xgBreadFruit/isMountainA_xgBreadFruit.pbrt
+Parsed F:\BA\island\pbrt\isMountainA/xgBreadFruit/xgBreadFruit_archiveBreadFruitBaked_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig18_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig18_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig19_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig19_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig16_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig16_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig17_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig17_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig14_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig14_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig15_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig15_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig12_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig12_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig13_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig13_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig10_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig10_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig11_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig11_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig30_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig30_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig31_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig31_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig32_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig32_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig33_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig33_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig8_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig8_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig9_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig9_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig4_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig4_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig5_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig5_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig6_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig6_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig7_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig7_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig2_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig2_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig3_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig3_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig27_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig27_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig26_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig26_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig25_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig25_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig24_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig24_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig23_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig23_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig22_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig22_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig21_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig21_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig20_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig20_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig29_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig29_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/isPalmRig28_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmRig/xgFrondsA/isPalmRig28_xgFrondsA.pbrt
+Parsed F:\BA\island\pbrt\isHibiscus/isHibiscus.pbrt
+Parsed F:\BA\island\pbrt\isHibiscus/isHibiscus_geometry.pbrt
+Parsed F:\BA\island\pbrt\isHibiscus/xgBonsai/isHibiscus_xgBonsai.pbrt
+Parsed F:\BA\island\pbrt\isHibiscus/xgBonsai/archiveHibiscusLeaf0001_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isHibiscus/xgBonsai/archiveHibiscusFlower0001_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isHibiscus/xgBonsai/archiveHibiscusLeaf0003_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isHibiscus/xgBonsai/archiveHibiscusLeaf0002_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/isMountainB.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/isMountainB_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgFoliageB/isMountainB_xgFoliageB.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgFoliageB/xgFoliageB_treeMadronaBaked_canopyOnly_lo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgFoliageC/isMountainB_xgFoliageC.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgFoliageC/xgFoliageC_treeMadronaBaked_canopyOnly_lo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgFoliageA/isMountainB_xgFoliageA.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgFoliageA/xgFoliageA_treeMadronaBaked_canopyOnly_lo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgFoliageAd/isMountainB_xgFoliageAd.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgFoliageAd/xgFoliageAd_treeMadronaBaked_canopyOnly_lo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgBreadFruit/isMountainB_xgBreadFruit.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgBreadFruit/xgBreadFruit_archiveBreadFruitBaked_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgCocoPalms/isMountainB_xgCocoPalms.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgCocoPalms/xgCocoPalms_isPalmRig3_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgCocoPalms/xgCocoPalms_isPalmRig14_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgCocoPalms/xgCocoPalms_isPalmRig17_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgCocoPalms/xgCocoPalms_isPalmRig8_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgCocoPalms/xgCocoPalms_isPalmRig12_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgCocoPalms/xgCocoPalms_isPalmRig_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgCocoPalms/xgCocoPalms_isPalmRig2_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgCocoPalms/xgCocoPalms_isPalmRig1_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgCocoPalms/xgCocoPalms_isPalmRig16_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgCocoPalms/xgCocoPalms_isPalmRig15_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgCocoPalms/xgCocoPalms_isPalmRig6_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgCocoPalms/xgCocoPalms_isPalmRig13_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgFern/isMountainB_xgFern.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgFern/xgFern_fern0011_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgFern/xgFern_fern0013_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgFern/xgFern_fern0005_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgFern/xgFern_fern0007_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgFern/xgFern_fern0010_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgFern/xgFern_fern0004_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgFern/xgFern_fern0001_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgFern/xgFern_fern0006_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgFern/xgFern_fern0012_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgFern/xgFern_fern0014_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgFern/xgFern_fern0008_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgFern/xgFern_fern0009_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgFern/xgFern_fern0002_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isMountainB/xgFern/xgFern_fern0003_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesB/isDunesB.pbrt
+Parsed F:\BA\island\pbrt\isDunesB/isDunesB_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesB/xgTreeSkyLine/isDunesB_xgTreeSkyLine.pbrt
+Parsed F:\BA\island\pbrt\isDunesB/xgTreeSkyLine/isIronwoodA1_variantB_lo_geometry.pbrt
+unspecified material
+Parsed F:\BA\island\pbrt\isDunesB/xgTreeSkyLine/isIronwoodA1_variantA_lo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesB/xgTreeFill/isDunesB_xgTreeFill.pbrt
+Parsed F:\BA\island\pbrt\isBayCedarA1/materials.pbrt
+Parsed F:\BA\island\pbrt\isDunesB/xgTreeFill/isBayCedarA1_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBayCedarA1/xgBonsai/isBayCedarA1_xgBonsai.pbrt
+Parsed F:\BA\island\pbrt\isBayCedarA1/xgBonsai/archivebaycedar0001_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesB/xgTreeFill/isBayCedarA1_bonsaiA_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBayCedarA1/xgBonsai/isBayCedarA1_bonsaiA_xgBonsai.pbrt
+Parsed F:\BA\island\pbrt\isDunesB/xgTreeFill/isBayCedarA1_bonsaiC_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBayCedarA1/xgBonsai/isBayCedarA1_bonsaiC_xgBonsai.pbrt
+Parsed F:\BA\island\pbrt\isDunesB/xgTreeFill/isBayCedarA1_bonsaiB_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBayCedarA1/xgBonsai/isBayCedarA1_bonsaiB_xgBonsai.pbrt
+Parsed F:\BA\island\pbrt\isDunesB/xgRoots/isDunesB_xgRoots.pbrt
+Parsed F:\BA\island\pbrt\isDunesB/xgRoots/xgRoots_archiveroot0001_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesB/xgRoots/xgRoots_archiveroot0012_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesB/xgRoots/xgRoots_archiveroot0003_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesB/xgRoots/xgRoots_archiveroot0014_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesB/xgRoots/xgRoots_archiveroot0007_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesB/xgRoots/xgRoots_archiveroot0009_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesB/xgRoots/xgRoots_archiveroot0004_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesB/xgRoots/xgRoots_archiveroot0011_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesB/xgRoots/xgRoots_archiveroot0006_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesB/xgRoots/xgRoots_archiveroot0010_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesB/xgRoots/xgRoots_archiveroot0005_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesB/xgRoots/xgRoots_archiveroot0013_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesB/xgRoots/xgRoots_archiveroot0002_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesB/xgRoots/xgRoots_archiveroot0008_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesB/xgTreeSpecific/isDunesB_xgTreeSpecific.pbrt
+Parsed F:\BA\island\pbrt\isDunesB/xgTreeSpecific/isIronwoodA1_variantA_lo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesB/xgPandanus/isDunesB_xgPandanus.pbrt
+Parsed F:\BA\island\pbrt\isDunesB/xgPandanus/xgPandanus_isPandanusAlo_base_geometry.pbrt
+duplicate mesh in pbrt file, skipping:lowerclump0001_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0002_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0003_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0004_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0005_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0006_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0007_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0008_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0009_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0010_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0011_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0012_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0013_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0014_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0015_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0016_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0017_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0018_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0019_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0020_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0021_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0022_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0023_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0024_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0025_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0026_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0027_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0028_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0029_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0030_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0031_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0032_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0033_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0034_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0035_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0036_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0037_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0038_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0039_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0040_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0041_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0042_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0043_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0044_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0045_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0046_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0047_proxy
+duplicate mesh in pbrt file, skipping:lowerclump0048_proxy
+Parsed F:\BA\island\pbrt\isGardeniaA/isGardeniaA.pbrt
+Parsed F:\BA\island\pbrt\isGardeniaA/isGardeniaA_geometry.pbrt
+Parsed F:\BA\island\pbrt\isGardeniaA/xgBonsai/isGardeniaA_xgBonsai.pbrt
+Parsed F:\BA\island\pbrt\isGardeniaA/xgBonsai/archivegardenia0008_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isGardeniaA/xgBonsai/archivegardenia0006_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isGardeniaA/xgBonsai/archivegardenia0007_mod_geometry.pbrt
+unspecified material
+Parsed F:\BA\island\pbrt\isGardeniaA/xgBonsai/archivegardenia0002_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isGardeniaA/xgBonsai/archivegardenia0003_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isGardeniaA/xgBonsai/archivegardenia0005_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isGardeniaA/xgBonsai/archivegardeniaflw0001_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isGardeniaA/xgBonsai/archivegardenia0001_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isGardeniaA/xgBonsai/archivegardenia0004_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isGardeniaA/xgBonsai/archivegardenia0009_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isGardeniaA/xgBonsai/archivegardeniaflw0002_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isGardeniaA/xgBonsai/archivegardeniaflw0003_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPalmDead/isPalmDead.pbrt
+Parsed F:\BA\island\pbrt\isPalmDead/isPalmDead_geometry.pbrt
+Parsed F:\BA\island\pbrt\isLavaRocks/isLavaRocks.pbrt
+Parsed F:\BA\island\pbrt\isLavaRocks/isLavaRocks_geometry.pbrt
+Parsed F:\BA\island\pbrt\isLavaRocks/isLavaRocks1_geometry.pbrt
+Parsed F:\BA\island\pbrt\isHibiscusYoung/isHibiscusYoung.pbrt
+Parsed F:\BA\island\pbrt\isHibiscusYoung/isHibiscusYoung_geometry.pbrt
+Parsed F:\BA\island\pbrt\isHibiscusYoung/xgBonsai/isHibiscusYoung_xgBonsai.pbrt
+Parsed F:\BA\island\pbrt\isHibiscusYoung/xgBonsai/archiveHibiscusLeaf0003_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isHibiscusYoung/xgBonsai/archiveHibiscusLeaf0002_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isHibiscusYoung/xgBonsai/archiveHibiscusLeaf0001_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isHibiscusYoung/xgBonsai/archiveHibiscusFlower0001_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isNaupakaA/isNaupakaA.pbrt
+Parsed F:\BA\island\pbrt\isNaupakaA/isNaupakaA_geometry.pbrt
+Parsed F:\BA\island\pbrt\isNaupakaA/xgBonsai/isNaupakaA_xgBonsai.pbrt
+Parsed F:\BA\island\pbrt\isNaupakaA/xgBonsai/xgBonsai_isNaupakaBon_bon_hero_ALL_geometry.pbrt
+Parsed F:\BA\island\pbrt\isNaupakaA/isNaupakaA1_geometry.pbrt
+Parsed F:\BA\island\pbrt\isNaupakaA/xgBonsai/isNaupakaA1_xgBonsai.pbrt
+Parsed F:\BA\island\pbrt\isNaupakaA/isNaupakaA3_geometry.pbrt
+Parsed F:\BA\island\pbrt\isNaupakaA/xgBonsai/isNaupakaA3_xgBonsai.pbrt
+Parsed F:\BA\island\pbrt\isNaupakaA/isNaupakaA2_geometry.pbrt
+Parsed F:\BA\island\pbrt\isNaupakaA/xgBonsai/isNaupakaA2_xgBonsai.pbrt
+Parsed F:\BA\island\pbrt\isCoral/isCoral.pbrt
+Parsed F:\BA\island\pbrt\isCoral/isCoral_geometry.pbrt
+unspecified material
+Parsed F:\BA\island\pbrt\isCoral/xgCabbage/isCoral_xgCabbage.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgCabbage/xgCabbage_archivecoral_cabbage0008_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgCabbage/xgCabbage_archivecoral_cabbage0009_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgCabbage/xgCabbage_archivecoral_cabbage0007_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgCabbage/xgCabbage_archivecoral_cabbage0005_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgCabbage/xgCabbage_archivecoral_cabbage0003_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgCabbage/xgCabbage_archivecoral_cabbage0001_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgCabbage/xgCabbage_archivecoral_cabbage0006_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgCabbage/xgCabbage_archivecoral_cabbage0004_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgCabbage/xgCabbage_archivecoral_cabbage0002_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgFlutes/isCoral_xgFlutes.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgFlutes/xgFlutes_flutes_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgAntlers/isCoral_xgAntlers.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgAntlers/xgAntlers_archivecoral_antler0002_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgAntlers/xgAntlers_archivecoral_antler0007_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgAntlers/xgAntlers_archivecoral_antler0005_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgAntlers/xgAntlers_archivecoral_antler0003_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgAntlers/xgAntlers_archivecoral_antler0009_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgAntlers/xgAntlers_archivecoral_antler0008_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgAntlers/xgAntlers_archivecoral_antler0006_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgAntlers/xgAntlers_archivecoral_antler0004_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgAntlers/xgAntlers_archivecoral_antler0001_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgStaghorn/isCoral_xgStaghorn.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgStaghorn/xgStaghorn_archivecoral_staghorn0008_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgStaghorn/xgStaghorn_archivecoral_staghorn0006_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgStaghorn/xgStaghorn_archivecoral_staghorn0002_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgStaghorn/xgStaghorn_archivecoral_staghorn0010_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgStaghorn/xgStaghorn_archivecoral_staghorn0009_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgStaghorn/xgStaghorn_archivecoral_staghorn0005_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgStaghorn/xgStaghorn_archivecoral_staghorn0007_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgStaghorn/xgStaghorn_archivecoral_staghorn0004_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgStaghorn/xgStaghorn_archivecoral_staghorn0001_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgStaghorn/xgStaghorn_archivecoral_staghorn0003_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/isCoral5_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgCabbage/isCoral5_xgCabbage.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgFlutes/isCoral5_xgFlutes.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgAntlers/isCoral5_xgAntlers.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgStaghorn/isCoral5_xgStaghorn.pbrt
+Parsed F:\BA\island\pbrt\isCoral/isCoral4_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgCabbage/isCoral4_xgCabbage.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgFlutes/isCoral4_xgFlutes.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgAntlers/isCoral4_xgAntlers.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgStaghorn/isCoral4_xgStaghorn.pbrt
+Parsed F:\BA\island\pbrt\isCoral/isCoral1_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgCabbage/isCoral1_xgCabbage.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgFlutes/isCoral1_xgFlutes.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgAntlers/isCoral1_xgAntlers.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgStaghorn/isCoral1_xgStaghorn.pbrt
+Parsed F:\BA\island\pbrt\isCoral/isCoral3_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgCabbage/isCoral3_xgCabbage.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgFlutes/isCoral3_xgFlutes.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgAntlers/isCoral3_xgAntlers.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgStaghorn/isCoral3_xgStaghorn.pbrt
+Parsed F:\BA\island\pbrt\isCoral/isCoral2_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgCabbage/isCoral2_xgCabbage.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgFlutes/isCoral2_xgFlutes.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgAntlers/isCoral2_xgAntlers.pbrt
+Parsed F:\BA\island\pbrt\isCoral/xgStaghorn/isCoral2_xgStaghorn.pbrt
+Parsed F:\BA\island\pbrt\isCoastline/isCoastline.pbrt
+Parsed F:\BA\island\pbrt\isCoastline/isCoastline_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoastline/xgGrass/isCoastline_xgGrass.pbrt
+Parsed F:\BA\island\pbrt\isCoastline/xgPalmDebris/isCoastline_xgPalmDebris.pbrt
+Parsed F:\BA\island\pbrt\isCoastline/xgPalmDebris/xgPalmDebris_archiveLeaflet0125_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoastline/xgPalmDebris/xgPalmDebris_archiveLeaflet0127_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoastline/xgPalmDebris/xgPalmDebris_archiveLeaflet0124_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoastline/xgPalmDebris/xgPalmDebris_archiveLeaflet0123_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoastline/xgPalmDebris/xgPalmDebris_archiveLeaflet0126_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoastline/xgFibers/isCoastline_xgFibers.pbrt
+Parsed F:\BA\island\pbrt\isCoastline/xgFibers/xgFibers_archiveseedpodb_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoastline/xgFibers/xgFibers_archivepineneedle0002_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoastline/xgFibers/xgFibers_archivepineneedle0003_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isCoastline/xgFibers/xgFibers_archivepineneedle0001_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/isBeach.pbrt
+Parsed F:\BA\island\pbrt\isBeach/isBeach_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgGrass/isBeach_xgGrass.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgFibers/isBeach_xgFibers.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgFibers/xgFibers_archiveseedpodb_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgFibers/xgFibers_archivepineneedle0003_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgFibers/xgFibers_archivepineneedle0002_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgFibers/xgFibers_archivepineneedle0001_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgHibiscus/isBeach_xgHibiscus.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgHibiscus/xgHibiscus_archiveHibiscusFlower0006_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgHibiscus/xgHibiscus_archiveHibiscusFlower0007_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgHibiscus/xgHibiscus_archiveHibiscusFlower0002_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgHibiscus/xgHibiscus_archiveHibiscusFlower0003_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgHibiscus/xgHibiscus_archiveHibiscusFlower0004_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgHibiscus/xgHibiscus_archiveHibiscusFlower0005_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgHibiscus/xgHibiscus_archiveHibiscusFlower0008_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgHibiscus/xgHibiscus_archiveHibiscusFlower0009_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgStones/isBeach_xgStones.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgStones/xgStones_archiveRock0001_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgStones/xgStones_archiveRock0004_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgStones/xgStones_archiveRock0006_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgStones/xgStones_archiveRock0005_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgStones/xgStones_archiveRock0007_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgStones/xgStones_archiveRock0003_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgStones/xgStones_archiveRock0002_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgShells/isBeach_xgShells.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgShells/xgShells_archiveShell0003_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgShells/xgShells_archiveShell0001_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgShells/xgShells_archiveShell0007_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgShells/xgShells_archiveShell0006_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgShells/xgShells_archiveShell0004_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgShells/xgShells_archiveShell0002_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgShells/xgShells_archiveShell0005_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgShells/xgShells_archiveShell0008_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgSeaweed/isBeach_xgSeaweed.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgSeaweed/xgSeaweed_archiveSeaweed0063_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgSeaweed/xgSeaweed_archiveSeaweed0064_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgSeaweed/xgSeaweed_archiveSeaweed0001_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgSeaweed/xgSeaweed_archiveSeaweed0065_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgSeaweed/xgSeaweed_archiveSeaweed0003_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgSeaweed/xgSeaweed_archiveSeaweed0002_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgPebbles/isBeach_xgPebbles.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgPebbles/xgPebbles_archiveRock0005_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgPebbles/xgPebbles_archiveCoral0003_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgPebbles/xgPebbles_archiveCoral0004_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgPebbles/xgPebbles_archiveCoral0001_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgPebbles/xgPebbles_archiveRock0002_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgPebbles/xgPebbles_archiveRock0004_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgPebbles/xgPebbles_archiveCoral0009_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgPebbles/xgPebbles_archiveCoral0002_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgPebbles/xgPebbles_archiveRock0007_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgPebbles/xgPebbles_archiveCoral0006_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgPebbles/xgPebbles_archiveCoral0007_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgPebbles/xgPebbles_archiveCoral0008_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgPebbles/xgPebbles_archiveCoral0005_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgPebbles/xgPebbles_archiveRock0001_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgPebbles/xgPebbles_archiveRock0003_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgPebbles/xgPebbles_archiveRock0006_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgShellsSmall/isBeach_xgShellsSmall.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgShellsSmall/xgShellsSmall_archiveShell0004_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgShellsSmall/xgShellsSmall_archiveShell0002_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgShellsSmall/xgShellsSmall_archiveShell0008_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgShellsSmall/xgShellsSmall_archiveShell0001_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgShellsSmall/xgShellsSmall_archiveShell0006_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgShellsSmall/xgShellsSmall_archiveShell0003_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgShellsSmall/xgShellsSmall_archiveShell0005_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgShellsSmall/xgShellsSmall_archiveShell0007_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgPalmDebris/isBeach_xgPalmDebris.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgPalmDebris/xgPalmDebris_archiveLeaflet0127_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgPalmDebris/xgPalmDebris_archiveLeaflet0125_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgPalmDebris/xgPalmDebris_archiveLeaflet0126_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgPalmDebris/xgPalmDebris_archiveLeaflet0123_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgPalmDebris/xgPalmDebris_archiveLeaflet0124_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgGroundCover/isBeach_xgGroundCover.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgGroundCover/xgGroundCover_archiveRock0002_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgGroundCover/xgGroundCover_archiveCoral0004_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgGroundCover/xgGroundCover_archiveShell0004_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgGroundCover/xgGroundCover_archiveRock0006_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgGroundCover/xgGroundCover_archiveCoral0002_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgGroundCover/xgGroundCover_archiveCoral0001_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgGroundCover/xgGroundCover_archiveCoral0007_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgGroundCover/xgGroundCover_archiveShell0001_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgGroundCover/xgGroundCover_archiveShell0003_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgGroundCover/xgGroundCover_archiveCoral0006_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgGroundCover/xgGroundCover_archiveCoral0008_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgGroundCover/xgGroundCover_archiveCoral0009_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgGroundCover/xgGroundCover_archiveShell0007_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgGroundCover/xgGroundCover_archiveCoral0005_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgGroundCover/xgGroundCover_archiveShell0008_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgGroundCover/xgGroundCover_archiveRock0007_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgGroundCover/xgGroundCover_archiveCoral0003_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgGroundCover/xgGroundCover_archiveRock0001_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgGroundCover/xgGroundCover_archiveShell0005_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgGroundCover/xgGroundCover_archiveShell0002_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgGroundCover/xgGroundCover_archiveRock0004_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgGroundCover/xgGroundCover_archiveShell0006_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgGroundCover/xgGroundCover_archiveRock0005_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBeach/xgGroundCover/xgGroundCover_archiveRock0003_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/isDunesA.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/isDunesA_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgPalmDebris/isDunesA_xgPalmDebris.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgPalmDebris/xgPalmDebris_archivePalmdead0004_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgPalmDebris/xgPalmDebris_archiveLeaflet0124_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgPalmDebris/xgPalmDebris_archiveLeaflet0126_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgPalmDebris/xgPalmDebris_archiveLeaflet0123_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgPalmDebris/xgPalmDebris_archiveLeaflet0127_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgPalmDebris/xgPalmDebris_archiveLeaflet0125_geo_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgRoots/isDunesA_xgRoots.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgDebris/isDunesA_xgDebris.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgDebris/xgDebris_archiveseedpodb_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgDebris/xgDebris_archiveseedpoda_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgDebris/xgDebris_archivepineneedle0003_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgDebris/xgDebris_archivepineneedle0002_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgDebris/xgDebris_archivepineneedle0001_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgShootRoots/isDunesA_xgShootRoots.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgHibiscusFlower/isDunesA_xgHibiscusFlower.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgHibiscusFlower/xgHibiscusFlower_archiveHibiscusFlower0009_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgHibiscusFlower/xgHibiscusFlower_archiveHibiscusFlower0005_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgHibiscusFlower/xgHibiscusFlower_archiveHibiscusFlower0008_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgHibiscusFlower/xgHibiscusFlower_archiveHibiscusFlower0004_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgHibiscusFlower/xgHibiscusFlower_archiveHibiscusFlower0007_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgHibiscusFlower/xgHibiscusFlower_archiveHibiscusFlower0006_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgHibiscusFlower/xgHibiscusFlower_archiveHibiscusFlower0003_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgHibiscusFlower/xgHibiscusFlower_archiveHibiscusFlower0002_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgMuskFern/isDunesA_xgMuskFern.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgMuskFern/xgMuskFern_fern0011_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgMuskFern/xgMuskFern_fern0002_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgMuskFern/xgMuskFern_fern0001_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgMuskFern/xgMuskFern_fern0004_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgMuskFern/xgMuskFern_fern0005_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgMuskFern/xgMuskFern_fern0010_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgMuskFern/xgMuskFern_fern0006_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgMuskFern/xgMuskFern_fern0008_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgMuskFern/xgMuskFern_fern0009_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgMuskFern/xgMuskFern_fern0007_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgMuskFern/xgMuskFern_fern0003_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgMuskFern/xgMuskFern_fern0013_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgMuskFern/xgMuskFern_fern0012_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isDunesA/xgMuskFern/xgMuskFern_fern0014_mod_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPandanusA/isPandanusA.pbrt
+Parsed F:\BA\island\pbrt\isPandanusA/isPandanusA_geometry.pbrt
+Parsed F:\BA\island\pbrt\isPandanusA/xgLeavesH/isPandanusA_xgLeavesH.pbrt
+Parsed F:\BA\island\pbrt\isPandanusA/xgLeavesI/isPandanusA_xgLeavesI.pbrt
+Parsed F:\BA\island\pbrt\isPandanusA/xgLeavesLower/isPandanusA_xgLeavesLower.pbrt
+Parsed F:\BA\island\pbrt\isPandanusA/xgLeavesA/isPandanusA_xgLeavesA.pbrt
+Parsed F:\BA\island\pbrt\isPandanusA/xgLeavesB/isPandanusA_xgLeavesB.pbrt
+Parsed F:\BA\island\pbrt\isPandanusA/xgLeavesC/isPandanusA_xgLeavesC.pbrt
+Parsed F:\BA\island\pbrt\isPandanusA/xgLeavesD/isPandanusA_xgLeavesD.pbrt
+Parsed F:\BA\island\pbrt\isPandanusA/xgLeavesE/isPandanusA_xgLeavesE.pbrt
+Parsed F:\BA\island\pbrt\isPandanusA/xgLeavesF/isPandanusA_xgLeavesF.pbrt
+Parsed F:\BA\island\pbrt\isPandanusA/xgLeavesG/isPandanusA_xgLeavesG.pbrt
+Parsed F:\BA\island\pbrt\osOcean/osOcean.pbrt
+Parsed F:\BA\island\pbrt\osOcean/materials.pbrt
+Parsed F:\BA\island\pbrt\osOcean/osOcean_geometry.pbrt
+Parsed F:\BA\island\pbrt\isBayCedarA1/isBayCedarA1.pbrt
+Parsed F:\BA\island\pbrt\isBayCedarA1/isBayCedarA1_geometry.pbrt
+Parsed F:\BA\island\pbrt\isKava/isKava.pbrt
+Parsed F:\BA\island\pbrt\isKava/isKava_geometry.pbrt
+Parsed F:\BA\island\pbrt\isKava/xgBonsai/isKava_xgBonsai.pbrt
+Parsed F:\BA\island\pbrt\isKava/xgBonsai/archive_kava0001_mod_geometry.pbrt
+Setting Parents and indices
+isMountainA_mountainLo used for 134012 vertices
+isMountainA_leavesOnHillside used for 801792 vertices
+isMountainA_trunk used for 3120960 vertices
+isMountainA_fronds used for 124800 vertices
+isMountainA_branches used for 848640 vertices
+isMountainA_breadFruit used for 8433220 vertices
+isPalmRig_trunk used for 6866112 vertices
+isPalmRig_branches used for 1867008 vertices
+isHibiscus_branches used for 496716 vertices
+isHibiscus_trunk used for 14796 vertices
+isHibiscus_leafHibiscus used for 720 vertices
+isHibiscus_flowerHibiscus used for 7776 vertices
+isMountainB_mountainLo used for 288040 vertices
+isMountainB_leavesOnHillside used for 3207168 vertices
+isMountainB_breadFruit used for 8433220 vertices
+isMountainB_trunk used for 2457504 vertices
+isMountainB_fronds used for 99840 vertices
+isMountainB_branches used for 678912 vertices
+isMountainB_trunkDetailed used for 39264 vertices
+isMountainB_ferns used for 94192 vertices
+isDunesB_soilSimple used for 77284 vertices
+isIronwoodA_barkSimple used for 7239432 vertices
+isIronwoodA_leaves used for 9017936 vertices
+isDunesB_isIronwoodA_archive_bark used for 1946104 vertices
+isBayCedarA1_barkSimple used for 14723076 vertices
+isBayCedarA1_bark used for 63000 vertices
+isBayCedarA1_leaves used for 1728 vertices
+isDunesB_xgRoots used for 13936 vertices
+isPandanus_trunk used for 333272 vertices
+isPandanus_leavesLower used for 31600 vertices
+isPandanus_leavesSimple used for 228600 vertices
+isGardeniaA_barkSimple used for 489940 vertices
+isGardeniaA_bark used for 24688 vertices
+isGardeniaA_leaves used for 8256 vertices
+isGardeniaA_instances used for 1032 vertices
+isPalmDead_roots used for 612800 vertices
+isPalmDead_trunk used for 623352 vertices
+isLavaRocks_volcanicRock used for 197540 vertices
+isHibiscusYoung_branches used for 17608 vertices
+isHibiscusYoung_leafHibiscus used for 720 vertices
+isHibiscusYoung_flowerHibiscus used for 7776 vertices
+isNaupakaA_hidden used for 30720 vertices
+isNaupakaA_leaves used for 2720 vertices
+isNaupakaA_stem used for 232 vertices
+isCoral_coral used for 34737296 vertices
+isCoral_xgCabbage used for 9104 vertices
+isCoral_xgFlutes used for 212 vertices
+isCoral_xgAntler used for 4456 vertices
+isCoral_xgStaghorn used for 4408 vertices
+isCoastline_sandSimple used for 230800 vertices
+isCoastline_archiveLeaflet used for 2080 vertices
+isCoastline_archiveFibers used for 1856 vertices
+isBeach_sand used for 223344 vertices
+isBeach_archiveFibers used for 1856 vertices
+isBeach_archiveFlowerHibiscus used for 124416 vertices
+isBeach_archiveVolcanicRock used for 2400 vertices
+isBeach_archiveShells used for 15648 vertices
+isBeach_archiveSeaweed used for 248928 vertices
+isBeach_archivePebbles used for 2400 vertices
+isBeach_archiveCoralPebbles used for 15168 vertices
+isBeach_archiveLeaflet used for 2080 vertices
+isBeach_archiveGroundCoverThin used for 10224 vertices
+isDunesA_underDunes used for 11432 vertices
+isDunesA_shoots used for 396176 vertices
+isDunesA_soil used for 18548 vertices
+isDunesA_archivePalm used for 5504 vertices
+isDunesA_archiveMuskFern used for 198640 vertices
+isDunesA_archiveLeaflet used for 2080 vertices
+isDunesA_xgDebris used for 21552 vertices
+isDunesA_archiveHibiscusFlower used for 124416 vertices
+isPandanusA_trunk used for 31928 vertices
+osOcean_water used for 7813121 vertices
+isKava_barkSimple used for 209664 vertices
+isKava_bark used for 35168 vertices
+isKava_leaves used for 184 vertices
+Reducing height
+Adjusting Scene Graph
+Merge instance Lists
+Merging instance Lists
+Writing Levels
+Number of Triangles: 31325579100
+Removing empty children
+inserting dummys
+added 9 dummies to the scenegraph
+computing AABBs
+Rebuilding the buffer from the root
+Removed 0 unused Nodes
+TLAS    I:0     P:0     C:1     T:0     L:0 ROOT-Reduced height InstanceList: 31054727
+BLAS    I:31054729      P:1     C:0     T:67006       L:3 Geom isMountainA_geometry
+BLAS    I:31054730      P:935   C:0     T:400896              L:3 Geom xgFoliageC_treeMadronaBaked_canopyOnly_lo_geometry
+BLAS    I:31054731      P:8     C:0     T:136480              L:3 Geom xgCocoPalms_isPalmRig5_geometry
+BLAS    I:31054732      P:7     C:0     T:136480              L:3 Geom xgCocoPalms_isPalmRig6_geometry
+BLAS    I:31054733      P:10    C:0     T:136480              L:3 Geom xgCocoPalms_isPalmRig13_geometry
+BLAS    I:31054734      P:9     C:0     T:136480              L:3 Geom xgCocoPalms_isPalmRig14_geometry
+BLAS    I:31054735      P:9     C:0     T:136480              L:3 Geom xgCocoPalms_isPalmRig3_geometry
+BLAS    I:31054736      P:8     C:0     T:136480              L:3 Geom xgCocoPalms_isPalmRig1_geometry
+BLAS    I:31054737      P:6     C:0     T:136480              L:3 Geom xgCocoPalms_isPalmRig16_geometry
+BLAS    I:31054738      P:5     C:0     T:136480              L:3 Geom xgCocoPalms_isPalmRig15_geometry
+BLAS    I:31054739      P:10    C:0     T:136480              L:3 Geom xgCocoPalms_isPalmRig4_geometry
+BLAS    I:31054740      P:9     C:0     T:136480              L:3 Geom xgCocoPalms_isPalmRig_geometry
+BLAS    I:31054741      P:6     C:0     T:136480              L:3 Geom xgCocoPalms_isPalmRig12_geometry
+BLAS    I:31054742      P:8     C:0     T:136480              L:3 Geom xgCocoPalms_isPalmRig8_geometry
+BLAS    I:31054743      P:2     C:0     T:136480              L:3 Geom xgCocoPalms_isPalmRig2_geometry
+BLAS    I:31054744      P:3     C:0     T:136480              L:3 Geom xgCocoPalms_isPalmRig7_geometry
+BLAS    I:31054745      P:7     C:0     T:136480              L:3 Geom xgCocoPalms_isPalmRig17_geometry
+BLAS    I:31054746      P:2     C:0     T:4216610             L:3 Geom xgBreadFruit_archiveBreadFruitBaked_geometry
+BLAS    I:31054747      P:1     C:0     T:132320              L:3 Geom isPalmRig_geometry
+BLAS    I:31054748      P:1     C:0     T:132320              L:3 Geom isPalmRig18_geometry
+BLAS    I:31054749      P:1     C:0     T:132320              L:3 Geom isPalmRig19_geometry
+BLAS    I:31054750      P:1     C:0     T:132320              L:3 Geom isPalmRig16_geometry
+BLAS    I:31054751      P:1     C:0     T:132320              L:3 Geom isPalmRig17_geometry
+BLAS    I:31054752      P:1     C:0     T:132320              L:3 Geom isPalmRig14_geometry
+BLAS    I:31054753      P:1     C:0     T:132320              L:3 Geom isPalmRig15_geometry
+BLAS    I:31054754      P:1     C:0     T:132320              L:3 Geom isPalmRig12_geometry
+BLAS    I:31054755      P:1     C:0     T:132320              L:3 Geom isPalmRig13_geometry
+BLAS    I:31054756      P:1     C:0     T:132320              L:3 Geom isPalmRig10_geometry
+BLAS    I:31054757      P:1     C:0     T:132320              L:3 Geom isPalmRig11_geometry
+BLAS    I:31054758      P:1     C:0     T:132320              L:3 Geom isPalmRig30_geometry
+BLAS    I:31054759      P:1     C:0     T:132320              L:3 Geom isPalmRig31_geometry
+BLAS    I:31054760      P:1     C:0     T:132320              L:3 Geom isPalmRig32_geometry
+BLAS    I:31054761      P:1     C:0     T:132320              L:3 Geom isPalmRig33_geometry
+BLAS    I:31054762      P:1     C:0     T:132320              L:3 Geom isPalmRig8_geometry
+BLAS    I:31054763      P:1     C:0     T:132320              L:3 Geom isPalmRig9_geometry
+BLAS    I:31054764      P:1     C:0     T:132320              L:3 Geom isPalmRig4_geometry
+BLAS    I:31054765      P:1     C:0     T:132320              L:3 Geom isPalmRig5_geometry
+BLAS    I:31054766      P:1     C:0     T:132320              L:3 Geom isPalmRig6_geometry
+BLAS    I:31054767      P:1     C:0     T:132320              L:3 Geom isPalmRig7_geometry
+BLAS    I:31054768      P:1     C:0     T:132320              L:3 Geom isPalmRig2_geometry
+BLAS    I:31054769      P:1     C:0     T:132320              L:3 Geom isPalmRig3_geometry
+BLAS    I:31054770      P:1     C:0     T:132320              L:3 Geom isPalmRig27_geometry
+BLAS    I:31054771      P:1     C:0     T:132320              L:3 Geom isPalmRig26_geometry
+BLAS    I:31054772      P:1     C:0     T:132320              L:3 Geom isPalmRig25_geometry
+BLAS    I:31054773      P:1     C:0     T:132320              L:3 Geom isPalmRig24_geometry
+BLAS    I:31054774      P:1     C:0     T:132320              L:3 Geom isPalmRig23_geometry
+BLAS    I:31054775      P:1     C:0     T:132320              L:3 Geom isPalmRig22_geometry
+BLAS    I:31054776      P:1     C:0     T:132320              L:3 Geom isPalmRig21_geometry
+BLAS    I:31054777      P:1     C:0     T:132320              L:3 Geom isPalmRig20_geometry
+BLAS    I:31054778      P:1     C:0     T:132320              L:3 Geom isPalmRig29_geometry
+BLAS    I:31054779      P:1     C:0     T:132320              L:3 Geom isPalmRig28_geometry
+BLAS    I:31054780      P:5     C:0     T:255756              L:3 Geom isHibiscus_geometry
+BLAS    I:31054781      P:21845 C:0     T:120         L:3 Geom archiveHibiscusLeaf0001_mod_geometry
+BLAS    I:31054782      P:2910  C:0     T:3888        L:3 Geom archiveHibiscusFlower0001_mod_geometry
+BLAS    I:31054783      P:23420 C:0     T:120         L:3 Geom archiveHibiscusLeaf0003_mod_geometry
+BLAS    I:31054784      P:22385 C:0     T:120         L:3 Geom archiveHibiscusLeaf0002_mod_geometry
+BLAS    I:31054785      P:1     C:0     T:144020              L:3 Geom isMountainB_geometry
+BLAS    I:31054786      P:1625  C:0     T:400896              L:3 Geom xgFoliageB_treeMadronaBaked_canopyOnly_lo_geometry
+BLAS    I:31054787      P:740   C:0     T:400896              L:3 Geom xgFoliageC_treeMadronaBaked_canopyOnly_lo_geometry
+BLAS    I:31054788      P:6184  C:0     T:400896              L:3 Geom xgFoliageA_treeMadronaBaked_canopyOnly_lo_geometry
+BLAS    I:31054789      P:11287 C:0     T:400896              L:3 Geom xgFoliageAd_treeMadronaBaked_canopyOnly_lo_geometry
+BLAS    I:31054790      P:72    C:0     T:4216610             L:3 Geom xgBreadFruit_archiveBreadFruitBaked_geometry
+BLAS    I:31054791      P:42    C:0     T:136480              L:3 Geom xgCocoPalms_isPalmRig3_geometry
+BLAS    I:31054792      P:41    C:0     T:136480              L:3 Geom xgCocoPalms_isPalmRig14_geometry
+BLAS    I:31054793      P:37    C:0     T:136480              L:3 Geom xgCocoPalms_isPalmRig17_geometry
+BLAS    I:31054794      P:36    C:0     T:136480              L:3 Geom xgCocoPalms_isPalmRig8_geometry
+BLAS    I:31054795      P:47    C:0     T:136480              L:3 Geom xgCocoPalms_isPalmRig12_geometry
+BLAS    I:31054796      P:39    C:0     T:136480              L:3 Geom xgCocoPalms_isPalmRig_geometry
+BLAS    I:31054797      P:43    C:0     T:136480              L:3 Geom xgCocoPalms_isPalmRig2_geometry
+BLAS    I:31054798      P:43    C:0     T:136480              L:3 Geom xgCocoPalms_isPalmRig1_geometry
+BLAS    I:31054799      P:49    C:0     T:136480              L:3 Geom xgCocoPalms_isPalmRig16_geometry
+BLAS    I:31054800      P:50    C:0     T:136480              L:3 Geom xgCocoPalms_isPalmRig15_geometry
+BLAS    I:31054801      P:42    C:0     T:136480              L:3 Geom xgCocoPalms_isPalmRig6_geometry
+BLAS    I:31054802      P:46    C:0     T:136480              L:3 Geom xgCocoPalms_isPalmRig13_geometry
+BLAS    I:31054803      P:79547 C:0     T:3364        L:3 Geom xgFern_fern0011_mod_geometry
+BLAS    I:31054804      P:78600 C:0     T:3364        L:3 Geom xgFern_fern0013_mod_geometry
+BLAS    I:31054805      P:80322 C:0     T:3364        L:3 Geom xgFern_fern0005_mod_geometry
+BLAS    I:31054806      P:79322 C:0     T:3364        L:3 Geom xgFern_fern0007_mod_geometry
+BLAS    I:31054807      P:79412 C:0     T:3364        L:3 Geom xgFern_fern0010_mod_geometry
+BLAS    I:31054808      P:79356 C:0     T:3364        L:3 Geom xgFern_fern0004_mod_geometry
+BLAS    I:31054809      P:79756 C:0     T:3364        L:3 Geom xgFern_fern0001_mod_geometry
+BLAS    I:31054810      P:79156 C:0     T:3364        L:3 Geom xgFern_fern0006_mod_geometry
+BLAS    I:31054811      P:79415 C:0     T:3364        L:3 Geom xgFern_fern0012_mod_geometry
+BLAS    I:31054812      P:80264 C:0     T:3364        L:3 Geom xgFern_fern0014_mod_geometry
+BLAS    I:31054813      P:79702 C:0     T:3364        L:3 Geom xgFern_fern0008_mod_geometry
+BLAS    I:31054814      P:79212 C:0     T:3364        L:3 Geom xgFern_fern0009_mod_geometry
+BLAS    I:31054815      P:79661 C:0     T:3364        L:3 Geom xgFern_fern0002_mod_geometry
+BLAS    I:31054816      P:80353 C:0     T:3364        L:3 Geom xgFern_fern0003_mod_geometry
+BLAS    I:31054817      P:1     C:0     T:38642       L:3 Geom isDunesB_geometry
+BLAS    I:31054818      P:20    C:0     T:2813250             L:3 Geom isIronwoodA1_variantB_lo_geometry
+BLAS    I:31054819      P:21    C:0     T:3387506             L:3 Geom isIronwoodA1_variantA_lo_geometry
+BLAS    I:31054820      P:156   C:0     T:1955190             L:3 Geom isBayCedarA1_geometry
+BLAS    I:31054821      P:156   C:1     T:0           L:3 DummyBLAS
+TLAS    I:31054822      P:1     C:1     T:0             L:4 isBayCedarA1_xgBonsai InstanceList: 8732
+BLAS    I:31063556      P:126395        C:0     T:864                 L:7 Geom archivebaycedar0001_mod_geometry
+BLAS    I:31063557      P:165   C:0     T:2103720             L:3 Geom isBayCedarA1_bonsaiA_geometry
+BLAS    I:31063558      P:165   C:1     T:0           L:3 DummyBLAS
+TLAS    I:31063559      P:1     C:1     T:0             L:4 isBayCedarA1_bonsaiA_xgBonsai InstanceList: 13025
+BLAS    I:31076586      P:178   C:0     T:628028              L:3 Geom isBayCedarA1_bonsaiC_geometry
+BLAS    I:31076587      P:178   C:1     T:0           L:3 DummyBLAS
+TLAS    I:31076588      P:1     C:1     T:0             L:4 isBayCedarA1_bonsaiC_xgBonsai InstanceList: 13025
+BLAS    I:31089615      P:180   C:0     T:750910              L:3 Geom isBayCedarA1_bonsaiB_geometry
+BLAS    I:31089616      P:180   C:1     T:0           L:3 DummyBLAS
+TLAS    I:31089617      P:1     C:1     T:0             L:4 isBayCedarA1_bonsaiB_xgBonsai InstanceList: 13025
+BLAS    I:31102644      P:172   C:0     T:568         L:3 Geom xgRoots_archiveroot0001_geo_geometry
+BLAS    I:31102645      P:177   C:0     T:400         L:3 Geom xgRoots_archiveroot0012_geo_geometry
+BLAS    I:31102646      P:167   C:0     T:520         L:3 Geom xgRoots_archiveroot0003_geo_geometry
+BLAS    I:31102647      P:157   C:0     T:352         L:3 Geom xgRoots_archiveroot0014_geo_geometry
+BLAS    I:31102648      P:131   C:0     T:568         L:3 Geom xgRoots_archiveroot0007_geo_geometry
+BLAS    I:31102649      P:174   C:0     T:448         L:3 Geom xgRoots_archiveroot0009_geo_geometry
+BLAS    I:31102650      P:158   C:0     T:592         L:3 Geom xgRoots_archiveroot0004_geo_geometry
+BLAS    I:31102651      P:172   C:0     T:328         L:3 Geom xgRoots_archiveroot0011_geo_geometry
+BLAS    I:31102652      P:156   C:0     T:592         L:3 Geom xgRoots_archiveroot0006_geo_geometry
+BLAS    I:31102653      P:152   C:0     T:496         L:3 Geom xgRoots_archiveroot0010_geo_geometry
+BLAS    I:31102654      P:162   C:0     T:568         L:3 Geom xgRoots_archiveroot0005_geo_geometry
+BLAS    I:31102655      P:146   C:0     T:424         L:3 Geom xgRoots_archiveroot0013_geo_geometry
+BLAS    I:31102656      P:147   C:0     T:544         L:3 Geom xgRoots_archiveroot0002_geo_geometry
+BLAS    I:31102657      P:153   C:0     T:568         L:3 Geom xgRoots_archiveroot0008_geo_geometry
+BLAS    I:31102658      P:3     C:0     T:3387506             L:3 Geom isIronwoodA1_variantA_lo_geometry
+BLAS    I:31102659      P:192   C:0     T:296736              L:3 Geom xgPandanus_isPandanusAlo_base_geometry
+BLAS    I:31102660      P:14    C:0     T:257314              L:3 Geom isGardeniaA_geometry
+BLAS    I:31102661      P:5096  C:0     T:540         L:3 Geom archivegardenia0008_mod_geometry
+BLAS    I:31102662      P:5740  C:0     T:540         L:3 Geom archivegardenia0006_mod_geometry
+BLAS    I:31102663      P:5152  C:0     T:540         L:3 Geom archivegardenia0007_mod_geometry
+BLAS    I:31102664      P:4788  C:0     T:476         L:3 Geom archivegardenia0002_mod_geometry
+BLAS    I:31102665      P:4620  C:0     T:476         L:3 Geom archivegardenia0003_mod_geometry
+BLAS    I:31102666      P:5488  C:0     T:540         L:3 Geom archivegardenia0005_mod_geometry
+BLAS    I:31102667      P:1372  C:0     T:144         L:3 Geom archivegardeniaflw0001_mod_geometry
+BLAS    I:31102668      P:4900  C:0     T:476         L:3 Geom archivegardenia0001_mod_geometry
+BLAS    I:31102669      P:5516  C:0     T:540         L:3 Geom archivegardenia0004_mod_geometry
+BLAS    I:31102670      P:4620  C:0     T:540         L:3 Geom archivegardenia0009_mod_geometry
+BLAS    I:31102671      P:1540  C:0     T:168         L:3 Geom archivegardeniaflw0002_mod_geometry
+BLAS    I:31102672      P:1512  C:0     T:204         L:3 Geom archivegardeniaflw0003_mod_geometry
+BLAS    I:31102673      P:1     C:0     T:618076              L:3 Geom isPalmDead_geometry
+BLAS    I:31102674      P:1     C:0     T:41138       L:3 Geom isLavaRocks_geometry
+BLAS    I:31102675      P:1     C:0     T:57632       L:3 Geom isLavaRocks1_geometry
+BLAS    I:31102676      P:6     C:0     T:8804        L:3 Geom isHibiscusYoung_geometry
+BLAS    I:31102677      P:9942  C:0     T:120         L:3 Geom archiveHibiscusLeaf0003_mod_geometry
+BLAS    I:31102678      P:9192  C:0     T:120         L:3 Geom archiveHibiscusLeaf0002_mod_geometry
+BLAS    I:31102679      P:9126  C:0     T:120         L:3 Geom archiveHibiscusLeaf0001_mod_geometry
+BLAS    I:31102680      P:954   C:0     T:3888        L:3 Geom archiveHibiscusFlower0001_mod_geometry
+BLAS    I:31102681      P:1     C:0     T:3840        L:3 Geom isNaupakaA_geometry
+BLAS    I:31102682      P:2884  C:0     T:1476        L:3 Geom xgBonsai_isNaupakaBon_bon_hero_ALL_geometry
+BLAS    I:31102683      P:1     C:0     T:3840        L:3 Geom isNaupakaA1_geometry
+BLAS    I:31102684      P:1     C:0     T:3840        L:3 Geom isNaupakaA3_geometry
+BLAS    I:31102685      P:1     C:0     T:3840        L:3 Geom isNaupakaA2_geometry
+BLAS    I:31102686      P:1     C:0     T:2894788             L:3 Geom isCoral_geometry
+BLAS    I:31102687      P:14817 C:0     T:388         L:3 Geom xgCabbage_archivecoral_cabbage0008_geo_geometry
+BLAS    I:31102688      P:14768 C:0     T:416         L:3 Geom xgCabbage_archivecoral_cabbage0009_geo_geometry
+BLAS    I:31102689      P:15155 C:0     T:416         L:3 Geom xgCabbage_archivecoral_cabbage0007_geo_geometry
+BLAS    I:31102690      P:14927 C:0     T:388         L:3 Geom xgCabbage_archivecoral_cabbage0005_geo_geometry
+BLAS    I:31102691      P:14887 C:0     T:696         L:3 Geom xgCabbage_archivecoral_cabbage0003_geo_geometry
+BLAS    I:31102692      P:15592 C:0     T:696         L:3 Geom xgCabbage_archivecoral_cabbage0001_geo_geometry
+BLAS    I:31102693      P:14749 C:0     T:496         L:3 Geom xgCabbage_archivecoral_cabbage0006_geo_geometry
+BLAS    I:31102694      P:15170 C:0     T:496         L:3 Geom xgCabbage_archivecoral_cabbage0004_geo_geometry
+BLAS    I:31102695      P:14588 C:0     T:560         L:3 Geom xgCabbage_archivecoral_cabbage0002_geo_geometry
+BLAS    I:31102696      P:3343855       C:0     T:106         L:3 Geom xgFlutes_flutes_geometry
+BLAS    I:31102697      P:2201  C:0     T:160         L:3 Geom xgAntlers_archivecoral_antler0002_geo_geometry
+BLAS    I:31102698      P:2051  C:0     T:296         L:3 Geom xgAntlers_archivecoral_antler0007_geo_geometry
+BLAS    I:31102699      P:1966  C:0     T:196         L:3 Geom xgAntlers_archivecoral_antler0005_geo_geometry
+BLAS    I:31102700      P:2163  C:0     T:160         L:3 Geom xgAntlers_archivecoral_antler0003_geo_geometry
+BLAS    I:31102701      P:2091  C:0     T:452         L:3 Geom xgAntlers_archivecoral_antler0009_geo_geometry
+BLAS    I:31102702      P:2203  C:0     T:296         L:3 Geom xgAntlers_archivecoral_antler0008_geo_geometry
+BLAS    I:31102703      P:2053  C:0     T:312         L:3 Geom xgAntlers_archivecoral_antler0006_geo_geometry
+BLAS    I:31102704      P:2116  C:0     T:196         L:3 Geom xgAntlers_archivecoral_antler0004_geo_geometry
+BLAS    I:31102705      P:1986  C:0     T:160         L:3 Geom xgAntlers_archivecoral_antler0001_geo_geometry
+BLAS    I:31102706      P:509   C:0     T:188         L:3 Geom xgStaghorn_archivecoral_staghorn0008_geo_geometry
+BLAS    I:31102707      P:532   C:0     T:228         L:3 Geom xgStaghorn_archivecoral_staghorn0006_geo_geometry
+BLAS    I:31102708      P:376   C:0     T:284         L:3 Geom xgStaghorn_archivecoral_staghorn0002_geo_geometry
+BLAS    I:31102709      P:401   C:0     T:296         L:3 Geom xgStaghorn_archivecoral_staghorn0010_geo_geometry
+BLAS    I:31102710      P:470   C:0     T:196         L:3 Geom xgStaghorn_archivecoral_staghorn0009_geo_geometry
+BLAS    I:31102711      P:508   C:0     T:228         L:3 Geom xgStaghorn_archivecoral_staghorn0005_geo_geometry
+BLAS    I:31102712      P:472   C:0     T:196         L:3 Geom xgStaghorn_archivecoral_staghorn0007_geo_geometry
+BLAS    I:31102713      P:475   C:0     T:252         L:3 Geom xgStaghorn_archivecoral_staghorn0004_geo_geometry
+BLAS    I:31102714      P:395   C:0     T:140         L:3 Geom xgStaghorn_archivecoral_staghorn0001_geo_geometry
+BLAS    I:31102715      P:467   C:0     T:196         L:3 Geom xgStaghorn_archivecoral_staghorn0003_geo_geometry
+BLAS    I:31102716      P:1     C:0     T:2894788             L:3 Geom isCoral5_geometry
+BLAS    I:31102717      P:1     C:0     T:2894788             L:3 Geom isCoral4_geometry
+BLAS    I:31102718      P:1     C:0     T:2894788             L:3 Geom isCoral1_geometry
+BLAS    I:31102719      P:1     C:0     T:2894788             L:3 Geom isCoral3_geometry
+BLAS    I:31102720      P:1     C:0     T:2894788             L:3 Geom isCoral2_geometry
+BLAS    I:31102721      P:1     C:0     T:115400              L:3 Geom isCoastline_geometry
+BLAS    I:31102722      P:450507        C:0     T:208         L:3 Geom xgPalmDebris_archiveLeaflet0125_geo_geometry
+BLAS    I:31102723      P:449914        C:0     T:208         L:3 Geom xgPalmDebris_archiveLeaflet0127_geo_geometry
+BLAS    I:31102724      P:449809        C:0     T:192         L:3 Geom xgPalmDebris_archiveLeaflet0124_geo_geometry
+BLAS    I:31102725      P:451282        C:0     T:224         L:3 Geom xgPalmDebris_archiveLeaflet0123_geo_geometry
+BLAS    I:31102726      P:448930        C:0     T:208         L:3 Geom xgPalmDebris_archiveLeaflet0126_geo_geometry
+BLAS    I:31102727      P:73268 C:0     T:136         L:3 Geom xgFibers_archiveseedpodb_mod_geometry
+BLAS    I:31102728      P:73269 C:0     T:264         L:3 Geom xgFibers_archivepineneedle0002_mod_geometry
+BLAS    I:31102729      P:73211 C:0     T:264         L:3 Geom xgFibers_archivepineneedle0003_mod_geometry
+BLAS    I:31102730      P:72799 C:0     T:264         L:3 Geom xgFibers_archivepineneedle0001_mod_geometry
+BLAS    I:31102731      P:1     C:0     T:111672              L:3 Geom isBeach_geometry
+BLAS    I:31102732      P:113364        C:0     T:136         L:3 Geom xgFibers_archiveseedpodb_mod_geometry
+BLAS    I:31102733      P:112903        C:0     T:264         L:3 Geom xgFibers_archivepineneedle0003_mod_geometry
+BLAS    I:31102734      P:113129        C:0     T:264         L:3 Geom xgFibers_archivepineneedle0002_mod_geometry
+BLAS    I:31102735      P:113266        C:0     T:264         L:3 Geom xgFibers_archivepineneedle0001_mod_geometry
+BLAS    I:31102736      P:44    C:0     T:7776        L:3 Geom xgHibiscus_archiveHibiscusFlower0006_mod_geometry
+BLAS    I:31102737      P:40    C:0     T:7776        L:3 Geom xgHibiscus_archiveHibiscusFlower0007_mod_geometry
+BLAS    I:31102738      P:43    C:0     T:7776        L:3 Geom xgHibiscus_archiveHibiscusFlower0002_mod_geometry
+BLAS    I:31102739      P:41    C:0     T:7776        L:3 Geom xgHibiscus_archiveHibiscusFlower0003_mod_geometry
+BLAS    I:31102740      P:37    C:0     T:7776        L:3 Geom xgHibiscus_archiveHibiscusFlower0004_mod_geometry
+BLAS    I:31102741      P:37    C:0     T:7776        L:3 Geom xgHibiscus_archiveHibiscusFlower0005_mod_geometry
+BLAS    I:31102742      P:36    C:0     T:7776        L:3 Geom xgHibiscus_archiveHibiscusFlower0008_mod_geometry
+BLAS    I:31102743      P:37    C:0     T:7776        L:3 Geom xgHibiscus_archiveHibiscusFlower0009_mod_geometry
+BLAS    I:31102744      P:6     C:0     T:320         L:3 Geom xgStones_archiveRock0001_geo_geometry
+BLAS    I:31102745      P:7     C:0     T:72          L:3 Geom xgStones_archiveRock0004_geo_geometry
+BLAS    I:31102746      P:9     C:0     T:192         L:3 Geom xgStones_archiveRock0006_geo_geometry
+BLAS    I:31102747      P:6     C:0     T:160         L:3 Geom xgStones_archiveRock0005_geo_geometry
+BLAS    I:31102748      P:5     C:0     T:104         L:3 Geom xgStones_archiveRock0007_geo_geometry
+BLAS    I:31102749      P:9     C:0     T:208         L:3 Geom xgStones_archiveRock0003_geo_geometry
+BLAS    I:31102750      P:7     C:0     T:144         L:3 Geom xgStones_archiveRock0002_geo_geometry
+BLAS    I:31102751      P:8772  C:0     T:416         L:3 Geom xgShells_archiveShell0003_geo_geometry
+BLAS    I:31102752      P:8861  C:0     T:416         L:3 Geom xgShells_archiveShell0001_geo_geometry
+BLAS    I:31102753      P:9001  C:0     T:208         L:3 Geom xgShells_archiveShell0007_geo_geometry
+BLAS    I:31102754      P:8875  C:0     T:288         L:3 Geom xgShells_archiveShell0006_geo_geometry
+BLAS    I:31102755      P:8933  C:0     T:416         L:3 Geom xgShells_archiveShell0004_geo_geometry
+BLAS    I:31102756      P:9082  C:0     T:416         L:3 Geom xgShells_archiveShell0002_geo_geometry
+BLAS    I:31102757      P:8624  C:0     T:336         L:3 Geom xgShells_archiveShell0005_geo_geometry
+BLAS    I:31102758      P:8824  C:0     T:1416        L:3 Geom xgShells_archiveShell0008_geo_geometry
+BLAS    I:31102759      P:3643  C:0     T:1936        L:3 Geom xgSeaweed_archiveSeaweed0063_geo_geometry
+BLAS    I:31102760      P:3571  C:0     T:1936        L:3 Geom xgSeaweed_archiveSeaweed0064_geo_geometry
+BLAS    I:31102761      P:3658  C:0     T:61888       L:3 Geom xgSeaweed_archiveSeaweed0001_mod_geometry
+BLAS    I:31102762      P:3491  C:0     T:1936        L:3 Geom xgSeaweed_archiveSeaweed0065_geo_geometry
+BLAS    I:31102763      P:3489  C:0     T:18528       L:3 Geom xgSeaweed_archiveSeaweed0003_mod_geometry
+BLAS    I:31102764      P:3639  C:0     T:38240       L:3 Geom xgSeaweed_archiveSeaweed0002_mod_geometry
+BLAS    I:31102765      P:50044 C:0     T:160         L:3 Geom xgPebbles_archiveRock0005_geo_geometry
+BLAS    I:31102766      P:48416 C:0     T:160         L:3 Geom xgPebbles_archiveCoral0003_geo_geometry
+BLAS    I:31102767      P:48965 C:0     T:880         L:3 Geom xgPebbles_archiveCoral0004_geo_geometry
+BLAS    I:31102768      P:49379 C:0     T:720         L:3 Geom xgPebbles_archiveCoral0001_geo_geometry
+BLAS    I:31102769      P:49302 C:0     T:144         L:3 Geom xgPebbles_archiveRock0002_geo_geometry
+BLAS    I:31102770      P:49724 C:0     T:72          L:3 Geom xgPebbles_archiveRock0004_geo_geometry
+BLAS    I:31102771      P:49590 C:0     T:368         L:3 Geom xgPebbles_archiveCoral0009_geo_geometry
+BLAS    I:31102772      P:49315 C:0     T:160         L:3 Geom xgPebbles_archiveCoral0002_geo_geometry
+BLAS    I:31102773      P:49350 C:0     T:104         L:3 Geom xgPebbles_archiveRock0007_geo_geometry
+BLAS    I:31102774      P:49122 C:0     T:192         L:3 Geom xgPebbles_archiveCoral0006_geo_geometry
+BLAS    I:31102775      P:49102 C:0     T:368         L:3 Geom xgPebbles_archiveCoral0007_geo_geometry
+BLAS    I:31102776      P:49059 C:0     T:224         L:3 Geom xgPebbles_archiveCoral0008_geo_geometry
+BLAS    I:31102777      P:49069 C:0     T:720         L:3 Geom xgPebbles_archiveCoral0005_geo_geometry
+BLAS    I:31102778      P:49414 C:0     T:320         L:3 Geom xgPebbles_archiveRock0001_geo_geometry
+BLAS    I:31102779      P:49331 C:0     T:208         L:3 Geom xgPebbles_archiveRock0003_geo_geometry
+BLAS    I:31102780      P:48916 C:0     T:192         L:3 Geom xgPebbles_archiveRock0006_geo_geometry
+BLAS    I:31102781      P:43570 C:0     T:416         L:3 Geom xgShellsSmall_archiveShell0004_geo_geometry
+BLAS    I:31102782      P:43897 C:0     T:416         L:3 Geom xgShellsSmall_archiveShell0002_geo_geometry
+BLAS    I:31102783      P:43592 C:0     T:1416        L:3 Geom xgShellsSmall_archiveShell0008_geo_geometry
+BLAS    I:31102784      P:43648 C:0     T:416         L:3 Geom xgShellsSmall_archiveShell0001_geo_geometry
+BLAS    I:31102785      P:43215 C:0     T:288         L:3 Geom xgShellsSmall_archiveShell0006_geo_geometry
+BLAS    I:31102786      P:43443 C:0     T:416         L:3 Geom xgShellsSmall_archiveShell0003_geo_geometry
+BLAS    I:31102787      P:42937 C:0     T:336         L:3 Geom xgShellsSmall_archiveShell0005_geo_geometry
+BLAS    I:31102788      P:44289 C:0     T:208         L:3 Geom xgShellsSmall_archiveShell0007_geo_geometry
+BLAS    I:31102789      P:1604  C:0     T:208         L:3 Geom xgPalmDebris_archiveLeaflet0127_geo_geometry
+BLAS    I:31102790      P:1817  C:0     T:208         L:3 Geom xgPalmDebris_archiveLeaflet0125_geo_geometry
+BLAS    I:31102791      P:1669  C:0     T:208         L:3 Geom xgPalmDebris_archiveLeaflet0126_geo_geometry
+BLAS    I:31102792      P:1788  C:0     T:224         L:3 Geom xgPalmDebris_archiveLeaflet0123_geo_geometry
+BLAS    I:31102793      P:1692  C:0     T:192         L:3 Geom xgPalmDebris_archiveLeaflet0124_geo_geometry
+BLAS    I:31102794      P:892796        C:0     T:144         L:3 Geom xgGroundCover_archiveRock0002_geo_geometry
+BLAS    I:31102795      P:890657        C:0     T:880         L:3 Geom xgGroundCover_archiveCoral0004_geo_geometry
+BLAS    I:31102796      P:888839        C:0     T:416         L:3 Geom xgGroundCover_archiveShell0004_geo_geometry
+BLAS    I:31102797      P:886736        C:0     T:192         L:3 Geom xgGroundCover_archiveRock0006_geo_geometry
+BLAS    I:31102798      P:881635        C:0     T:160         L:3 Geom xgGroundCover_archiveCoral0002_geo_geometry
+BLAS    I:31102799      P:896501        C:0     T:720         L:3 Geom xgGroundCover_archiveCoral0001_geo_geometry
+BLAS    I:31102800      P:894019        C:0     T:368         L:3 Geom xgGroundCover_archiveCoral0007_geo_geometry
+BLAS    I:31102801      P:893824        C:0     T:416         L:3 Geom xgGroundCover_archiveShell0001_geo_geometry
+BLAS    I:31102802      P:881926        C:0     T:416         L:3 Geom xgGroundCover_archiveShell0003_geo_geometry
+BLAS    I:31102803      P:888832        C:0     T:192         L:3 Geom xgGroundCover_archiveCoral0006_geo_geometry
+BLAS    I:31102804      P:888489        C:0     T:224         L:3 Geom xgGroundCover_archiveCoral0008_geo_geometry
+BLAS    I:31102805      P:887730        C:0     T:368         L:3 Geom xgGroundCover_archiveCoral0009_geo_geometry
+BLAS    I:31102806      P:889556        C:0     T:208         L:3 Geom xgGroundCover_archiveShell0007_geo_geometry
+BLAS    I:31102807      P:891441        C:0     T:720         L:3 Geom xgGroundCover_archiveCoral0005_geo_geometry
+BLAS    I:31102808      P:889379        C:0     T:1416        L:3 Geom xgGroundCover_archiveShell0008_geo_geometry
+BLAS    I:31102809      P:890237        C:0     T:104         L:3 Geom xgGroundCover_archiveRock0007_geo_geometry
+BLAS    I:31102810      P:887236        C:0     T:160         L:3 Geom xgGroundCover_archiveCoral0003_geo_geometry
+BLAS    I:31102811      P:890812        C:0     T:320         L:3 Geom xgGroundCover_archiveRock0001_geo_geometry
+BLAS    I:31102812      P:888744        C:0     T:336         L:3 Geom xgGroundCover_archiveShell0005_geo_geometry
+BLAS    I:31102813      P:894086        C:0     T:416         L:3 Geom xgGroundCover_archiveShell0002_geo_geometry
+BLAS    I:31102814      P:892980        C:0     T:72          L:3 Geom xgGroundCover_archiveRock0004_geo_geometry
+BLAS    I:31102815      P:889633        C:0     T:288         L:3 Geom xgGroundCover_archiveShell0006_geo_geometry
+BLAS    I:31102816      P:888016        C:0     T:160         L:3 Geom xgGroundCover_archiveRock0005_geo_geometry
+BLAS    I:31102817      P:893108        C:0     T:208         L:3 Geom xgGroundCover_archiveRock0003_geo_geometry
+BLAS    I:31102818      P:1     C:0     T:213078              L:3 Geom isDunesA_geometry
+BLAS    I:31102819      P:22    C:0     T:7880        L:3 Geom xgPalmDebris_archivePalmdead0004_mod_geometry
+BLAS    I:31102820      P:854   C:0     T:192         L:3 Geom xgPalmDebris_archiveLeaflet0124_geo_geometry
+BLAS    I:31102821      P:836   C:0     T:208         L:3 Geom xgPalmDebris_archiveLeaflet0126_geo_geometry
+BLAS    I:31102822      P:816   C:0     T:224         L:3 Geom xgPalmDebris_archiveLeaflet0123_geo_geometry
+BLAS    I:31102823      P:838   C:0     T:208         L:3 Geom xgPalmDebris_archiveLeaflet0127_geo_geometry
+BLAS    I:31102824      P:829   C:0     T:208         L:3 Geom xgPalmDebris_archiveLeaflet0125_geo_geometry
+BLAS    I:31102825      P:46215 C:0     T:136         L:3 Geom xgDebris_archiveseedpodb_mod_geometry
+BLAS    I:31102826      P:46225 C:0     T:9848        L:3 Geom xgDebris_archiveseedpoda_mod_geometry
+BLAS    I:31102827      P:163823        C:0     T:264         L:3 Geom xgDebris_archivepineneedle0003_mod_geometry
+BLAS    I:31102828      P:163481        C:0     T:264         L:3 Geom xgDebris_archivepineneedle0002_mod_geometry
+BLAS    I:31102829      P:163945        C:0     T:264         L:3 Geom xgDebris_archivepineneedle0001_mod_geometry
+BLAS    I:31102830      P:8     C:0     T:7776        L:3 Geom xgHibiscusFlower_archiveHibiscusFlower0009_mod_geometry
+BLAS    I:31102831      P:3     C:0     T:7776        L:3 Geom xgHibiscusFlower_archiveHibiscusFlower0005_mod_geometry
+BLAS    I:31102832      P:16    C:0     T:7776        L:3 Geom xgHibiscusFlower_archiveHibiscusFlower0008_mod_geometry
+BLAS    I:31102833      P:12    C:0     T:7776        L:3 Geom xgHibiscusFlower_archiveHibiscusFlower0004_mod_geometry
+BLAS    I:31102834      P:13    C:0     T:7776        L:3 Geom xgHibiscusFlower_archiveHibiscusFlower0007_mod_geometry
+BLAS    I:31102835      P:18    C:0     T:7776        L:3 Geom xgHibiscusFlower_archiveHibiscusFlower0006_mod_geometry
+BLAS    I:31102836      P:11    C:0     T:7776        L:3 Geom xgHibiscusFlower_archiveHibiscusFlower0003_mod_geometry
+BLAS    I:31102837      P:21    C:0     T:7776        L:3 Geom xgHibiscusFlower_archiveHibiscusFlower0002_mod_geometry
+BLAS    I:31102838      P:145   C:0     T:6728        L:3 Geom xgMuskFern_fern0011_mod_geometry
+BLAS    I:31102839      P:170   C:0     T:6728        L:3 Geom xgMuskFern_fern0002_mod_geometry
+BLAS    I:31102840      P:171   C:0     T:6728        L:3 Geom xgMuskFern_fern0001_mod_geometry
+BLAS    I:31102841      P:162   C:0     T:6728        L:3 Geom xgMuskFern_fern0004_mod_geometry
+BLAS    I:31102842      P:165   C:0     T:6728        L:3 Geom xgMuskFern_fern0005_mod_geometry
+BLAS    I:31102843      P:155   C:0     T:6728        L:3 Geom xgMuskFern_fern0010_mod_geometry
+BLAS    I:31102844      P:160   C:0     T:6728        L:3 Geom xgMuskFern_fern0006_mod_geometry
+BLAS    I:31102845      P:178   C:0     T:6728        L:3 Geom xgMuskFern_fern0008_mod_geometry
+BLAS    I:31102846      P:177   C:0     T:6728        L:3 Geom xgMuskFern_fern0009_mod_geometry
+BLAS    I:31102847      P:168   C:0     T:6728        L:3 Geom xgMuskFern_fern0007_mod_geometry
+BLAS    I:31102848      P:159   C:0     T:6728        L:3 Geom xgMuskFern_fern0003_mod_geometry
+BLAS    I:31102849      P:167   C:0     T:6728        L:3 Geom xgMuskFern_fern0013_mod_geometry
+BLAS    I:31102850      P:171   C:0     T:6728        L:3 Geom xgMuskFern_fern0012_mod_geometry
+BLAS    I:31102851      P:164   C:0     T:6728        L:3 Geom xgMuskFern_fern0014_mod_geometry
+BLAS    I:31102852      P:8     C:0     T:15964       L:3 Geom isPandanusA_geometry
+BLAS    I:31102853      P:1     C:0     T:15592264            L:3 Geom osOcean_geometry
+BLAS    I:31102854      P:9     C:0     T:1955190             L:3 Geom isBayCedarA1_geometry
+BLAS    I:31102855      P:3     C:0     T:122416              L:3 Geom isKava_geometry
+BLAS    I:31102856      P:486   C:0     T:92          L:3 Geom archive_kava0001_mod_geometry
+Validating SceneGraph
+Scene Contained 331 identity transforms
+Writing Scene
+Writing Vertices: 119187425
+Writing Indices: 213838248
+Writing Nodes: 31102857
+Writing Materials: 75
+Writing Textures: 0
+Total Number of Triangles: 31325579100
+Num TLAS: 5 Num BLAS: 313
+PARSE FINISHED, PRESS ENTER
