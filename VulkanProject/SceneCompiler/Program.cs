@@ -58,7 +58,10 @@ namespace SceneCompiler
                 throw new Exception("at least one convert type must be true");
             }
 
-            var dst = Path.Combine(config.StorePath, compiler.SceneName + ".vksc");
+            var sceneName = compiler.SceneName;
+            if (CompilerConfiguration.SettingName != null)
+                sceneName = CompilerConfiguration.SettingName;
+            var dst = Path.Combine(config.StorePath, sceneName + ".vksc");
 
             if (config.LodConfiguration.UseLod)
             {

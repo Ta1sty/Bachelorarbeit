@@ -13,6 +13,7 @@ namespace SceneCompiler
     public class CompilerConfiguration
     {
         public static readonly CompilerConfiguration Configuration = LoadCompilerConfiguration();
+        public static string SettingName { get; set; }
 
         public GltfConfiguration GltfConfiguration { get; set; } = new();
         public MoanaConfiguration MoanaConfiguration { get; set; } = new();
@@ -44,8 +45,11 @@ namespace SceneCompiler
             }
 
             if (overridden)
+            {
+                SettingName = Path.GetFileName(overridePath).Replace(".appsettings.json", "");
                 return config;
-                // write back so that newly added default values are added to the json file
+            }
+            // write back so that newly added default values are added to the json file
             using (var str = new StreamWriter("appsettings.json"))
             {
                 var text = JsonSerializer.Serialize(config, opt);
@@ -72,9 +76,7 @@ namespace SceneCompiler
                 using var fileDialog = new OpenFileDialog();
                 fileDialog.Filter = "JSON-File (.json) | *.json";
                 fileDialog.Title = "Select the overriding appsettings file";
-                Regex reg = new Regex(@"\\SceneCompiler.*");
-                var bPath = reg.Replace(Assembly.GetExecutingAssembly().Location, "");
-                fileDialog.InitialDirectory = Directory.GetParent(bPath).FullName;
+                fileDialog.InitialDirectory = Directory.GetParent(Environment.CurrentDirectory).FullName;
 
                 var res = fileDialog.ShowDialog();
                 if (res != DialogResult.OK || string.IsNullOrWhiteSpace(fileDialog.FileName))
