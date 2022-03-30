@@ -46,6 +46,8 @@ void load_scene(Scene* scene, char* path)
 		error("failed to open scene file");
 	free(buffer);
 
+	// this uses the .vksc format to easily read all scene data into their buffers.
+
 	// VertexBuffer
 	fread(&scene->scene_data.numVertices, sizeof(uint32_t), 1, file);
 	scene->vertices = malloc(sizeof(Vertex) * scene->scene_data.numVertices);
@@ -153,6 +155,7 @@ void destroy_scene(Scene* scene)
 	free(scene->node_indices);
 	free(scene->vertices);
 	free(scene->scene_nodes);
+	free(scene->node_transforms);
 	free(scene->texture_data.materials);
 	free(scene->lights);
 	for (uint32_t i = 0; i < scene->texture_data.num_textures; i++)

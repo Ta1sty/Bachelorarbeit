@@ -233,7 +233,9 @@ void draw_imgui_frame(VkInfo* info, Scene* scene, SceneSelection* scene_selectio
 	ImGui::SliderInt("MaxDepth", (int*) &scene->camera.settings.maxDepth, 0, 10);
 
 	ImGui::Text("Rendersettings");
-	ImGui::Checkbox("Vsync", (bool*)&info->vsync);
+	ImGui::Checkbox("Vsync (RELOAD)", (bool*)&info->vsync);
+	ImGui::Checkbox("OpacityCheck (RELOAD)", (bool*)&info->opacity_check);
+
 	bool reload = ImGui::Button("Reload shader");
 	if (info->reloadButton == 0 && reload == 1) {
 		info->reload = 1;
@@ -399,8 +401,12 @@ void resize_callback_imgui(VkInfo* vk, Scene* scene, SceneSelection* scene_selec
 
 void destroy_imgui_buffers(VkInfo* info)
 {
-	free(info->imgui_command_buffers);
-	vkDestroyCommandPool(info->device, info->imgui_command_pool, nullptr);
+	if(info->imgui_command_pool)
+	{
+		free(info->imgui_command_buffers);
+		vkDestroyCommandPool(info->device, info->imgui_command_pool, nullptr);
+		info->imgui_command_pool = VK_NULL_HANDLE;
+	}
 	if (info->swapchain.imgui_frame_buffers)
 	{
 		for (uint32_t i = 0; i < info->buffer_count; i++)

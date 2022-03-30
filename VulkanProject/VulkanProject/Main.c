@@ -47,7 +47,7 @@ float dragX = 0; // mouseX where dragging started
 float dragY = 0; // mouseY where dragging started
 float dragRotX = 0; // rotation along x-axis when dragging started
 float dragRotY = 0; // rotation along y-axis when dragging started
-void mouse__move_callback (GLFWwindow* window, double x, double y)
+void mouse_move_callback (GLFWwindow* window, double x, double y)
 {
     mouseX = x;
     mouseY = y;
@@ -162,9 +162,10 @@ int main()
 {
     App app = {0};
 
+    // lists all scenes and sets the selected scene to default.vksc
     get_available_scenes(&app.sceneSelection);
     if (app.sceneSelection.numScenes == 0) {
-        error("no scenes found");
+        error("no scenes found. Please make sure that are scenes in ../Scenes/ with the .vksc extension");
     }
 
     App* appPtr = &app;
@@ -172,12 +173,14 @@ int main()
     setExceptionCallback(exception_callback_impl);
     app.vk_info.rasterize = VK_TRUE;
     app.vk_info.vsync = 1;
+    app.vk_info.opacity_check = 1;
+    // loads the default scene
     load_scene(&app.scene, app.sceneSelection.availableScenes[app.sceneSelection.nextScene]);
     init_window(&app.window);
     init_vulkan(&app.vk_info, &app.window, &app.scene);
 
 	glfwSetFramebufferSizeCallback(app.window, resize_callback);
-	glfwSetCursorPosCallback(app.window, mouse__move_callback);
+	glfwSetCursorPosCallback(app.window, mouse_move_callback);
 	glfwSetMouseButtonCallback(app.window, mouse_button_callback);
 
     // everything else needs to be build before creating the swapchain
@@ -185,23 +188,20 @@ int main()
 
     init_imgui(&app, WINDOW_WIDTH, WINDOW_HEIGHT);
     init_imgui_command_buffers(&app.vk_info, &app.scene, &app.sceneSelection);
-    // resize_callback_imgui(&app.vk_info, &app.scene, &app.sceneSelection);
 
-    //app.scene.scene_data.numTriangles = min(app.scene.scene_data.numTriangles, 500);
-    // scene renderes fluently for up to 1000 triangles when intersecting with linear time complexity
-    // provided the same complexity one can allow for a total of 1000 intersection tests per ray
-    // which means 1000 during BVH traversal, we expect a depth of log(n) for the BVH, so say we have 2^16 triangles
-    // we will have a depth of 16. 
+    // copies contents of the global buffers to the GPU
     set_global_buffers(&app.vk_info, &app.scene);
     printSceneSizes(&app.scene);
 	while (!glfwWindowShouldClose(app.window)) {
 		glfwPollEvents();
+        // draws the frame if the window is not minimized
 		if(WINDOW_WIDTH > 0 && WINDOW_HEIGHT > 0)
             {
                 updatePosition(app.window, &app.scene.camera);
                 drawFrame(&app.vk_info, &app.scene, &app.sceneSelection);
                 compile_query_trace(&app.vk_info, &app.scene);
             }
+        // resizes the window if the resize values are set or a manual reload is requested
 		if (resizeW >= 0 || resizeH >= 0 || app.vk_info.reload != 0)
 		{
             if (resizeW == -1 || resizeH == -1) {
@@ -210,9 +210,9 @@ int main()
             }
 
             vkDeviceWaitIdle(app.vk_info.device);
+			destroy_imgui_buffers(&app.vk_info);
 			create_or_resize_swapchain(&app.vk_info, &app.window, resizeW, resizeH, &app.scene);
             if (resizeW != 0 && resizeH != 0) {
-                destroy_imgui_buffers(&app.vk_info);
                 resize_callback_imgui(&app.vk_info, &app.scene, &app.sceneSelection);
             }
 
@@ -223,6 +223,7 @@ int main()
             resizeH = -1;
             app.vk_info.reload = 0;
 		}
+        // changes the scene if requested
         if (app.sceneSelection.currentScene != app.sceneSelection.nextScene)
             changeScene(&app);
 	}

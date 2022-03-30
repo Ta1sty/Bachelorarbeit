@@ -215,7 +215,6 @@
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="buildScene.bat" />
     <None Include="shaders\debug.frag" />
     <None Include="shaders\glslangValidator.exe" />
     <None Include="shaders\intersections.frag" />

@@ -3,15 +3,13 @@
 #include "structs.frag"
 #endif
 
-#ifdef RAY_QUERIES
 #include "QueryTraceRecord.frag"
 layout(binding = TLAS_BINDING, set = 3) uniform accelerationStructureEXT[] tlas;
-#endif
 
 #ifndef MATH
 #include "math.frag"
 #endif
-
+// retrieves material data and normal for triangle intersection
 void getHitPayload(int triangle, vec3 tuv, out vec3 N, out Material material) {
 	Vertex v0 = vertices[indices[triangle * 3]];
 	Vertex v1 = vertices[indices[triangle * 3 + 1]];
@@ -62,12 +60,16 @@ void getHitPayload(int triangle, vec3 tuv, out vec3 N, out Material material) {
 	else
 		SetDebugCol(displayTextureIdx, vec4(0.2, 0.4, 0.8, 1));
 }
+// selects the lod-node (TLAS) for an LOD-Selector
 SceneNode selectLOD(SceneNode selector, float tNear, mat3 tr, int parentLOD, out int lod){
 	SceneNode dummy = nodes[childIndices[selector.ChildrenIndex]];
 	int N = dummy.NumChildren;
 	if(parentLOD >= 0) {
+		// if the lod is force use this
 		lod = parentLOD;
 	} else {
+		// otherwise select lod with a projection onto the screen
+		// see the traversal shader paper for this routine
 		float rObject = length(selector.AABB_max-selector.AABB_min)/2;
 
 		float rMax = 5000;
@@ -90,7 +92,6 @@ struct TraversalPayload {
 	int sIdx_un; // after compute: unsused   ; bebore compute: shaderOffset (grandchild)
 };
 
-#ifdef RAY_QUERIES
 // use a stack because:
 // keep the list as short as possible, I.E. use a depth first search
 const int TRAVERSAL_STACK_SIZE = 30;
@@ -100,6 +101,7 @@ TraversalPayload traversalStack[TRAVERSAL_STACK_SIZE];
 int traversalDepth = 0;
 uint numTraversals = 0;
 uint queryCount = 0;
+// gets called for every intersected PI after query has finished
 void instanceShader(SceneNode tlas, int index, vec3 rayOrigin, vec3 rayDirection, int parentLOD){	
 	TraversalPayload nextLoad = traversalStack[index];
 	mat4x3 world_to_object;
@@ -161,7 +163,7 @@ void instanceShader(SceneNode tlas, int index, vec3 rayOrigin, vec3 rayDirection
 	}
 }
 
-
+// checks if a triangle hit actually occured by retrieving texture alpha value
 void triangleHit(rayQueryEXT ray_query, SceneNode node, float minAlpha) {
 	float t = rayQueryGetIntersectionTEXT(ray_query, false);
 	vec2 uv = rayQueryGetIntersectionBarycentricsEXT(ray_query, false);
@@ -183,7 +185,7 @@ void triangleHit(rayQueryEXT ray_query, SceneNode node, float minAlpha) {
 	if (material.color[3] > minAlpha)
 		rayQueryConfirmIntersectionEXT(ray_query);
 }
-
+// the ray trace loop that executes traversal - this is the entry point
 bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, float minAlpha, int lod,out vec3 tuv, out int triangle_index, out TraversalPayload resultPayload) {
 	numTraversals = 0;
 
@@ -192,12 +194,14 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, f
 	float min_t = 1.0e-4f;
 	float best_t = t_max;
 
-	TraversalPayload start; // start at root node
+	// start at root node
+	TraversalPayload start; 
 	start.world_to_object = mat4x3(1);
 	start.cIdx_nIdx = int(root);
 	start.pIdx_lod = lod;
 	start.tNear = 0;
 
+	// debug display for AABBs
 	if (debug && displayAABBs) {
 		SceneNode root = nodes[root];
 		debugAABB(rayOrigin, rayDirection, root);
@@ -222,6 +226,7 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, f
 		vec3 query_origin = (load.world_to_object * vec4(rayOrigin,1)).xyz;
 		vec3 query_direction = (load.world_to_object * vec4(rayDirection,0)).xyz;
 
+		// debugging AABBs is quite a bit of work
 		if (debug && displayAABBs) {
 			for (int i = 0; i < node.NumChildren; i++) {
 				SceneNode directChild = nodes[childIndices[node.ChildrenIndex + i]];
@@ -238,6 +243,7 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, f
 			}
 		}
 
+		// initialize the ray query
 		rayQueryEXT ray_query;
 		rayQueryInitializeEXT(ray_query, tlas[tlasNumber], 0, 0xFF,
 			query_origin, min_t,
@@ -247,17 +253,21 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, f
 		numTraversals++;
 		uint triangleIntersections = 0;
 		uint instanceIntersections = 0;
+		// run the ray query
 		while (rayQueryProceedEXT(ray_query)) {
 			uint type = rayQueryGetIntersectionTypeEXT(ray_query, false);
 			switch (type) {
 			case gl_RayQueryCandidateIntersectionTriangleEXT:
-				rayQueryConfirmIntersectionEXT(ray_query);
-				break;
-				// might want to check for opaque
+#ifdef OPAQUE_CHECK	
+				// checks if the triangle hit is opaque. Can impact performance significantly
 				triangleHit(ray_query, node, minAlpha);
-				//rayQueryConfirmIntersectionEXT(ray_query);
 				triangleIntersections++;
 				break;
+#else
+				// always commit if opaque check is disabled
+				rayQueryConfirmIntersectionEXT(ray_query);
+				break;
+#endif
 			case gl_RayQueryCandidateIntersectionAABBEXT:
 				// we do not want to generate intersections, since AABB hit does not guarantee a hit in the traversal
 				// instead call instanceShader and add the new parameters to the traversalList
@@ -282,11 +292,12 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, f
 		int end = stackSize;
 		int added = end - start;
 		
+		// call instance shader for all intersected PIs
 		for(int i = start;i < end;i++) {
 			instanceShader(node, i, rayOrigin, rayDirection, load.pIdx_lod);
-			//recordQuery(traversalStack[i].nIdx, node.Level, traversalStack[i].t, vec3(1,0,0), vec3(2,0,0), i-start ,added);
 		}
 
+		// reverse added lists to improve t-Value convergence
 		for (int i = 0; i < added / 2; i++) {
 			int i1 = start + i;
 			int i2 = end - 1 - i;
@@ -295,19 +306,23 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, f
 			traversalStack[i1] = tmp2;
 			traversalStack[i2] = tmp1;
 		}
-
+		// check commited intersection
 		uint commitedType = rayQueryGetIntersectionTypeEXT(ray_query, true);
 		if (commitedType == gl_RayQueryCommittedIntersectionTriangleEXT) {
+			// debug diplays edges of triangles
 			if (debug && displayTriangles) {
 				vec2 uv = rayQueryGetIntersectionBarycentricsEXT(ray_query, true);
 				if (uv.x + uv.y > 0.99f || uv.x < 0.01f || uv.y < 0.01f) {
 					triangle_index = 0;
+					// you can replace with a t-value commit to display only closest and opaque
 					return true;
 				}
 				else {
 					continue;
 				}
 			}
+			// processes closest intersection if it is better than best_t 
+			// (hint: it always is, because best_t is maximum allowed value for intersections)
 			float t = rayQueryGetIntersectionTEXT(ray_query, true);
 			if (t < best_t) {
 				best_t = t;
@@ -333,60 +348,17 @@ bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, f
 				triangleTLAS = tlasNumber;
 			}
 		}
+		// records the ray query for displaying
 		recordQuery(node.Index, node.Level, load.tNear, rayOrigin, rayOrigin + best_t * rayDirection, triangleIntersections ,instanceIntersections);
 	}
 	SetDebugHsv(displayTLASNumber, triangleTLAS, colorSensitivity, true);
+	// returns true if a hit occured
 	return triangle_index >= 0;
 }
-#endif
-
-#ifndef RAY_QUERIES
-bool ray_trace_loop(vec3 rayOrigin, vec3 rayDirection, float t_max, uint root, out vec3 tuv, out int triangle_index, out TraversalPayload resultPayload) {
-	vec3 tuv_next;
-	tuv.x = t_max;
-	triangle_index = -1;
-	for (int i = 0; i < numTriangles; i++) {
-		Vertex vert_v0 = vertices[indices[i * 3]];
-		Vertex vert_v1 = vertices[indices[i * 3 + 1]];
-		Vertex vert_v2 = vertices[indices[i * 3 + 2]];
-
-		vec3 v0 = vert_v0.position;
-		vec3 v2 = vert_v1.position;
-		vec3 v1 = vert_v2.position;
-
-
-		if (rayTriangleIntersect(rayOrigin, rayDirection, tuv_next, v0, v1, v2)) {
-			// for showing triangles we use anyHit and early out
-			if (debug != 0 && displayTriangles != 0) {
-				vec2 uv = tuv_next.yz;
-				if (uv.x + uv.y > 0.99f || uv.x < 0.01f || uv.y < 0.01f) {
-					return true;
-				}
-			}
-			else {
-				if (tuv_next.x < tuv.x) { // compute closest hit
-					vec3 N;
-					vec4 color;
-					Material material;
-					getHitPayload(i, tuv_next, color, N, material);
-					if (color[3] == 0) // test that the hit is opque, else skip it
-						continue;
-					triangle_index = i;
-					tuv = tuv_next;
-				}
-			}
-		}
-	}
-
-	if (triangle_index == -1) {
-		return false;
-	}
-	return true;
-}
-#endif
 
 const float MAX_T = 100000;
 
+// shades an intersection point
 vec4 shadeFragment(vec3 P, vec3 V, vec3 N, Material material, int triangle, int lod) {
 	// calculate lighting for each light source
 	vec3 sum = vec3(0);
@@ -441,7 +413,8 @@ vec4 shadeFragment(vec3 P, vec3 V, vec3 N, Material material, int triangle, int 
 	sum += material.k_a * material.color.xyz;
 	return vec4(sum.xyz, material.color[3]);
 }
-
+// the ray trace function, traces a ray and recursion up to a maximum total traversal count
+// uses its own little stack
 vec4 rayTrace(vec3 rayOrigin, vec3 rayDirection, out float t) {
 	int triangle = -1;
 	TraversalPayload load;
@@ -527,7 +500,7 @@ vec4 rayTrace(vec3 rayOrigin, vec3 rayDirection, out float t) {
 				//SetDebugCol(true, vec4(0,0,0,0));
 				t = MAX_T;
 			}
-			// maybe environment map
+			// some magic with suns, does some dot product pows to create a bright spot on the sky
 			for (int i = 0; i < numLights; i++) {
 				Light light = lights[i];
 				if ((light.type & LIGHT_TYPE_SUN) != 0) {
@@ -537,13 +510,14 @@ vec4 rayTrace(vec3 rayOrigin, vec3 rayDirection, out float t) {
 					color += frac * fac * vec4(light.intensity,1);
 				}
 			}
+			// skybox
 			color += frac * texture(skybox,V);
 		}
 	}
 	return color;
 }
 
-
+// generates a ray for a pixel
 void generatePixelRay(out vec3 rayOrigin, out vec3 rayDirection) {
 	ivec2 xy = ivec2(gl_FragCoord.xy);
 	float x = xy.x;

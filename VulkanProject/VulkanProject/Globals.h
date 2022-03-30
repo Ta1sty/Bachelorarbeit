@@ -157,6 +157,7 @@ typedef struct vkInfo {
 	uint32_t reloadButton;
 	uint32_t reload;
 	uint32_t vsync;
+	uint32_t opacity_check;
 } VkInfo;
 
 typedef void (*ChangeSceneCallback)(void);

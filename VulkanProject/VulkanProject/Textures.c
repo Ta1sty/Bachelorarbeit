@@ -276,7 +276,7 @@ void create_skybox(VkInfo* vk, Scene* scene)
 		memcpy(&data[width * height * i], &textureData[width * height * i], layerSize);
 	}
 	vkUnmapMemory(vk->device, stagingBufferDeviceMemory);
-
+	free(textureData);
 	VkImageCreateInfo imageInfo = { 0 };
 	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	imageInfo.imageType = VK_IMAGE_TYPE_2D;

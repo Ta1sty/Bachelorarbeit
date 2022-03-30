@@ -12,16 +12,16 @@
 #include "Raytrace.h"
 #include "Bindings.h"
 
-void compile_shaders(VkBool32 ray_trace)
+void compile_shaders(uint32_t opaqueCheck)
 {
 	printf("compiling shaders\n");
-	int vert = system("%VK_SDK_PATH%/Bin/glslc.exe shaders/shader.vert -o shader.vert.spv -g --target-env=vulkan1.2");
+	int vert = system("glslangValidator.exe shaders/shader.vert -o shader.vert.spv -g --target-env vulkan1.2");
 	int frag;
-	if (ray_trace) {
-		frag = system("%VK_SDK_PATH%/Bin/glslc.exe shaders/shader.frag -o shader.frag.spv -g --target-env=vulkan1.2 -DRAY_QUERIES");
+	if (opaqueCheck) {
+		frag = system("glslangValidator.exe shaders/shader.frag -o shader.frag.spv -g --target-env vulkan1.2 -DOPAQUE_CHECK");
 	}
 	else {
-		frag = system("%VK_SDK_PATH%/Bin/glslc.exe shaders/shader.frag -o shader.frag.spv -g --target-env=vulkan1.2");
+		frag = system("glslangValidator.exe shaders/shader.frag -o shader.frag.spv -g --target-env vulkan1.2");
 	}
 	
 	if (vert || frag)
@@ -148,7 +148,7 @@ void create_descriptor_containers(VkInfo* info, Scene* scene)
 	info->global_buffers = create_descriptor_set(info, 0, globalInfos, GLOBAL_BUFFER_COUNT, 1);
 
 	// set 1 - samplers and textures
-	create_texture_descriptors(info, scene, SAMPLER_BINDING, TEXTURE_BINDING);
+	create_texture_descriptors(info, scene);
 
 	// set 2 - frame buffers
 
@@ -205,6 +205,11 @@ void destroy_shaders(VkInfo* vk, Scene* scene)
 		vkDestroyImage(vk->device, t->texture_image, NULL);
 	}
 	vkDestroySampler(vk->device, scene->sampler, NULL);
+
+	vkDestroyImageView(vk->device, vk->skyboxView, NULL);
+	vkFreeMemory(vk->device, vk->skyboxMemory, NULL);
+	vkDestroyImage(vk->device, vk->skyboxImage, NULL);
+	vkDestroySampler(vk->device, vk->skyboxSampler, NULL);
 
 	if (vk->ray_tracing) {
 		destroyAccelerationStructures(vk, scene);

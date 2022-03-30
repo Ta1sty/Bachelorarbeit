@@ -197,7 +197,7 @@ void create_device(VkInfo* vk_info) // see https://github.com/MomentsInGraphics/
 	if (vk_info->ray_tracing)
 		printf("Ray tracing is available.\n");
 	else
-		printf("No ray tracing for u\n");
+		error("This device does NOT support the required extensions\n");
 	VkPhysicalDeviceProperties2 prop2 = {
 		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 
 	};
@@ -312,7 +312,7 @@ void create_image_views(VkInfo* info) // see https://vulkan-tutorial.com/
 void create_pipeline(VkInfo* info) // see https://vulkan-tutorial.com/
 {
 	Swapchain* swapchain = &info->swapchain;
-	compile_shaders(info->ray_tracing);
+	compile_shaders(info->opacity_check);
 	get_vertex_shader(info, &info->vertex_shader);
 	get_fragment_shader(info, &info->fragment_shader);
 

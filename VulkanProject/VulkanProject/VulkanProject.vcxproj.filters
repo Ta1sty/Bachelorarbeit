@@ -142,9 +142,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="buildScene.bat">
-      <Filter>Source Files</Filter>
-    </None>
     <None Include="shaders\vert.spv">
       <Filter>Source Files\Shader\glsl</Filter>
     </None>
