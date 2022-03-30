@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -33,11 +34,23 @@ namespace SceneCompiler
                 IgnoreNullValues = false,
             };
             CompilerConfiguration config;
-            var path = "appsettings.json";
+            var path = Directory.EnumerateFiles(".")
+                .Where(x => Path.GetFileName(x).EndsWith("appsettings.json"))
+                .OrderByDescending(x => x.Length)
+                .First();
 
             var overridden = OverrideAppsettings(out var overridePath);
             if (overridden)
+            {
                 path = overridePath;
+            }
+            else
+            {
+                if (Path.GetFileName(path) != "appsettings.json")
+                {
+                    SettingName = Path.GetFileName(path).Replace(".appsettings.json", "");
+                }
+            }
             using (var str = new StreamReader(path))
             {
                 var res = str.ReadToEnd();
@@ -50,7 +63,7 @@ namespace SceneCompiler
                 return config;
             }
             // write back so that newly added default values are added to the json file
-            using (var str = new StreamWriter("appsettings.json"))
+            using (var str = new StreamWriter(path))
             {
                 var text = JsonSerializer.Serialize(config, opt);
                 str.Write(text);

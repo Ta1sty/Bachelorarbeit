@@ -37,22 +37,6 @@
     "SpacingFactor": 1,
     "Randomize": false
   },
-  "LodConfiguration": {
-    "UseLod": true,
-    "UseTriangleLod": false,
-    "LodTriangleThreshold": 15000,
-    "LodTriangleStopCount": 100000,
-    "UseInstanceLod": true,
-    "CutExcess": true,
-    "LodInstanceThreshold": 1000000,
-    "LodInstanceStopCount": 500,
-    "ReductionFactor": 4,
-    "NumLod": 1,
-    "TriDecimatorArguments": [
-      "-Sn",
-      "-C"
-    ]
-  },
   "OptimizationConfiguration": {
     "UseSingleLevelInstancing": false,
     "ReduceInstanceListCount": 2,
@@ -61,6 +45,20 @@
     "CapInstanceLists": false,
     "MaxInstances": 16000000,
     "RootBufferRebuild": true
+  },
+  "LodConfiguration": {
+    "UseLod": true,
+    "UseTriangleLod": false,
+    "LodTriangleThreshold": 15000,
+    "UseInstanceLod": true,
+    "CutExcess": true,
+    "LodInstanceThreshold": 1000000,
+    "ReductionFactor": 4,
+    "NumLod": 1,
+    "TriDecimatorArguments": [
+      "-Sn",
+      "-C"
+    ]
   },
   "DebugConfiguration": {
     "PrintScene": true,
