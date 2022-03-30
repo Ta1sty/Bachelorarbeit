@@ -1,0 +1,15 @@
+camera movement:
+w - forward
+s - backward
+a - left
+d - right
+q - down
+e - up
+shift(hold) speed * 10
+ctrl(hold) speed * 100
+shift+ctrl (hold) speed * 1000
+
+hold r + left click: Record trace - can be displayed with debug settings
+
+scenes can be swapped in the dropdown
+VIEWPOS can be used to input exact view positions for reproducing results
