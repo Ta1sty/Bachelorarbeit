@@ -7,6 +7,7 @@
 #include "VulkanUtil.h"
 #include "Util.h"
 #include <vulkan/vulkan_core.h>
+// credits to christoph peters for the general structure of AS construction and for this useful macro
 // see https://github.com/MomentsInGraphics/vulkan_renderer, this macro creates a function pointer for dynamic function handles of vulkan
 #define VK_LOAD(FUNCTION_NAME) PFN_##FUNCTION_NAME p##FUNCTION_NAME = (PFN_##FUNCTION_NAME) glfwGetInstanceProcAddress(info->instance, #FUNCTION_NAME)
 
@@ -72,7 +73,6 @@ void build_tlas_instance_list(VkInfo* info, Scene* scene, SceneNode* list)
 {
 	SceneNode* node = &scene->scene_nodes[scene->node_indices[list->ChildrenIndex]];
 
-	// credits to christopher
 	VK_LOAD(vkGetAccelerationStructureBuildSizesKHR);
 	VK_LOAD(vkCreateAccelerationStructureKHR);
 	VK_LOAD(vkGetAccelerationStructureDeviceAddressKHR);
@@ -244,7 +244,7 @@ void build_tlas_instance_list(VkInfo* info, Scene* scene, SceneNode* list)
 // see https://github.com/MomentsInGraphics/vulkan_renderer
 void build_tlas(VkInfo* info, Scene* scene, SceneNode* node)
 {
-	// credits to christopher
+	// credits to christoph
 	VK_LOAD(vkGetAccelerationStructureBuildSizesKHR);
 	VK_LOAD(vkCreateAccelerationStructureKHR);
 	VK_LOAD(vkGetAccelerationStructureDeviceAddressKHR);
@@ -418,7 +418,7 @@ void build_blas_instance_list(VkInfo* info, Scene* scene, SceneNode* list)
 	// if node references children recursively create new TLAS
 	// and add traversalNodes
 
-	// credits to christopher
+	// credits to christoph
 	VK_LOAD(vkGetAccelerationStructureBuildSizesKHR);
 	VK_LOAD(vkCreateAccelerationStructureKHR);
 	VK_LOAD(vkGetAccelerationStructureDeviceAddressKHR);
@@ -575,7 +575,7 @@ void build_blas(VkInfo* info, Scene* scene, SceneNode* node)
 	// if node references children recursively create new TLAS
 	// and add traversalNodes
 
-	// credits to christopher
+	// credits to christoph
 	VK_LOAD(vkGetAccelerationStructureBuildSizesKHR);
 	VK_LOAD(vkCreateAccelerationStructureKHR);
 	VK_LOAD(vkGetAccelerationStructureDeviceAddressKHR);

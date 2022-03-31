@@ -1,7 +1,7 @@
 This Project is part of the Markus Halls Bachelor's thesis Traversal Shaderes on Current GPUs
 This application is responsible for rendering the scenes to test the Traversal shader performance.
 
-Huge thanks to Christopher Peters with his vulkan toy renderer
+Huge thanks to Christoph Peters with his vulkan toy renderer
 https://momentsingraphics.de/ToyRendererOverview.html
 
 and also to Vulkan-tutorial.com
@@ -15,8 +15,3 @@ The relevant sections are marked in code accordingly
 Used libraries are the vulkan lunar sdk, glfw and imgui
 
 The shaders folder is required by the application. The folder raytrace.frag contains the code for the traversal shader
-
-RayQuery Loop triangle opacity check is DISABLED! to renenable it open raytrace.frag and goto line 254 and 
-remove the CommitTriangleIntersectionEXT(rayQuery); and break; in the switch statement. Then reload the shader with the button.
-The used tests for the thesis have also had it disabled.
-
