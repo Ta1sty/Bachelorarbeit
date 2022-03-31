@@ -4,7 +4,7 @@ It was written at the Karlsruhe Institute of Technology.
 Due to used thrid party software any further distribution for commerical purposes is prohibited.
 Any use of this software and its parts is subject to licenses of the used components.
 
-For example, the SceneCompiler uses the tridecimator which uses the GNU-Genral public license
+For example, the SceneCompiler uses the tridecimator which uses the GNU-General public license
 this makes any use and redistribution of the scene compiler also subject to the Tridecimator License.
 
 The programms in this repository should be used for private and educational purposes only.

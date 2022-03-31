@@ -301,7 +301,7 @@
    anderen Pr\"ufungsbeh\"orde vorgelegt und von dieser als Teil
    einer Pr\"ufungsleistung angenommen. \\[4cm]
 
-   Karlsruhe, den \today\hfill
+   Karlsruhe, den 31. März, 2022\hfill
 
    \hfill{\vbox{\hrule{\hbox{\small(\myname)}}}}
    \thispagestyle{empty}
