@@ -6,6 +6,7 @@ This repository contains the software that was developed alongside as well as th
 REQUIREMENTS
 Scene compiler requieres the windows-x64 build and at least 32GB ram to compile every scene
 VulkanProject(Traversal Shader) requires a graphics device which support the vulkan ray tracing extensions, for example an RTX 3060
+The full specs for the testing machine can be seen in the evaluation folder
 
 Each subfolder should also have a README which specifies its use
 The folder contents are as follows
