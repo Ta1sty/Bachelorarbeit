@@ -45,9 +45,19 @@ Now that is all fun and games, but how are we actually going to implement a trav
 
 ## Method
 
+As previously stated we will emulate the behaviour of a traversal shader in a single shader program. In this program we will make use of Vulkan-RayQueries.
+Before we start with the implementation of shader we first require a tree of AS Structures to traverse.
+In Vulkan an AS contains of two levels
+- Bottom-Level-AS (BLAS): These AS contain the actual geometry, such as meshes made up by triangles. The may also contain Axis-Aligned-Bounding-Boxes (AABBs). Once a primitve (Triangle,AABB) is intersected, control is returned to the shader to confirm the intersection or to generate a custom intersection point in the case of AABBs(for example for tracing spheres).
+- Top-Level-AS (TLAS): Is the entry point for a ray query and spans over instances of BLAS, with each instance having its own transform and properties.
 
+This is the point where we introduce programmable instances (proposed by Wong Jong et al). They are basically just instances or AABBs with an attached programm that is run once they are intersected. In this program we can add AS to traverse next and transform the ray to our liking. We want these PIs to be referenced between TLAS and BLAS and between BLAS to BLAS. Sadly, we cant do either. What we can do is fake these PIs by flagging our AABBs and running more ray-queries into lower-level TLAS.
 
-## Evaluation
+We then implement different behaviour by using a couple of if-statements that implent behaviour such as selecting a level of detail.
+
+Whenever we traverse a tree, we need to keep track of where to continue next. For this we are required to implement a stack that keeps track of traversal while it is running. Most of the optimization and problems I ran into during implementation are in relation to keeping this stack as small and as optimized as possible.
+
+### Evaluation
 
 
 
