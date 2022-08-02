@@ -70,7 +70,7 @@ There are a couple of things that can be optimized:
 - Order of added stack payloads: It makes sense that the first intersectd PI should be the first to traverse next, as the RayQuery gives us the closer AABB intersections first.
 - Skipping payloads: with each payload we can associate a lower bound for any intersection inside its AABB, therefore we can skip payloads if we already found a closer hit.
 
-A traversal payload need to keep track of:
+Thus a payload need to keep track of:
 - Transformation: Used to transform the ray into object space and surface normals back to world space
 - tNear: the closest intersection point possible inside the AABB
 - selected AS: the TLAS to traverse next
