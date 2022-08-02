@@ -27,6 +27,18 @@ In terms of memory, multi-level instancing comes to mind:
 
 ### Walking through a forest
 
+The best example to explain traversal shaders is for a forest of trees with leaves. Hereby the forest,trees and their leaves all have their own accelleration structure.
+- Forest AS: Spans over the entire scene and contains trees as instances with different transforms. In this example this could be called the Top-Level-AS (TLAS)
+- Tree AS: Contains the geometry for the branches and trunk. It also references the leaves as instanced primitves with different transforms
+- Leave AS: Contains the geometry for the leaves
+
+The way traversal works with multi-level instancing is that we start at the root (forest) of the scene graph. We then traverse down the forest until we intersect a tree instance. We then transform the ray into the coordinate system of the tree. There, traversal is continued until either the tree or an instanced leaf is hit. In the latter case we continue by transforming the ray into the coordiante system of a leaf. This is where we either insersect a triangle or we return with a negative, in any case we continue through the tree to find closer intersections in the same manner. Once we are done with the tree we finish the forest and see if we can find a closer intersection. The result of the traversal is the closest primitive.
+
+(TODO, picture forest scenegraph)
+
+### Continue 
+
+
 In a sense, traversal shaders already exist in the current architecture. They are responsible for transforming the ray into the lower AS coordinate system and letting the ray traversal continue there.
 
 However, currently we have to define which AS is traversed next during AS-Build and we are limited to single-level instancing.Therefore, the Forest-Tree-Leaf example does not work. This is where start of.
@@ -37,9 +49,7 @@ The goal is to build a shader program given our current limitations that emulate
 
 The m
 The best example for usage of traversal shaderes is a forest of trees with leafs:
-- Forest AS: Spans over the entire scene and contains trees as instances with different transforms. In this example this could be called the Top-Level-AS (TLAS)
-- Tree AS: Contains the geometry for the branches and trunk. It also references the leaves as instanced primitves with different transforms
-- Leave AS: Contains the geometry for the leaves
+
 
 Whenever we shoot a ray into the scene, we traverse thought this tree of AS. If, for example, we intersect an instance of a tree we transform the ray into the tree coordinate system and let traversal continue though its AS before we resume with the rest of the forest. That way we find out closest intersection as fast as possible.
 
