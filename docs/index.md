@@ -14,10 +14,28 @@ will allow us to render the Moana Island production asset by Disney in real time
 saving multiple GBs of VRAM.
 
 ## Traversal shaders
-Traversal shaders are an extension to acceleration-structure traversal. A traversal shader hereby represents a small programm, which can control how an acceleration structure is travered. For that, a scene is built out of a tree of acelleration structures. 
+Traversal shaders are an extension to acceleration-structure traversal. A traversal shader hereby represents a small programm, which can control how an acceleration structure is travered. We can use this to implement Multi-Level instancing, dynamic-level of detail, reduced GPU-CPU bandwidth and much more. More information on the general concept can be found in chapter 4.1(TODO link to thesis) or a the paper by (TODO won jong at al).
 
-### An example
+### Why use traversal shaders
 
+Traversal shaders offer a couple of improvements to raytracing, especially with regard to memory and performance, they also have a couple of niche uses as well.
+In terms of memory, multi-level instancing comes to mind:
+  - Traveral of an accelleration structrure behaves like tree traversal, it is possible to specify an acelleration structure as a leaf node of another. In that case we can keep continuing this way as long as we want. Below is an example that explains it.
+  - Level-of-detail (LoD) is a common practice to reduce performance impact of far away objects. It swaps the meshes of far away objects with lower resolutions and keeps improving resolution as the observer comes closer. In the regular case an application must precalculate the selected levels of detail in advance, however with traversal shader it is possible to select the level of detail dynamically.
+
+(TODO, Pictures LOD)
+
+### Walking through a forest
+
+In a sense, traversal shaders already exist in the current architecture. They are responsible for transforming the ray into the lower AS coordinate system and letting the ray traversal continue there.
+
+However, currently we have to define which AS is traversed next during AS-Build and we are limited to single-level instancing.Therefore, the Forest-Tree-Leaf example does not work. This is where start of.
+
+The goal is to build a shader program given our current limitations that emulates the behaviour of a traversal shader with all its functionality. I.e. we can always choose where our traversal continues and we can keep going down the tree as far as we want.
+
+
+
+The m
 The best example for usage of traversal shaderes is a forest of trees with leafs:
 - Forest AS: Spans over the entire scene and contains trees as instances with different transforms. In this example this could be called the Top-Level-AS (TLAS)
 - Tree AS: Contains the geometry for the branches and trunk. It also references the leaves as instanced primitves with different transforms
@@ -25,13 +43,7 @@ The best example for usage of traversal shaderes is a forest of trees with leafs
 
 Whenever we shoot a ray into the scene, we traverse thought this tree of AS. If, for example, we intersect an instance of a tree we transform the ray into the tree coordinate system and let traversal continue though its AS before we resume with the rest of the forest. That way we find out closest intersection as fast as possible.
 
-### Current state
 
-In a sense, traversal shaders already exist in the current architecture. They are responsible for transforming the ray into the lower AS coordinate system and letting the ray traversal continue there.
-
-However, currently we have to define which AS is traversed next during AS-Build and we are limited to single-level instancing.Therefore, the Forest-Tree-Leaf example does not work. This is where start of.
-
-The goal is to build a shader program given our current limitations that emulates the behaviour of a traversal shader with all its functionality. I.e. we can always choose where our traversal continues and we can keep going down the tree as far as we want.
 
 ### What can we do?
 
