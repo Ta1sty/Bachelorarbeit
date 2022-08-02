@@ -75,6 +75,8 @@ Thus a payload need to keep track of:
 - tNear: the closest intersection point possible inside the AABB
 - selected AS: the TLAS to traverse next
 
+We can now go about implementing the different behaviour such as level of detail
+
 ### Implementing Dynamic-LOD
 
 Since the PIs are nothing but AABBs with flagged behaviour, we can exectute any code we want. This allows to select the LOD based on the distance of the AABB to the observer by projecting the AABB onto the screen and selecting the LOD based on the projection size. We then just add the selected LOD to the traversal stack and let traversal resume.
