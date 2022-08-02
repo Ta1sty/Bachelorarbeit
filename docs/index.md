@@ -81,8 +81,6 @@ We can now go about implementing the different behaviour such as level of detail
 
 Since the PIs are nothing but AABBs with flagged behaviour, we can exectute any code we want. This allows to select the LOD based on the distance of the AABB to the observer by projecting the AABB onto the screen and selecting the LOD based on the projection size. We then just add the selected LOD to the traversal stack and let traversal resume.
 
-Therefore it is required  tree, we need to keep track of where to continue next. For this we are required to implement a stack that keeps track of traversal while it is running. Most of the optimization and problems I ran into during implementation are in relation to keeping this stack as small and as optimized as possible.
-
 ### Evaluation
 
 
