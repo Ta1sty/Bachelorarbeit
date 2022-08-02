@@ -36,48 +36,50 @@ The way traversal works with multi-level instancing is that we start at the root
 
 (TODO, picture forest scenegraph)
 
-### Continue 
-
-
-In a sense, traversal shaders already exist in the current architecture. They are responsible for transforming the ray into the lower AS coordinate system and letting the ray traversal continue there.
-
-However, currently we have to define which AS is traversed next during AS-Build and we are limited to single-level instancing.Therefore, the Forest-Tree-Leaf example does not work. This is where start of.
-
-The goal is to build a shader program given our current limitations that emulates the behaviour of a traversal shader with all its functionality. I.e. we can always choose where our traversal continues and we can keep going down the tree as far as we want.
-
-
-
-The m
-The best example for usage of traversal shaderes is a forest of trees with leafs:
-
-
-Whenever we shoot a ray into the scene, we traverse thought this tree of AS. If, for example, we intersect an instance of a tree we transform the ray into the tree coordinate system and let traversal continue though its AS before we resume with the rest of the forest. That way we find out closest intersection as fast as possible.
-
-
-
-### What can we do?
-
-Suppose we have a working traversal shader, we can then use the new functionality to implement a couple of different techniques to improve upon framerate, CPU-GPU bandwidth and GPU-Memory.
-- Dynamic Level of Detail: Allows us to select lower resolution AS for objects that are further away from the observer. This can be implemented by letting the traversal shader calculate the distance from the ray-origin to the bounding box of the intersected object. Then, based on this value we can select the AS to traverse next. In this case we gain a few FPS and we are no longer required to select levels of details in advance, this saves us from constantly updating the AS every time the observer moves and releases some strain on the CPU-GPU bandwidth.
-- Multi-Level Instaning: Can save us tons of memory by using instancing of a higher degree. This is espessially useful for cases like the one with the forest. But also houses and walls come to mind. The degree of saved memory can be quite astonishing. With this we are able to go above and beyond any "normal" count of triangles. Say   for example 10 Quintillion (@13FPS). This can be implemented by letting the traversal shader keep adding more structures to traverse until we reach the leafs of the AS-Tree.
-
 What else? Well, you can do a lot of hacky things with them, you could teleport the light ray to another position in the scene. Implementing a light-portal in the process. Or you could start to render fractals (sphereflake) to high depths. You can also use traversal shader to implement a lazy-loading technique for AS that are not visible (TODO-Source). They also open up a couple of possiblities for moving objects, since you can represent movement by transforming the ray into another positon. Just pay attention to the bounding boxes in this case or they will give false negatives.
 
-Now that is all fun and games, but how are we actually going to implement a traversal shader, given our current limitations?
+### Current state of architecture 
+
+In a sense, traversal shaders already exist in the current gpu (notably ampere for rtx, TODO check) architecture. They are responsible for transforming the ray into the lower AS coordinate system and letting the ray traversal continue there.
+
+However, currently we have to define which AS is traversed next when intersecting an instance during the AS-Build. Additionally, we are limited to single-level instancing.Therefore, the Forest-Tree-Leaf example does not work. We choose this architecture as our starting point and develop a proof of concept by modeling a traversal shader in a GLSL shader.
 
 ## Method
 
-As previously stated we will emulate the behaviour of a traversal shader in a single shader program. In this program we will make use of Vulkan-RayQueries.
-Before we start with the implementation of shader we first require a tree of AS Structures to traverse.
+As previously stated we will emulate the behaviour of a traversal shader in a single GLSL shader. In this program we will make use of Vulkan-RayQueries.
+However before we can go about implementing it we are first required to take a look at the scene.
+
+### Setting up a scene
 In Vulkan an AS contains of two levels
 - Bottom-Level-AS (BLAS): These AS contain the actual geometry, such as meshes made up by triangles. The may also contain Axis-Aligned-Bounding-Boxes (AABBs). Once a primitve (Triangle,AABB) is intersected, control is returned to the shader to confirm the intersection or to generate a custom intersection point in the case of AABBs(for example for tracing spheres).
 - Top-Level-AS (TLAS): Is the entry point for a ray query and spans over instances of BLAS, with each instance having its own transform and properties.
 
-This is the point where we introduce programmable instances (proposed by Wong Jong et al). They are basically just instances or AABBs with an attached programm that is run once they are intersected. In this program we can add AS to traverse next and transform the ray to our liking. We want these PIs to be referenced between TLAS and BLAS and between BLAS to BLAS. Sadly, we cant do either. What we can do is fake these PIs by flagging our AABBs and running more ray-queries into lower-level TLAS.
+With traversal shader we want a tree of acceleration structure, therefore we dont stop at a BLAS, we then define AABBs as leafs of a BLAS that represent lower level TLAS. Every vulkan accleration structure therefore adds two layers of instancing.
+- Instanced BLAS as part of a TLAS
+- AABBs that represent lower TLAS as geometry in a BLAS
 
-We then implement different behaviour by using a couple of if-statements that implent behaviour such as selecting a level of detail.
+### Programmable instances
 
-Whenever we traverse a tree, we need to keep track of where to continue next. For this we are required to implement a stack that keeps track of traversal while it is running. Most of the optimization and problems I ran into during implementation are in relation to keeping this stack as small and as optimized as possible.
+This is the point where we introduce programmable instances (proposed by Wong Jong et al). They are basically just instances or AABBs with an attached programm that is run once they are intersected. In this program we can add AS to traverse next and transform the ray to our liking. We want these PIs to be referenced between TLAS and BLAS and between BLAS to BLAS. Sadly, we cant do either. What we can do is fake these PIs by flagging our AABBs and running more ray-queries into lower-level TLAS. In this case we only have access to PIs as children of BLAS. Different behaviour is then implemented by using a couple of if-statements that implent behaviour such as selecting a level of detail.
+
+### Traversal stack and traveral order
+
+Above I described the way traversal continues down a tree. At all traversed levels it is required to keep track of state of traversal inside an accelleration structure. Therefore traversal requires a stack. Furthermore, GLSL does not support recursion as it does not have a stack, therefore we implement our own.
+This gives us the problem that we are unable to run more rayqueires recursivly. Instead, we let a rayquery run to finish and keep track of all intersected PIs. Once finished we loop through them and let them select their AS and add a traversal payload to the stack. Traversal finishes when there are no payloads left in the stack.
+There are a couple of things that can be optimized:
+- Order of added stack payloads: It makes sense that the first intersectd PI should be the first to traverse next, as the RayQuery gives us the closer AABB intersections first.
+- Skipping payloads: with each payload we can associate a lower bound for any intersection inside its AABB, therefore we can skip payloads if we already found a closer hit.
+
+A traversal payload need to keep track of:
+- Transformation: Used to transform the ray into object space and surface normals back to world space
+- tNear: the closest intersection point possible inside the AABB
+- selected AS: the TLAS to traverse next
+
+### Implementing Dynamic-LOD
+
+Since the PIs are nothing but AABBs with flagged behaviour, we can exectute any code we want. This allows to select the LOD based on the distance of the AABB to the observer by projecting the AABB onto the screen and selecting the LOD based on the projection size. We then just add the selected LOD to the traversal stack and let traversal resume.
+
+Therefore it is required  tree, we need to keep track of where to continue next. For this we are required to implement a stack that keeps track of traversal while it is running. Most of the optimization and problems I ran into during implementation are in relation to keeping this stack as small and as optimized as possible.
 
 ### Evaluation
 
