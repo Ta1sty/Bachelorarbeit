@@ -81,44 +81,47 @@ We can now go about implementing the different behaviour such as level of detail
 
 Since the PIs are nothing but AABBs with flagged behaviour, we can exectute any code we want. This allows to select the LOD based on the distance of the AABB to the observer by projecting the AABB onto the screen and selecting the LOD based on the projection size. We then just add the selected LOD to the traversal stack and let traversal resume.
 
-### Evaluation
+## Evaluation
 
+Performance was test in 3 diffent topics:
+1. Level of detail
+2. Multi-level instancing
+3. Moana island [link]
+The latter of the three was a test to showcase usability in real world examples.
+
+### Level of detail
+
+For level of detail we tested on a 2 million triangle statue which was instanced (TODO number) times with 6 levels of detail. Each level reduced triangle count by a factor of 6. We had three cases to test:
+-NO-LOD: no levels of detail used, instead all meshes are instanced in one acceleration structure this the ground mark
+-Overhead - in this sceneario the same scene was rendered with always the highest level chosen, this was to evaluate the overhead the traversal shader has
+-Dynamic LOD - here we used dynamic LOD to see if it was possible to achieve an improvement over no LOD
+
+As for the results, the overhead test showed that there is a significant cost that comes from using multiple ray queries per pixel, however with dynamic level of detail it was possible to achieve a gain in FPS over NO-LOD. Overall there was an improvement in cache efficiency by using traversal shaders.
+
+### Multi-level instancing
+In this test I picked a tree form the disney dataset an instanced it so many times until vulkan did not allow for more instances in an acceleration structure.
+Then the same scene was rendered with traversal shaders using multi-level instancing. This test yielded an over 90% improvement in vram in this example, however the amount of FPS lost was also very significant with more then 50%. I also tested the  limits of traversal shader an kept instancing the forest over and over a couple of times. This resulted in a scene with an effective triangle count of 10 Quintillion running at 13 FPS.
+
+### Moana island
+In this scenario I tested the applicatbility of traversal shaders mixed with traditional rendering. Moana island was a good candidate for that as it featured a lot of single instanced meshes with a couple of multi instanced bushes. I tried to render as much of the scene as possible and ended up at about 14 million instanced with a total triangle count of 22 billion. As for the results:
+The scene in single level instancing used almost all VRAM avaiable. Most notably the acceleration structures occupied over 80% of VRAM. With multi level instancing however this decreased singificantly by more than 50GBs (50%+) with only a minimal performance impact.
 
 
 ## Discussion
 
+### Result simmary
 
+In these scenearios traversal shaders showed that they do indeed work and are able to implement the mentioned concepts. Furhtermore, they show a more than significant decrease in memory usage and a slight improvement in cache efficnety. On the contrarly however, they also introduce a heavy overhead as they keep switching control between raytracing core and the streaming multiprocessor.
 
-## 
+### Applications
+Traversal shader are a huge addition to any production or render software which uses raytracing and must not fulfil real time requirements. They are perfect for objects like trees and houses which have multiple shadered submeshes like leafs, walls, rooms etc. Lod can be used to some extent and does offer some improvements, though one has to be careful on what objects to use traversal. They may also be useful for some niche uses that I mentioned earlier, specifically the reduced amount of rebuilds and lazy loading of AS.
 
-### Markdown
+### Drawbacks
+Overall traversal should only continue up to 3 levels of instancing otherwise the overhead starts to take over. current GPUs just do not have enough raytracing power to render a scene like moana island in all its beauty with raytracing in real time. RT-Core and SM control switches take most of the shader time and overall the cache effiency does not look to great for AS that are in the dimensions of multiple GBs, though they do improve a little.
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+### Outlook
+Hardware support for traveral shaders, if something along those lines comes in a new vulkan version/ NVidia driver, then I would see some real promise. It isnt even nessecary to support traveral shaders in full generaltity. Just the injection of a program before selecting a single accerlation structure to chose where to continue would be enough to allow for almost all technqiues. More genrally speaking it would definetly be beneficial for reduced latency for any control switches for ray queries in any program. Overall I was astonished at the decrease in memory usage by multi instancing a couple of bushes.
 
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [Basic writing and formatting syntax](https://docs.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/Ta1sty/Traversal-Shader-on-Current-GPUs/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+### Thanks
+That is all for now. I am currently working privatly on another raytracer with vulkan where I will incorperate my traversal shader to some degree. And depending on the results I might publish that repository aswell. My thanks go out to all people who helped me, all the nice tutorials and public repos out there. You can find these at the end of the Pdf in subscetion (TODO)
+I thank you sincerely for reading. 
