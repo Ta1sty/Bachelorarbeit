@@ -14,18 +14,18 @@ will allow us to render the Moana Island production asset by Disney in real time
 saving multiple GBs of VRAM.
 
 ## Traversal shaders
-Traversal shaders are an extension to acceleration-structure traversal. A traversal shader hereby represents a small programm, which can control how an acceleration structure is travered. We can use this to implement Multi-Level instancing, dynamic-level of detail, reduced GPU-CPU bandwidth and much more. More information on the general concept can be found in chapter 4.1(TODO link to thesis) or a the paper by (TODO won jong at al).
+Traversal shaders are an extension to acceleration-structure traversal. A traversal shader hereby represents a small programm, which can control how an acceleration structure(AS) is travered. This can be used to implement Multi-Level instancing and dynamic-level of detail, reduce GPU-CPU bandwidth and much more. More information on the general concept can be found in chapter [4.1](https://github.com/Ta1sty/Traversal-Shader-on-Current-GPUs/blob/master/Traversal-Shaders%20on%20current%20GPUs.pdf) or a the paper by [Won-Jong et al.](https://www.intel.com/content/www/us/en/developer/articles/technical/flexible-ray-traversal-with-an-extended-programming-model.html).
 
 ### Why use traversal shaders
 
 Traversal shaders offer a couple of improvements to raytracing, especially with regard to memory and performance, they also have a couple of niche uses as well.
-In terms of memory, multi-level instancing comes to mind:
+For this thesis I focused on the two following applications:
   - Traveral of an accelleration structrure behaves like tree traversal, it is possible to specify an acelleration structure as a leaf node of another. In that case we can keep continuing this way as long as we want. Below is an example that explains it.
-  - Level-of-detail (LoD) is a common practice to reduce performance impact of far away objects. It swaps the meshes of far away objects with lower resolutions and keeps improving resolution as the observer comes closer. In the regular case an application must precalculate the selected levels of detail in advance, however with traversal shader it is possible to select the level of detail dynamically.
+  - Level-of-Detail (LoD) is a common practice to reduce performance impact of far away objects. It swaps the meshes of far away objects with lower resolutions and keeps improving resolution as the observer comes closer. In the regular case an application must precalculate the selected levels of detail in advance. However, with traversal shader it is possible to select the level of detail dynamically.
 
-(TODO, Pictures LOD)
+![alt text](Image/LoD-Levels.PNG)
 
-What else? Well, you can do a lot of hacky things with them, you could teleport the light ray to another position in the scene. Implementing a light-portal in the process. Or you could start to render fractals (sphereflake) to high depths. You can also use traversal shader to implement a lazy-loading technique for AS that are not visible (TODO-Source). They also open up a couple of possiblities for moving objects, since you can represent movement by transforming the ray into another positon. Just pay attention to the bounding boxes in this case or they will give false negatives.
+What else is possible? Well, it is possible to do a lot of hacky things with them, you could teleport the light ray to another position in the scene. Implementing a light-portal in the process. Or you could start to render fractals (sphereflake) to high depths. You can also use traversal shader to implement a lazy-loading technique for AS that are not visible (TODO-Source). They also open up a couple of possiblities for moving objects, since you can represent movement by transforming the ray into another positon. Just pay attention to the bounding boxes in this case or they will give false negatives.
 
 ### Walking through a forest
 
