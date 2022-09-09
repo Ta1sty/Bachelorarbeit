@@ -1,3 +1,6 @@
+# Traversal-Shader-on-Current-GPUs
+A thesis by Markus Hall
+
 ## Welcome
 
 I'm Markus and welcome you to the GitHub-Page for my thesis "Traversal shader on current GPUs".
