@@ -23,7 +23,8 @@ For this thesis I focused on the two following applications:
   - Traveral of an accelleration structrure behaves like tree traversal, it is possible to specify an acelleration structure as a leaf node of another. In that case we can keep continuing this way as long as we want. Below is an example that explains it.
   - Level-of-Detail (LoD) is a common practice to reduce performance impact of far away objects. It swaps the meshes of far away objects with lower resolutions and keeps improving resolution as the observer comes closer. In the regular case an application must precalculate the selected levels of detail in advance. However, with traversal shader it is possible to select the level of detail dynamically.
 
-![alt text](Image/LoD-Levels.PNG)
+![alt text](Image/LoD-Levels.PNG)![LoD-Levels](https://user-images.githubusercontent.com/57618110/189333002-9dd9a1a0-191d-49a7-ba8d-b7ce1ab4d03a.PNG)
+
 
 What else is possible? Well, it is possible to do a lot of hacky things with them, you could teleport the light ray to another position in the scene. Implementing a light-portal in the process. Or you could start to render fractals (sphereflake) to high depths. You can also use traversal shader to implement a lazy-loading technique for AS that are not visible (TODO-Source). They also open up a couple of possiblities for moving objects, since you can represent movement by transforming the ray into another positon. Just pay attention to the bounding boxes in this case or they will give false negatives.
 
