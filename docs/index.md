@@ -128,6 +128,11 @@ Then the same scene was rendered with traversal shaders using multi-level instan
 This case tested the applicability of traversal shaders mixed with traditional rendering. Moana island was a good candidate for that as it featured a lot of single instanced meshes with a couple of multi-instanced bushes. For this test, as much geometry was rendered as could fit and it ended up at about 14 million instanced with a total triangle count of 22 billion. This yielded the following results:
 The scene in single level instancing used almost all VRAM available (11GBs). Most notably the acceleration structures occupied over 80% of VRAM. With multi-level instancing however, this decreased significantly by more than 5GBs (50%+) with only a minimal performance impact.
 
+<p align="center">The geometry render of moana island</p>
+<p align="center">
+  <img src="Image/Moana Render.PNG" width="800">
+</p>
+
 ## Discussion
 
 ### Results summary
