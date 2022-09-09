@@ -23,8 +23,8 @@ Traversal shaders are an extension to acceleration-structure traversal. A traver
 
 Traversal shaders offer a couple of improvements to raytracing, especially regarding memory and performance, they also have a couple of niche uses as well.
 For this thesis I focused on the two following applications:
-  - Multi-level instancing: Traversal of an accelleration structrure behaves like tree traversal, it is possible to specify an acceleration structure as a leaf node of another. In that case we can keep continuing this way as long as we want. Below is an example that explains it.
-  - Level-of-Detail: (LoD) is a common practice to reduce performance impact of faraway objects. It swaps the meshes of those objects with lower resolutions and keeps improving resolution as the observer comes closer. In the regular case the selected level of detail must be precalculated before each frame. However, with traversal shader it is possible to select the level of detail dynamically.
+  - Multi-level instancing: Traversal of an acceleration structure behaves like tree traversal; it is possible to specify an acceleration structure as a leaf node of another. In that case we can keep continuing this way as long as we want. Below is an example that explains it.
+  - Level-of-Detail: (LOD) is a common practice to reduce performance impact of faraway objects. It swaps the meshes of those objects with lower resolutions and keeps improving resolution as the observer comes closer. In the regular case the selected level of detail must be precalculated before each frame. However, with traversal shader it is possible to select the level of detail dynamically.
 
 <p align="center">Multi-level instancing</p>
 <p align="center">
@@ -36,7 +36,7 @@ For this thesis I focused on the two following applications:
   <img src="Image/LoD-Levels.PNG" width="400">
 </p>
 
-What else is possible? Well, it is possible to do a lot of hacky things with them, you could teleport the light ray to another position in the scene. Implementing a light-portal in the process. Or you could start to render fractals (Sphereflake) to high depths. You can also use traversal shader to implement a lazy-loading technique for AS that are not visible [(Wong-Jong et al.)](https://www.intel.com/content/www/us/en/developer/articles/technical/lazy-build-of-acceleration-structures.html). They also open a couple of possiblities for moving objects, since you can represent movement by transforming the ray into another position. In this case it is required to adjust sizes of bounding boxes and rebuild less often.
+What else is possible? Well, it is possible to do a lot of hacky things with them, you could teleport the light ray to another position in the scene. Implementing a light-portal in the process. Or you could start to render fractals (Sphereflake) to high depths. You can also use traversal shader to implement a lazy-loading technique for AS that are not visible [(Wong-Jong et al.)](https://www.intel.com/content/www/us/en/developer/articles/technical/lazy-build-of-acceleration-structures.html). They also open a couple of possibilities for moving objects, since you can represent movement by transforming the ray into another position. In this case it is required to adjust sizes of bounding boxes and rebuild less often.
 
 ### Current state of architecture 
 
@@ -57,7 +57,7 @@ In Vulkan an AS contains of two levels
 
 The best example to explain traversal shaders is for a forest of trees with leaves. Hereby the forest, trees and their leaves all have their own acceleration structure.
 - Forest AS: Spans over the entire scene and contains trees as instances with different transforms. In this example this could be called the Top-Level-AS (TLAS)
-- Tree AS: Contains the geometry for the branches and trunk. It also references the leaves as instanced primitves with different transforms
+- Tree AS: Contains the geometry for the branches and trunk. It also references the leaves as instanced primitives with different transforms
 - Leave AS: Contains the geometry for the leaves
 
 The way traversal works with multi-level instancing is that we start at the root (forest) of the scene graph. We then traverse down the forest until we intersect a tree instance. We then transform the ray into the coordinate system of the tree. There, traversal is continued until either the tree or an instanced leaf is hit. In the latter case we continue by transforming the ray into the coordinate system of a leaf. This is where we either intersect a triangle or we return with a negative, in any case we continue through the tree to find closer intersections in the same manner. Once we are done with the tree, we finish with the forest and see if we can find a closer intersection. The result of the traversal is the closest primitive.
@@ -68,7 +68,7 @@ The way traversal works with multi-level instancing is that we start at the root
 </p>
 
 ## Method
-As previously stated, we will emulate the behaviour of a traversal shader in a single GLSL shader. In this program we will make use of [Vulkan-RayQueries](https://www.khronos.org/blog/ray-tracing-in-vulkan).
+As previously stated, we will emulate the behavior of a traversal shader in a single GLSL shader. In this program we will make use of [Vulkan-RayQueries](https://www.khronos.org/blog/ray-tracing-in-vulkan).
 
 
 ### Continuing with the forest
@@ -84,7 +84,7 @@ On the current architecture the AS-Tree in the example above cannot be represent
 
 The above example introduces the programmable instance. In the forest scenario, they are responsible for continuing traversal from the World-AS into the Tree-AS. They do that by executing a small program which then tells the shader where to continue traversal. In this case, traversal is continued in the Tree-AS once it has finished with the World-AS.
 
-PI were proposed by [Wong Jong et al.](https://www.intel.com/content/www/us/en/developer/articles/technical/flexible-ray-traversal-with-an-extended-programming-model.html), which is more general. In our case they are basically just instances or AABBs with an attached program that is run once they are intersected. In this program we can add AS to traverse next and transform the ray to our liking. We want these PIs to be referenced between TLAS and BLAS and between BLAS to BLAS. Sadly, we can't do either. What we can do is fake these PIs by flagging our AABBs and running more ray-queries into lower-level TLAS. In this case we only have access to PIs as children of BLAS, which can be seen in the picture above. Different behavior is then implemented by using a couple of if-statements that implement behaviour such as selecting a level of detail based on the AABB-flags.
+PI were proposed by [Wong Jong et al.](https://www.intel.com/content/www/us/en/developer/articles/technical/flexible-ray-traversal-with-an-extended-programming-model.html), which is more general. In our case they are basically just instances or AABBs with an attached program that is run once they are intersected. In this program we can add AS to traverse next and transform the ray to our liking. We want these PIs to be referenced between TLAS and BLAS and between BLAS to BLAS. Sadly, we can't do either. What we can do is fake these PIs by flagging our AABBs and running more ray-queries into lower-level TLAS. In this case we only have access to PIs as children of BLAS, which can be seen in the picture above. Different behavior is then implemented by using a couple of if-statements that implement behavior such as selecting a level of detail based on the AABB-flags.
 
 ### Traversal stack and traversal order
 
@@ -112,7 +112,7 @@ Performance was test in 3 different fields:
 2. Multi-level instancing
 3. [Moana island](https://disneyanimation.com/resources/moana-island-scene/)
 
-The latter of the three was a test to showcase usability in a real world example. Every scene was rendered using only raytracing, with primary, shadow, transmission and reflection rays on an RTX3060 with a resolution of 1920x1080.
+The latter of the three was a test to showcase usability in a real-world example. Every scene was rendered using only raytracing, with primary, shadow, transmission and reflection rays on an RTX3060 with a resolution of 1920x1080.
 
 ### Level of detail
 
@@ -143,15 +143,15 @@ The scene in single level instancing used almost all VRAM available (11GBs). Mos
 In these scenarios traversal shaders showed that they do indeed work and are able to implement the mentioned concepts. Furthermore, they show a more than significant decrease in memory usage and a slight improvement in cache efficiency. On the other side, they also introduce a heavy overhead as they keep switching control between raytracing core and the streaming multiprocessor.
 
 ### Applications
-Traversal shader are a huge addition to any production or render software which uses raytracing and must not fulfill real time requirements. They are perfect for objects like trees and houses which have multiple shared submeshes like leavs, walls, rooms etc. LOD can be used to some extent and does offer some improvements, though one must be careful where to use it. They may also be useful for some niche uses that I mentioned earlier, specifically the reduced amount of rebuilds and lazy loading of AS.
+Traversal shader are a huge addition to any production or render software which uses raytracing and must not fulfill real time requirements. They are perfect for objects like trees and houses which have multiple shared sub-meshes like leaves, walls, rooms etc. LOD can be used to some extent and does offer some improvements, though one must be careful where to use it. They may also be useful for some niche uses that I mentioned earlier, specifically the reduced amount of rebuilds and lazy loading of AS.
 
 ### Drawbacks
-Overall traversal should only continue up to 3 levels of instancing otherwise the overhead starts to take over. Current GPUs are currently not designed for this many control switches as RT-Core and SM control switches take most of the shader time and overall the cache efficiency does not look to great for AS that are in the dimensions of multiple GBs. Though, using traversal shaders they do improve a little, since less instances are used.
+Overall traversal should only continue up to 3 levels of instancing otherwise the overhead starts to take over. Current GPUs are currently not designed for this many control switches as RT-Core and SM control switches take most of the shader time and overall, the cache efficiency does not look to great for AS that are in the dimensions of multiple GBs. Though, using traversal shaders they do improve a little, since less instances are used.
 
 ### Outlook
-If something along the lines comes of hardware support for traversal shaders comes, then I would see some real promise. It isn't even necessary to support traveral shaders in full generality. Just the injection of a program to select a single acceleration structure to traverse next, would be enough to allow for almost all techniques. More generally speaking it would definetly be beneficial for reduced latency for any control switches for ray queries in any program. Overall, I was astonished at the decrease in memory usage by multi instancing a couple of bushes and that it had next to no performance impact.
+If something along the lines comes of hardware support for traversal shaders comes, then I would see some real promise. It isn't even necessary to support traversal shaders in full generality. Just the injection of a program to select a single acceleration structure to traverse next, would be enough to allow for almost all techniques. More generally speaking it would be beneficial to see reduced latency for any control switches for RayQueries. Overall, I was astonished at the decrease in memory usage by multi instancing a couple of bushes and that it had next to no performance impact.
 
 ### Thanks
-That is all for now. I am currently working privately on another raytracer with Vulkan where I will incorporate a traversal shader to some degree. And depending on the results I might publish that repository as well. My thanks go out to all people who helped me, all the nice tutorials and the public repositories out there. You can find these at the end of the Pdf in subsection 6.5.
+That is all for now. I am currently working privately on another Ray-Tracer with Vulkan where I will incorporate a traversal shader to some degree. And depending on the results I might publish that repository as well. My thanks go out to all people who helped me, all the nice tutorials and the public repositories out there. You can find these at the end of the Pdf in subsection 6.5.
 
 <p align="center">I sincerely thank you for reading. </p>
